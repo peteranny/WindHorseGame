@@ -1,1 +1,6 @@
-console.info("Hello world!");
+import React from "react";
+import { render } from "react-dom";
+
+const App = () => <div>Hello world!</div>;
+
+render(<App />, document.getElementById("root"));
