@@ -1,5 +1,9 @@
 {
-  "extends": "plugin:prettier/recommended",
+  "extends": [
+    "standard",
+    "plugin:react/recommended",
+    "plugin:prettier/recommended"
+  ],
   "parser": "babel-eslint",
   "parserOptions": {
     "sourceType": "module"
