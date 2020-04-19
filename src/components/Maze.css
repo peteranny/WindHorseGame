@@ -1,0 +1,42 @@
+$cell-size: 100px;
+
+.cellContent {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &.road {
+    background: greenyellow;
+  }
+
+  &.wall {
+    background: brown;
+  }
+}
+
+.cell {
+  position: relative;
+
+  .cellContent {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+  }
+}
+
+.map {
+  display: table;
+
+  .row {
+    display: table-row;
+
+    .cell {
+      display: table-cell;
+      min-width: $cell-size;
+      max-width: $cell-size;
+      height: $cell-size;
+    }
+  }
+}
