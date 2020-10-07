@@ -7,6 +7,8 @@ const CELL_TYPE = {
   WALL: "X",
 };
 
+const CELL_SIZE = 100;
+
 const simpleMap = `
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 XX           XXXXX          X
@@ -44,12 +46,41 @@ const Maze = () => {
         .map((rowString) => rowString.split("")),
     []
   );
+  const [x, y] = [0, 0];
+  const centerRect = {
+    left: x * CELL_SIZE,
+    top: y * CELL_SIZE,
+    width: CELL_SIZE,
+    height: CELL_SIZE,
+  };
+  const [centerX, centerY] = [window.innerWidth / 2, window.innerHeight / 2];
+  const centerTargetRect = {
+    ...centerRect,
+    left: centerX - centerRect.width / 2,
+    top: centerY - centerRect.height / 2,
+  };
+  const offset = [
+    centerTargetRect.left - centerRect.left,
+    centerTargetRect.top - centerRect.top,
+  ];
+  const [offsetX, offsetY] = offset;
   return (
-    <div className={styles.map}>
-      {compileMap(simpleMap).map((cells, i) => (
-        <div key={i} className={styles.row}>
-          {cells.map((cell, j) => (
-            <div key={j} className={styles.cell}>
+    <div
+      className={styles.map}
+      style={{ position: "relative", left: offsetX, top: offsetY }}
+    >
+      {compileMap(simpleMap).map((cells, r) => (
+        <div key={r} className={styles.row}>
+          {cells.map((cell, c) => (
+            <div
+              key={c}
+              className={styles.cell}
+              style={{
+                minWidth: CELL_SIZE,
+                maxWidth: CELL_SIZE,
+                height: CELL_SIZE,
+              }}
+            >
               <div
                 className={cn(
                   styles.cellContent,
