@@ -1,17 +1,17 @@
 $cell-size: 100px;
 
-.road {
-  background: greenyellow;
-}
-
-.wall {
-  background: brown;
-}
-
 .cellContent {
   display: flex;
   justify-content: center;
   align-items: center;
+
+  &.road {
+    background: greenyellow;
+  }
+
+  &.wall {
+    background: brown;
+  }
 }
 
 .cell {
