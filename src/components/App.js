@@ -2,7 +2,7 @@ import React from "react";
 import useMouse from "../hooks/useMouse";
 import MouseContext from "../contexts/MouseContext";
 import Screen from "./Screen";
-import Maze from "./Maze.js";
+import Maze from "./Maze";
 
 const App = () => {
   const [mouse, handleMouseClick] = useMouse();
