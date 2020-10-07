@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 
 git push $@
 NODE_ENV=production yarn build
