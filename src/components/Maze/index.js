@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import cn from "classnames";
-import styles from "./Maze.css";
+import styles from "./styles.css";
 
 const CELL_TYPE = {
   ROAD: " ",
