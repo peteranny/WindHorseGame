@@ -19,7 +19,7 @@
   }
 
   &.wall {
-    background: brown;
+    /* Apply the screen background */
   }
 }
 
