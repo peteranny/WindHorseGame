@@ -9,5 +9,8 @@
   "parserOptions": {
     "sourceType": "module"
   },
-  "env": { "es6": true, "browser": true }
+  "env": { "es6": true, "browser": true },
+  "rules": {
+    "react-hooks/exhaustive-deps": "error"
+  }
 }
