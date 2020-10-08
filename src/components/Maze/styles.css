@@ -1,3 +1,14 @@
+.container {
+  position: relative;
+}
+
+.pin {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .cellContent {
   display: flex;
   justify-content: center;
