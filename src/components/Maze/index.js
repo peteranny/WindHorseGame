@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 
@@ -46,7 +46,7 @@ const Maze = () => {
         .map((rowString) => rowString.split("")),
     []
   );
-  const [x, y] = [0, 0];
+  const [[x, y], setPosition] = useState([0, 0]);
   const centerRect = {
     left: x * CELL_SIZE,
     top: y * CELL_SIZE,
@@ -64,10 +64,16 @@ const Maze = () => {
     centerTargetRect.top - centerRect.top,
   ];
   const [offsetX, offsetY] = offset;
+  const goto = useCallback((r, c) => {
+    setPosition([c, r]);
+  }, []);
   return (
     <div
-      className={styles.map}
-      style={{ position: "relative", left: offsetX, top: offsetY }}
+      className={cn(styles.map, styles.withOffset)}
+      style={{
+        left: offsetX,
+        top: offsetY,
+      }}
     >
       {compileMap(simpleMap).map((cells, r) => (
         <div key={r} className={styles.row}>
@@ -80,6 +86,7 @@ const Maze = () => {
                 maxWidth: CELL_SIZE,
                 height: CELL_SIZE,
               }}
+              onClick={(e) => goto(r, c)}
             >
               <div
                 className={cn(
