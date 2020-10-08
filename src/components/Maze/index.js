@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
+import PropTypes from "prop-types";
 import cn from "classnames";
 import styles from "./styles.css";
 
@@ -25,7 +26,7 @@ XX XX     XXXX      XX     XX
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 `;
 
-const Maze = () => {
+const Maze = ({ center: [centerX, centerY] }) => {
   const classNameForCell = useCallback((cell) => {
     switch (cell) {
       case CELL_TYPE.ROAD:
@@ -54,7 +55,6 @@ const Maze = () => {
     width: CELL_SIZE,
     height: CELL_SIZE,
   };
-  const [centerX, centerY] = [window.innerWidth / 2, window.innerHeight / 2];
   const centerTargetRect = {
     ...centerRect,
     left: centerX - centerRect.width / 2,
@@ -130,4 +130,28 @@ const Maze = () => {
   );
 };
 
-export default Maze;
+Maze.propTypes = {
+  center: PropTypes.arrayOf(PropTypes.number).isRequired,
+};
+
+const MazeContainer = () => {
+  const [centerX, centerY] = [window.innerWidth / 2, window.innerHeight / 2];
+  return (
+    <div className={styles.container}>
+      <Maze center={[centerX, centerY]} />
+      <div
+        className={styles.pin}
+        style={{
+          width: CELL_SIZE,
+          height: CELL_SIZE,
+          left: centerX - CELL_SIZE / 2,
+          top: centerY - CELL_SIZE / 2,
+        }}
+      >
+        V
+      </div>
+    </div>
+  );
+};
+
+export default MazeContainer;
