@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 
@@ -46,7 +46,8 @@ const Maze = () => {
         .map((rowString) => rowString.split("")),
     []
   );
-  const [[x, y], setPosition] = useState([0, 0]);
+  const map = useMemo(() => compileMap(simpleMap), [compileMap]);
+  const [[x, y], setPosition] = useState([2, 1]);
   const centerRect = {
     left: x * CELL_SIZE,
     top: y * CELL_SIZE,
@@ -64,9 +65,34 @@ const Maze = () => {
     centerTargetRect.top - centerRect.top,
   ];
   const [offsetX, offsetY] = offset;
-  const goto = useCallback((r, c) => {
-    setPosition([c, r]);
-  }, []);
+  const isReachableAt = useCallback(
+    (r, c) => {
+      if (r === y) {
+        let isReachable = true;
+        const from = x < c ? x : c;
+        const to = c > x ? c : x;
+        for (let i = from; i <= to; i++)
+          if (map[r][i] !== " ") isReachable = false;
+        return isReachable;
+      }
+      if (c === x) {
+        let isReachable = true;
+        const from = y < r ? y : r;
+        const to = r > y ? r : y;
+        for (let i = from; i <= to; i++)
+          if (map[i][c] !== " ") isReachable = false;
+        return isReachable;
+      }
+      return false;
+    },
+    [map, x, y]
+  );
+  const goto = useCallback(
+    (r, c) => {
+      if (isReachableAt(r, c)) setPosition([c, r]);
+    },
+    [isReachableAt]
+  );
   return (
     <div
       className={cn(styles.map, styles.withOffset)}
@@ -75,7 +101,7 @@ const Maze = () => {
         top: offsetY,
       }}
     >
-      {compileMap(simpleMap).map((cells, r) => (
+      {map.map((cells, r) => (
         <div key={r} className={styles.row}>
           {cells.map((cell, c) => (
             <div
