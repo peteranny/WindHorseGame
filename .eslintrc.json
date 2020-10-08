@@ -12,5 +12,10 @@
   "env": { "es6": true, "browser": true },
   "rules": {
     "react-hooks/exhaustive-deps": "error"
+  },
+  "settings": {
+    "react": {
+      "version": "latest"
+    }
   }
 }

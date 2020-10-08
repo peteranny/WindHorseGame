@@ -5,14 +5,17 @@ import qs from "qs";
 const useQuery = () => {
   const location = useLocation();
   const query = useMemo(
-    () => qs.parse(window.location.search, { ignoreQueryPrefix: true }),
+    () => qs.parse(location.search, { ignoreQueryPrefix: true }),
     [location.search]
   );
 
   const history = useHistory();
-  const setQuery = useCallback((query) => {
-    history.push(qs.stringify(query, { addQueryPrefix: true }));
-  }, []);
+  const setQuery = useCallback(
+    (query) => {
+      history.push(qs.stringify(query, { addQueryPrefix: true }));
+    },
+    [history]
+  );
 
   return [query, setQuery];
 };
