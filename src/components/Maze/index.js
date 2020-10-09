@@ -134,8 +134,7 @@ Maze.propTypes = {
   center: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
-const MazeContainer = () => {
-  const [centerX, centerY] = [window.innerWidth / 2, window.innerHeight / 2];
+const MazeContainer = ({ center: [centerX, centerY] }) => {
   return (
     <div className={styles.container}>
       <Maze center={[centerX, centerY]} />
@@ -152,6 +151,10 @@ const MazeContainer = () => {
       </div>
     </div>
   );
+};
+
+MazeContainer.propTypes = {
+  center: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
 export default MazeContainer;
