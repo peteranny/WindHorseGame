@@ -30,7 +30,7 @@ module.exports = {
       templateContent: () => `
 <html>
   <head>
-    <style>html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; }</style>
+    <style>html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; overscroll-behavior: none; }</style>
   </head>
   <body>
     <div id="root"></div>
