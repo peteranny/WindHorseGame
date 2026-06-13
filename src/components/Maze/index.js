@@ -10,6 +10,16 @@ const CELL_TYPE = {
 
 const CELL_SIZE = window.innerWidth <= 768 ? 150 : 100;
 
+const deviceId = (() => {
+  let id = localStorage.getItem("deviceId");
+  if (!id) {
+    id =
+      Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    localStorage.setItem("deviceId", id);
+  }
+  return id;
+})();
+
 const simpleMap = `
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 XX           XXXXX          X
@@ -55,7 +65,7 @@ const Maze = ({ center: [centerX, centerY] }) => {
         .withSuccessHandler((pos) => {
           if (pos) setPosition([pos.x, pos.y]);
         })
-        .getPosition();
+        .getPosition(deviceId);
     }
   }, []);
   const centerRect = {
@@ -104,7 +114,7 @@ const Maze = ({ center: [centerX, centerY] }) => {
   );
   useEffect(() => {
     if (typeof google !== "undefined") {
-      google.script.run.savePosition(x, y);
+      google.script.run.savePosition(deviceId, x, y);
     }
   }, [x, y]);
   return (
