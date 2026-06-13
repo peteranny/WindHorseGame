@@ -10,7 +10,7 @@
     "sourceType": "module"
   },
   "env": { "es6": true, "browser": true },
-  "globals": { "__DEPLOY_DATE__": "readonly" },
+  "globals": { "__DEPLOY_DATE__": "readonly", "google": "readonly" },
   "rules": {
     "react-hooks/exhaustive-deps": "error"
   },

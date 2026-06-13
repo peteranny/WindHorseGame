@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import cn from "classnames";
 import styles from "./styles.css";
@@ -93,6 +93,11 @@ const Maze = ({ center: [centerX, centerY] }) => {
     },
     [isReachableAt]
   );
+  useEffect(() => {
+    if (typeof google !== "undefined") {
+      google.script.run.savePosition(x, y);
+    }
+  }, [x, y]);
   return (
     <div
       className={cn(styles.map, styles.withOffset)}

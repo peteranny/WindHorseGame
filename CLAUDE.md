@@ -30,3 +30,7 @@ npm run deploy         # build, push, and activate the live deployment
 | `npm run pull` | Pull latest scripts from GAS editor |
 | `npm run push` | Build, push to GAS (also pushes git) |
 | `npm run open` | Open GAS editor in browser |
+
+## Google Sheet integration
+
+The GAS project is container-bound to a Google Sheet. Each time the player moves, the app calls `google.script.run.savePosition(x, y)` which overwrites cells A1:B1 with the current position. The `google` global is only available in the deployed GAS environment — the call is guarded with `typeof google !== "undefined"` so local dev is unaffected.
