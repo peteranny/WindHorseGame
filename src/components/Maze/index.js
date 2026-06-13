@@ -8,7 +8,7 @@ const CELL_TYPE = {
   WALL: "X",
 };
 
-const CELL_SIZE = 150;
+const CELL_SIZE = 300;
 
 const deviceId = (() => {
   let id = localStorage.getItem("deviceId");
