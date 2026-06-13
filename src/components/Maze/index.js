@@ -2,13 +2,14 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import cn from "classnames";
 import styles from "./styles.css";
+import SCALE from "../../scale";
 
 const CELL_TYPE = {
   ROAD: " ",
   WALL: "X",
 };
 
-const CELL_SIZE = 300;
+const CELL_SIZE = 100 * SCALE;
 
 const deviceId = (() => {
   let id = localStorage.getItem("deviceId");

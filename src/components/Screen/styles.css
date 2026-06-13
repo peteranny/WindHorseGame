@@ -6,5 +6,5 @@
   bottom: 0;
   overflow: hidden;
   background: brown;
-  font-size: 40pt;
+  font-size: calc(13pt * var(--scale));
 }

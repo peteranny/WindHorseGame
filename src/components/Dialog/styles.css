@@ -3,13 +3,13 @@
   border: 4px solid black;
   border-radius: 4px;
   background: white;
-  padding: 20px;
-  line-height: 25px;
+  padding: calc(20px * var(--scale));
+  line-height: calc(25px * var(--scale));
 }
 
 .outer {
   position: relative;
-  height: 100px;
+  height: calc(100px * var(--scale));
   background: white;
 
   .inner {
