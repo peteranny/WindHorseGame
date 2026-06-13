@@ -11,7 +11,7 @@
     "logout": "clasp logout",
     "pull": "npm run check-login && git pull --rebase && clasp pull",
     "push": "npm run check-login && git push --force-with-lease && npm run build && clasp push",
-    "deploy": "npm run check-login && npm run build && clasp push && clasp update-deployment $(clasp list-deployments | awk '/@[0-9]/{print $2}' | tail -1)",
+    "deploy": "npm run check-login && npm run build && clasp push && (ID=$(clasp list-deployments | awk '/@[0-9]/{print $2}' | tail -1); if [ -n \"$ID\" ]; then clasp update-deployment \"$ID\"; else clasp create-deployment; fi)",
     "open": "npm run check-login && clasp open-script",
     "setup": "clasp create --type webapp --title WindHorseGame --rootDir gas"
   },
