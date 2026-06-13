@@ -1,2 +1,4 @@
 node_modules
 dist
+gas/index.html
+gas/bundle.js

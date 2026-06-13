@@ -5,9 +5,18 @@
   "license": "MIT",
   "scripts": {
     "start": "NODE_OPTIONS=--openssl-legacy-provider webpack-dev-server",
-    "build": "NODE_OPTIONS=--openssl-legacy-provider webpack"
+    "build": "NODE_OPTIONS=--openssl-legacy-provider NODE_ENV=production webpack && node scripts/inline-gas-html.js",
+    "check-login": "clasp show-authorized-user --json | grep -q '\"loggedIn\": true' || (echo 'Not logged in. Run: npm run login' >&2 && false)",
+    "login": "clasp login",
+    "logout": "clasp logout",
+    "pull": "npm run check-login && git pull --rebase && clasp pull",
+    "push": "npm run check-login && git push --force-with-lease && npm run build && clasp push",
+    "deploy": "npm run check-login && npm run build && clasp push && clasp update-deployment $(clasp list-deployments | awk '/@[0-9]/{print $2}' | tail -1)",
+    "open": "npm run check-login && clasp open-script",
+    "setup": "clasp create --type webapp --title WindHorseGame --rootDir gas"
   },
   "devDependencies": {
+    "@google/clasp": "^3.3.0",
     "babel-eslint": "^10.1.0",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.10.1",

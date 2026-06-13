@@ -1,20 +1,26 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
+const isProd = process.env.NODE_ENV === "production";
+
 module.exports = {
-  mode: process.env.NODE_ENV || "development",
+  mode: isProd ? "production" : "development",
   entry: path.join(__dirname, "src/index.js"),
-  output: { path: path.join(__dirname, "dist") },
+  output: {
+    path: isProd ? path.join(__dirname, "gas") : path.join(__dirname, "dist"),
+    filename: "bundle.js",
+  },
   devServer: {
     contentBase: path.join(__dirname, "dist"),
     open: true,
   },
   plugins: [
     new HtmlWebpackPlugin({
+      filename: "index.html",
       meta: {
         viewport: "width=device-width, initial-scale=1.0",
       },
-      templateContent: ({ htmlWebpackPlugin }) => `
+      templateContent: () => `
 <html>
   <head></head>
   <body>

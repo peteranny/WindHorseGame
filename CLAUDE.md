@@ -13,3 +13,20 @@ Early-stage prototype. The maze layout is hardcoded, and the only UI beyond the 
 ## Dev setup
 
 Uses webpack 4 + Node 18, which requires `NODE_OPTIONS=--openssl-legacy-provider` — already set in the npm scripts, so `npm start` and `npm build` work as-is.
+
+## Deployment (Google Apps Script)
+
+Deployed via clasp as a standalone web app (not gh-pages). React source lives in `src/`; production build outputs inlined `gas/index.html` alongside `gas/Code.js` (doGet handler).
+
+```sh
+npm install
+npm run login          # authenticate with Google
+npm run setup          # first time only — creates GAS project, writes scriptId to .clasp.json
+npm run deploy         # build, push, and activate the live deployment
+```
+
+| Command | Description |
+|---|---|
+| `npm run pull` | Pull latest scripts from GAS editor |
+| `npm run push` | Build, push to GAS (also pushes git) |
+| `npm run open` | Open GAS editor in browser |
