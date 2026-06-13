@@ -49,6 +49,15 @@ const Maze = ({ center: [centerX, centerY] }) => {
   );
   const map = useMemo(() => compileMap(simpleMap), [compileMap]);
   const [[x, y], setPosition] = useState([2, 1]);
+  useEffect(() => {
+    if (typeof google !== "undefined") {
+      google.script.run
+        .withSuccessHandler((pos) => {
+          if (pos) setPosition([pos.x, pos.y]);
+        })
+        .getPosition();
+    }
+  }, []);
   const centerRect = {
     left: x * CELL_SIZE,
     top: y * CELL_SIZE,
