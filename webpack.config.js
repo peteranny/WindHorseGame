@@ -18,11 +18,14 @@ module.exports = {
     new HtmlWebpackPlugin({
       filename: "index.html",
       meta: {
-        viewport: "width=device-width, initial-scale=1.0",
+        viewport:
+          "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no",
       },
       templateContent: () => `
 <html>
-  <head></head>
+  <head>
+    <style>html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; }</style>
+  </head>
   <body>
     <div id="root"></div>
   </body>
