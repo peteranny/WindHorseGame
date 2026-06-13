@@ -58,14 +58,16 @@ const Maze = ({ center: [centerX, centerY] }) => {
     []
   );
   const map = useMemo(() => compileMap(simpleMap), [compileMap]);
-  const [[x, y], setPosition] = useState([2, 1]);
+  const [position, setPosition] = useState(null);
+  const x = position ? position[0] : 0;
+  const y = position ? position[1] : 0;
   useEffect(() => {
     if (typeof google !== "undefined") {
       google.script.run
-        .withSuccessHandler((pos) => {
-          if (pos) setPosition([pos.x, pos.y]);
-        })
+        .withSuccessHandler((pos) => setPosition(pos ? [pos.x, pos.y] : [2, 1]))
         .getPosition(deviceId);
+    } else {
+      setPosition([2, 1]);
     }
   }, []);
   const centerRect = {
@@ -113,10 +115,11 @@ const Maze = ({ center: [centerX, centerY] }) => {
     [isReachableAt]
   );
   useEffect(() => {
-    if (typeof google !== "undefined") {
+    if (position && typeof google !== "undefined") {
       google.script.run.savePosition(deviceId, x, y);
     }
-  }, [x, y]);
+  }, [x, y, position]);
+  if (!position) return null;
   return (
     <div
       className={cn(styles.map, styles.withOffset)}
