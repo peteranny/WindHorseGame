@@ -36,7 +36,6 @@ const App = () => {
               position: "absolute",
               top: 4,
               right: 8,
-              fontSize: 16,
               opacity: 0.35,
               pointerEvents: "none",
               color: "white",
