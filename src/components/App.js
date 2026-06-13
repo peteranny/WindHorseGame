@@ -30,6 +30,21 @@ const App = () => {
           </div>
         </div>
         <Dialog />
+        {__DEPLOY_DATE__ && (
+          <div
+            style={{
+              position: "absolute",
+              top: 4,
+              right: 8,
+              fontSize: 16,
+              opacity: 0.35,
+              pointerEvents: "none",
+              color: "white",
+            }}
+          >
+            Last Updated: {__DEPLOY_DATE__}
+          </div>
+        )}
       </Screen>
     </MouseContext.Provider>
   );

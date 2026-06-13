@@ -1,5 +1,6 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -15,6 +16,11 @@ module.exports = {
     open: true,
   },
   plugins: [
+    new webpack.DefinePlugin({
+      __DEPLOY_DATE__: JSON.stringify(
+        process.env.DEPLOY_DATE || (isProd ? "" : "1970-01-01 00:00")
+      ),
+    }),
     new HtmlWebpackPlugin({
       filename: "index.html",
       meta: {
