@@ -7,4 +7,8 @@
   overflow: hidden;
   background: brown;
   font-size: 13pt;
+
+  @media (max-width: 768px) {
+    font-size: 20pt;
+  }
 }

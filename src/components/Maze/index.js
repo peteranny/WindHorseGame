@@ -8,7 +8,7 @@ const CELL_TYPE = {
   WALL: "X",
 };
 
-const CELL_SIZE = 100;
+const CELL_SIZE = window.innerWidth <= 768 ? 150 : 100;
 
 const simpleMap = `
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
