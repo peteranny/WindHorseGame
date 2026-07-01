@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import cn from "classnames";
 import styles from "./styles.css";
 import SCALE from "../../scale";
+import simpleMap from "./map.txt";
 
 const CELL_TYPE = {
   ROAD: " ",
@@ -20,22 +21,6 @@ const deviceId = (() => {
   }
   return id;
 })();
-
-const simpleMap = `
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-XX           XXXXX          X
-XX XXXXX XXX XXXXX XXXXXXXX X
-XX XXX   XXX          X     X
-XXXXXXXX XXX XXXXXXXX XX XXXX
-XX             X         XXXX
-XXXX XXXXXXXXXXXXXX XXXXXXXXX
-XX   XXXX   XX   XX         X
-XX XXXXXX X XXXX XXXXXXXXXX X
-X         X       X         X
-XX XX XXX XXXX XXXX XXXXX XXX
-XX XX     XXXX      XX     XX
-XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-`;
 
 const Maze = ({ center: [centerX, centerY] }) => {
   const classNameForCell = useCallback((cell) => {
