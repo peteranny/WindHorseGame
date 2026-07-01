@@ -1,5 +1,7 @@
 # WindHorseGame
 
+> **For AI:** Keep this file up to date as the codebase evolves. After any task that changes the architecture, adds a new concept, or modifies how a key system works, update the relevant section here before committing.
+
 A browser-based maze navigation game built with React and webpack.
 
 ## What it does
