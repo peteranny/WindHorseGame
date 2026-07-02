@@ -22,6 +22,22 @@ const deviceId = (() => {
   return id;
 })();
 
+const getLocalPosition = () => {
+  try {
+    const raw = localStorage.getItem("position");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const setLocalPosition = (x, y) => {
+  localStorage.setItem(
+    "position",
+    JSON.stringify({ x, y, timestamp: Date.now() })
+  );
+};
+
 const Maze = ({ center: [centerX, centerY] }) => {
   const classNameForCell = useCallback((cell) => {
     switch (cell) {
@@ -48,12 +64,21 @@ const Maze = ({ center: [centerX, centerY] }) => {
   const x = position ? position[0] : 0;
   const y = position ? position[1] : 0;
   useEffect(() => {
+    const local = getLocalPosition();
     if (typeof google !== "undefined") {
       google.script.run
-        .withSuccessHandler((pos) => setPosition(pos ? [pos.x, pos.y] : [2, 1]))
+        .withSuccessHandler((remote) => {
+          if (remote && (!local || remote.timestamp >= local.timestamp)) {
+            setPosition([remote.x, remote.y]);
+          } else {
+            const pos = local || { x: 2, y: 1 };
+            setPosition([pos.x, pos.y]);
+          }
+        })
         .getPosition(deviceId);
     } else {
-      setPosition([2, 1]);
+      const pos = local || { x: 2, y: 1 };
+      setPosition([pos.x, pos.y]);
     }
   }, []);
   const centerRect = {
@@ -101,8 +126,11 @@ const Maze = ({ center: [centerX, centerY] }) => {
     [isReachableAt]
   );
   useEffect(() => {
-    if (position && typeof google !== "undefined") {
-      google.script.run.savePosition(deviceId, x, y);
+    if (position) {
+      setLocalPosition(x, y);
+      if (typeof google !== "undefined") {
+        google.script.run.savePosition(deviceId, x, y, Date.now());
+      }
     }
   }, [x, y, position]);
   if (!position) return null;
