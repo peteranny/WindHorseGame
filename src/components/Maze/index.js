@@ -81,22 +81,6 @@ const Maze = ({ center: [centerX, centerY] }) => {
       setPosition([pos.x, pos.y]);
     }
   }, []);
-  const centerRect = {
-    left: x * CELL_SIZE,
-    top: y * CELL_SIZE,
-    width: CELL_SIZE,
-    height: CELL_SIZE,
-  };
-  const centerTargetRect = {
-    ...centerRect,
-    left: centerX - centerRect.width / 2,
-    top: centerY - centerRect.height / 2,
-  };
-  const offset = [
-    centerTargetRect.left - centerRect.left,
-    centerTargetRect.top - centerRect.top,
-  ];
-  const [offsetX, offsetY] = offset;
   const isReachableAt = useCallback(
     (r, c) => {
       if (r === y) {
@@ -134,6 +118,16 @@ const Maze = ({ center: [centerX, centerY] }) => {
     }
   }, [x, y, position]);
   if (!position) return null;
+  const centerRect = {
+    left: x * CELL_SIZE,
+    top: y * CELL_SIZE,
+    width: CELL_SIZE,
+    height: CELL_SIZE,
+  };
+  const [offsetX, offsetY] = [
+    centerX - centerRect.width / 2 - centerRect.left,
+    centerY - centerRect.height / 2 - centerRect.top,
+  ];
   return (
     <div
       className={cn(styles.map, styles.withOffset)}

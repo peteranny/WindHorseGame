@@ -26,7 +26,7 @@ const App = () => {
               bottom: 0,
             }}
           >
-            <Maze center={center} />
+            {width > 0 && height > 0 && <Maze center={center} />}
           </div>
         </div>
         <Dialog />
