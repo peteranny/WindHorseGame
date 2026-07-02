@@ -8,8 +8,8 @@ import Dialog from "./Dialog";
 
 const App = () => {
   const [mouse, handleMouseClick] = useMouse();
-  const [ref, { width, height }] = useMeasure();
-  const center = [width / 2, height / 2];
+  const [ref, { width, height }] = useMeasure<HTMLDivElement>();
+  const center: [number, number] = [width / 2, height / 2];
   return (
     <MouseContext.Provider value={mouse}>
       <Screen

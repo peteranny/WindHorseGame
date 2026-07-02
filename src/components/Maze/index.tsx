@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import PropTypes from "prop-types";
 import cn from "classnames";
 import styles from "./styles.css";
 import SCALE from "../../scale";
@@ -8,7 +7,7 @@ import simpleMap from "./map.txt";
 const CELL_TYPE = {
   ROAD: " ",
   WALL: "X",
-};
+} as const;
 
 const CELL_SIZE = 100 * SCALE;
 
@@ -22,24 +21,34 @@ const deviceId = (() => {
   return id;
 })();
 
-const getLocalPosition = () => {
+interface StoredPosition {
+  x: number;
+  y: number;
+  timestamp: number;
+}
+
+const getLocalPosition = (): StoredPosition | null => {
   try {
     const raw = localStorage.getItem("position");
-    return raw ? JSON.parse(raw) : null;
+    return raw ? (JSON.parse(raw) as StoredPosition) : null;
   } catch {
     return null;
   }
 };
 
-const setLocalPosition = (x, y) => {
+const setLocalPosition = (x: number, y: number): void => {
   localStorage.setItem(
     "position",
     JSON.stringify({ x, y, timestamp: Date.now() })
   );
 };
 
-const Maze = ({ center: [centerX, centerY] }) => {
-  const classNameForCell = useCallback((cell) => {
+interface MazeProps {
+  center: [number, number];
+}
+
+const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
+  const classNameForCell = useCallback((cell: string): string | null => {
     switch (cell) {
       case CELL_TYPE.ROAD:
         return "road";
@@ -49,9 +58,9 @@ const Maze = ({ center: [centerX, centerY] }) => {
         return null;
     }
   }, []);
-  const contentForCell = useCallback((cell) => "", []);
+  const contentForCell = useCallback((_cell: string): string => "", []);
   const compileMap = useCallback(
-    (mapString) =>
+    (mapString: string): string[][] =>
       mapString
         .replace(/^\n*/, "")
         .replace(/\n*$/, "")
@@ -60,29 +69,29 @@ const Maze = ({ center: [centerX, centerY] }) => {
     []
   );
   const map = useMemo(() => compileMap(simpleMap), [compileMap]);
-  const [position, setPosition] = useState(null);
+  const [position, setPosition] = useState<[number, number] | null>(null);
   const x = position ? position[0] : 0;
   const y = position ? position[1] : 0;
   useEffect(() => {
     const local = getLocalPosition();
     if (typeof google !== "undefined") {
       google.script.run
-        .withSuccessHandler((remote) => {
+        .withSuccessHandler<StoredPosition | null>((remote) => {
           if (remote && (!local || remote.timestamp >= local.timestamp)) {
             setPosition([remote.x, remote.y]);
           } else {
-            const pos = local || { x: 2, y: 1 };
+            const pos = local ?? { x: 2, y: 1 };
             setPosition([pos.x, pos.y]);
           }
         })
         .getPosition(deviceId);
     } else {
-      const pos = local || { x: 2, y: 1 };
+      const pos = local ?? { x: 2, y: 1 };
       setPosition([pos.x, pos.y]);
     }
   }, []);
   const isReachableAt = useCallback(
-    (r, c) => {
+    (r: number, c: number): boolean => {
       if (r === y) {
         let isReachable = true;
         const from = x < c ? x : c;
@@ -104,7 +113,7 @@ const Maze = ({ center: [centerX, centerY] }) => {
     [map, x, y]
   );
   const goto = useCallback(
-    (r, c) => {
+    (r: number, c: number): void => {
       if (isReachableAt(r, c)) setPosition([c, r]);
     },
     [isReachableAt]
@@ -138,38 +147,41 @@ const Maze = ({ center: [centerX, centerY] }) => {
     >
       {map.map((cells, r) => (
         <div key={r} className={styles.row}>
-          {cells.map((cell, c) => (
-            <div
-              key={c}
-              className={styles.cell}
-              style={{
-                minWidth: CELL_SIZE,
-                maxWidth: CELL_SIZE,
-                height: CELL_SIZE,
-              }}
-              onClick={(e) => goto(r, c)}
-            >
+          {cells.map((cell, c) => {
+            const cellClass = classNameForCell(cell);
+            return (
               <div
-                className={cn(
-                  styles.cellContent,
-                  styles[classNameForCell(cell)]
-                )}
+                key={c}
+                className={styles.cell}
+                style={{
+                  minWidth: CELL_SIZE,
+                  maxWidth: CELL_SIZE,
+                  height: CELL_SIZE,
+                }}
+                onClick={() => goto(r, c)}
               >
-                {contentForCell(cell)}
+                <div
+                  className={cn(
+                    styles.cellContent,
+                    cellClass !== null ? styles[cellClass] : undefined
+                  )}
+                >
+                  {contentForCell(cell)}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ))}
     </div>
   );
 };
 
-Maze.propTypes = {
-  center: PropTypes.arrayOf(PropTypes.number).isRequired,
-};
+interface ContainerProps {
+  center: [number, number];
+}
 
-const MazeContainer = ({ center: [centerX, centerY] }) => {
+const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
   return (
     <div className={styles.container}>
       <Maze center={[centerX, centerY]} />
@@ -186,10 +198,6 @@ const MazeContainer = ({ center: [centerX, centerY] }) => {
       </div>
     </div>
   );
-};
-
-MazeContainer.propTypes = {
-  center: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
 export default MazeContainer;

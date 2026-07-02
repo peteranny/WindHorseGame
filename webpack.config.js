@@ -6,7 +6,8 @@ const isProd = process.env.NODE_ENV === "production";
 
 module.exports = {
   mode: isProd ? "production" : "development",
-  entry: path.join(__dirname, "src/index.js"),
+  entry: path.join(__dirname, "src/index.tsx"),
+  resolve: { extensions: [".tsx", ".ts", ".js"] },
   output: {
     path: isProd ? path.join(__dirname, "gas") : path.join(__dirname, "dist"),
     filename: "bundle.js",
@@ -40,7 +41,7 @@ module.exports = {
   ],
   module: {
     rules: [
-      { test: /.js$/, exclude: /node_modules/, use: ["babel-loader"] },
+      { test: /\.tsx?$/, exclude: /node_modules/, use: ["babel-loader"] },
       { test: /\.txt$/, use: "raw-loader" },
       {
         test: /.css$/,

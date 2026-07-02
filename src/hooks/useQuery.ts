@@ -1,18 +1,17 @@
 import { useCallback, useMemo } from "react";
 import { useLocation, useHistory } from "react-router-dom";
-import qs from "qs";
 
-const useQuery = () => {
+const useQuery = (): [URLSearchParams, (params: Record<string, string>) => void] => {
   const location = useLocation();
   const query = useMemo(
-    () => qs.parse(location.search, { ignoreQueryPrefix: true }),
+    () => new URLSearchParams(location.search),
     [location.search]
   );
 
   const history = useHistory();
   const setQuery = useCallback(
-    (query) => {
-      history.push(qs.stringify(query, { addQueryPrefix: true }));
+    (params: Record<string, string>) => {
+      history.push({ search: new URLSearchParams(params).toString() });
     },
     [history]
   );
