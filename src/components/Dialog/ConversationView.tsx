@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
@@ -19,18 +19,22 @@ const ConversationView = () => {
     (state) => Object.keys(state.captured).length
   );
   const [pageIndex, setPageIndex] = useState(0);
-  const [isUnlocked, setIsUnlocked] = useState(true);
+  // Computed synchronously (not via effect) so it's already correct on the very
+  // first render for a new encounter - an effect would leave a stale value for
+  // that first render, mismatched with the resetKey the typewriter keys off of.
+  const isUnlocked = useMemo(
+    () =>
+      activeMonsterId === null
+        ? true
+        : isUnlockConditionMet(
+            MONSTERS[activeMonsterId].unlockCondition,
+            new Date()
+          ),
+    [activeMonsterId]
+  );
 
   useEffect(() => {
     setPageIndex(0);
-    if (activeMonsterId !== null) {
-      setIsUnlocked(
-        isUnlockConditionMet(
-          MONSTERS[activeMonsterId].unlockCondition,
-          new Date()
-        )
-      );
-    }
   }, [activeMonsterId]);
 
   const pages =

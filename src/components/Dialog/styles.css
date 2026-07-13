@@ -47,7 +47,7 @@
 
 .outer {
   position: relative;
-  height: calc(100px * var(--scale));
+  height: calc(160px * var(--scale));
   background: white;
 
   .inner {

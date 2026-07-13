@@ -70,7 +70,7 @@ Everything the deployed app needs (including all monster icons and the player sp
 
 `src/scale.ts` exports a `SCALE` constant (currently `3`) and sets it as the `--scale` CSS custom property on `<html>`. All sizing derives from this:
 - JS: `CELL_SIZE = 100 * SCALE`
-- CSS: `font-size: calc(13pt * var(--scale))`, dialog height `calc(100px * var(--scale))`, etc.
+- CSS: `font-size: calc(13pt * var(--scale))`, dialog height `calc(160px * var(--scale))`, etc.
 
 To make the UI bigger or smaller, change only `SCALE` in `scale.ts`.
 
