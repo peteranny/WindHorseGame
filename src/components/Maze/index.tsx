@@ -44,6 +44,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const [x, y] = useGameStore((state) => state.position);
   const setPosition = useGameStore((state) => state.setPosition);
   const captured = useGameStore((state) => state.captured);
+  const flowMode = useFlowStore((state) => state.mode);
   const startEncounter = useFlowStore((state) => state.startEncounter);
 
   // Unlock conditions are time-based, so re-render periodically to keep
@@ -91,6 +92,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   );
   const goto = useCallback(
     (r: number, c: number): void => {
+      if (flowMode !== "map") return;
       if (!isReachableAt(r, c)) return;
       const monsterId = monsterIds[r][c];
       if (monsterId !== null && captured[monsterId] === undefined) {
@@ -99,7 +101,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
       }
       setPosition(c, r);
     },
-    [isReachableAt, monsterIds, captured, startEncounter, setPosition]
+    [flowMode, isReachableAt, monsterIds, captured, startEncounter, setPosition]
   );
   const centerRect = {
     left: x * CELL_SIZE,

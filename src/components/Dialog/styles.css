@@ -7,6 +7,36 @@
   line-height: calc(25px * var(--scale));
 }
 
+.conversation {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  cursor: pointer;
+}
+
+.portrait {
+  width: calc(60px * var(--scale));
+  height: calc(60px * var(--scale));
+  object-fit: contain;
+  flex-shrink: 0;
+  margin-right: calc(16px * var(--scale));
+}
+
+.textBlock {
+  flex: 1;
+  overflow: hidden;
+}
+
+.speakerName {
+  font-weight: bold;
+  margin-bottom: calc(4px * var(--scale));
+}
+
+.speakerText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .outer {
   position: relative;
   height: calc(100px * var(--scale));
