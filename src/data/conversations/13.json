@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "唔，小風媽擋住了小風的路耶。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？小風的媽媽。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "既然這樣，小風要認真了！",
+    "action": "enter_challenge"
+  }
+]

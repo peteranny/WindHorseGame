@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "小風歪著頭：這隻是草草小馬嗎？"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？小風小馬原本看不清楚，所以都會一起滾滾滾，有一天，滾到了草叢堆，發現不知道為什麼可以看清楚..."
+  },
+  {
+    "speaker": "protagonist",
+    "text": "別緊張，小風只是想跟你打個招呼——用拳頭的那種！",
+    "action": "enter_challenge"
+  }
+]

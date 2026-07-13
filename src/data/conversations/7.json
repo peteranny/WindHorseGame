@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "哇，沒想到會在這裡遇到山斑小馬。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？當原本顏色黑白相間的山斑馬吃到小小風兒跟小小馬兒灌溉的野草，就不小心變成山班小馬，而改變成..."
+  },
+  {
+    "speaker": "protagonist",
+    "text": "別緊張，小風只是想跟你打個招呼——用拳頭的那種！",
+    "action": "enter_challenge"
+  }
+]

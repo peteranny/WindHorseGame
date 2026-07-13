@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "小風歪著頭：這隻是金牛座小風嗎？"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？看到小馬牛時，對小馬牛的角感到？？，結果隔天起床就變成金牛座小風了。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "看來得讓你認識一下小風的厲害了！",
+    "action": "enter_challenge"
+  }
+]

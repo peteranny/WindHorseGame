@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "咦？前面怎麼會有一隻雙子座小馬！"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？會以為自己是小風，和雙子座小風出生看到對方都會問號問號。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "別緊張，小風只是想跟你打個招呼——用拳頭的那種！",
+    "action": "enter_challenge"
+  }
+]

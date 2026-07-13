@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "等等，這是...牡羊座小馬？！"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？小風很調皮把山羊角放在小馬頭上，就不小心變成牡羊座小馬了。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "別緊張，小風只是想跟你打個招呼——用拳頭的那種！",
+    "action": "enter_challenge"
+  }
+]

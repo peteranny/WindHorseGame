@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "哇，沒想到會在這裡遇到牡羊座小風。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？小馬很調皮把山羊角放在小風頭上，就不小心變成牡羊座小風了。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "好，那就來比一場吧！",
+    "action": "enter_challenge"
+  }
+]

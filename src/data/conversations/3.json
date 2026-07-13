@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "唔，月見花小風小馬擋住了小風的路耶。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？鳥巢上誕生了一隻很可愛，結果被小風抱起來就不哭的小馬，哈。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "別緊張，小風只是想跟你打個招呼——用拳頭的那種！",
+    "action": "enter_challenge"
+  }
+]

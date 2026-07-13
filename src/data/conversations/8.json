@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "唔，銀喉圓尾山雀小風擋住了小風的路耶。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？產地：瑞典。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "好，那就來比一場吧！",
+    "action": "enter_challenge"
+  }
+]

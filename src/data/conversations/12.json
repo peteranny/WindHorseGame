@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "哇，沒想到會在這裡遇到企鵝小風。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？是最簡單畫的小風， 上網一下子就可以很多的可愛企鵝小風圖。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "好，那就來比一場吧！",
+    "action": "enter_challenge"
+  }
+]

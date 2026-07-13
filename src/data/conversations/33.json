@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "唔，金牛座小馬擋住了小風的路耶。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？看到小馬牛時，對小馬牛的角感到？？，結果隔天起床就變成金牛座小馬了。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "既然這樣，小風要認真了！",
+    "action": "enter_challenge"
+  }
+]

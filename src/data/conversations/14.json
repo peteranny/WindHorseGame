@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "小風歪著頭：這隻是芭樂葡萄小馬嗎？"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？這是一直愛吃芭樂的葡萄小馬，因為太愛吃，總是把芭樂吃完，為了等待下一次可以吃芭樂，於是葡萄..."
+  },
+  {
+    "speaker": "protagonist",
+    "text": "看來得讓你認識一下小風的厲害了！",
+    "action": "enter_challenge"
+  }
+]

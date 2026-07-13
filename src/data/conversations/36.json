@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "等等，這是...雙子座小風？！"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？會以為自己是小馬，和雙子座小馬出生看到對方都會問號問號。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "好，那就來比一場吧！",
+    "action": "enter_challenge"
+  }
+]

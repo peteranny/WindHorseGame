@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "小風歪著頭：這隻是神秘小風嗎？"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？還沒被小風發現的神秘生物，據說也在某個角落等待著屬於自己的故事被寫下。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "別緊張，小風只是想跟你打個招呼——用拳頭的那種！",
+    "action": "enter_challenge"
+  }
+]

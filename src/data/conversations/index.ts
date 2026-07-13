@@ -1,0 +1,87 @@
+import { Conversation } from "./types";
+
+import c0 from "./0.json";
+import c1 from "./1.json";
+import c2 from "./2.json";
+import c3 from "./3.json";
+import c4 from "./4.json";
+import c5 from "./5.json";
+import c6 from "./6.json";
+import c7 from "./7.json";
+import c8 from "./8.json";
+import c9 from "./9.json";
+import c10 from "./10.json";
+import c11 from "./11.json";
+import c12 from "./12.json";
+import c13 from "./13.json";
+import c14 from "./14.json";
+import c15 from "./15.json";
+import c16 from "./16.json";
+import c17 from "./17.json";
+import c18 from "./18.json";
+import c19 from "./19.json";
+import c20 from "./20.json";
+import c21 from "./21.json";
+import c22 from "./22.json";
+import c23 from "./23.json";
+import c24 from "./24.json";
+import c25 from "./25.json";
+import c26 from "./26.json";
+import c27 from "./27.json";
+import c28 from "./28.json";
+import c29 from "./29.json";
+import c30 from "./30.json";
+import c31 from "./31.json";
+import c32 from "./32.json";
+import c33 from "./33.json";
+import c34 from "./34.json";
+import c35 from "./35.json";
+import c36 from "./36.json";
+import c37 from "./37.json";
+import c38 from "./38.json";
+import c39 from "./39.json";
+
+const CONVERSATIONS: Record<number, Conversation> = {
+  0: c0 as Conversation,
+  1: c1 as Conversation,
+  2: c2 as Conversation,
+  3: c3 as Conversation,
+  4: c4 as Conversation,
+  5: c5 as Conversation,
+  6: c6 as Conversation,
+  7: c7 as Conversation,
+  8: c8 as Conversation,
+  9: c9 as Conversation,
+  10: c10 as Conversation,
+  11: c11 as Conversation,
+  12: c12 as Conversation,
+  13: c13 as Conversation,
+  14: c14 as Conversation,
+  15: c15 as Conversation,
+  16: c16 as Conversation,
+  17: c17 as Conversation,
+  18: c18 as Conversation,
+  19: c19 as Conversation,
+  20: c20 as Conversation,
+  21: c21 as Conversation,
+  22: c22 as Conversation,
+  23: c23 as Conversation,
+  24: c24 as Conversation,
+  25: c25 as Conversation,
+  26: c26 as Conversation,
+  27: c27 as Conversation,
+  28: c28 as Conversation,
+  29: c29 as Conversation,
+  30: c30 as Conversation,
+  31: c31 as Conversation,
+  32: c32 as Conversation,
+  33: c33 as Conversation,
+  34: c34 as Conversation,
+  35: c35 as Conversation,
+  36: c36 as Conversation,
+  37: c37 as Conversation,
+  38: c38 as Conversation,
+  39: c39 as Conversation,
+};
+
+export default CONVERSATIONS;

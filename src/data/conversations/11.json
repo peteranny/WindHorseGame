@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "等等，這是...長頸鹿小馬？！"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？因為小馬沒有脖子，因此小馬以為身體長長的就是長頸鹿，結果小馬很努力的讓自己的身體慢慢變長，..."
+  },
+  {
+    "speaker": "protagonist",
+    "text": "別緊張，小風只是想跟你打個招呼——用拳頭的那種！",
+    "action": "enter_challenge"
+  }
+]

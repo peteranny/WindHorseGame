@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "咦？前面怎麼會有一隻草草小風！"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？小風小馬原本看不清楚，所以都會一起滾滾滾，有一天，滾到了草叢堆，發現不知道為什麼可以看清楚..."
+  },
+  {
+    "speaker": "protagonist",
+    "text": "好，那就來比一場吧！",
+    "action": "enter_challenge"
+  }
+]

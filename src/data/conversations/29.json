@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "小風歪著頭：這隻是龍龍小馬嗎？"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？因為就要過小風小馬年了，小馬在小風小馬紅包裡，不知道臉上為什麼會黏著圓圓鬍子，然後就不知不..."
+  },
+  {
+    "speaker": "protagonist",
+    "text": "既然這樣，小風要認真了！",
+    "action": "enter_challenge"
+  }
+]

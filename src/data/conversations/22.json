@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "哇，沒想到會在這裡遇到水水小風。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？小風跟小馬躺在地上一起看小風小馬星星，結果要翻身起來翻不起來，小風就變成流汗小風了。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "看來得讓你認識一下小風的厲害了！",
+    "action": "enter_challenge"
+  }
+]

@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "唔，火火小馬擋住了小風的路耶。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？問號問號小風小馬有一天忽然認真，結果小馬認真過頭就變成火火小馬了。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "別緊張，小風只是想跟你打個招呼——用拳頭的那種！",
+    "action": "enter_challenge"
+  }
+]

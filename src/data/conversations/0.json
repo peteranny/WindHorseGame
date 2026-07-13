@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "咦？前面怎麼會有一隻小馬小風！"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？不管親親到了哪裡，小風都會找到小馬的，小馬也會等到小風的。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "好，那就來比一場吧！",
+    "action": "enter_challenge"
+  }
+]

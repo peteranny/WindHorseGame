@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "等等，這是...小馬媽？！"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？小馬的媽媽。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "好，那就來比一場吧！",
+    "action": "enter_challenge"
+  }
+]

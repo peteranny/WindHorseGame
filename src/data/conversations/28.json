@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "唔，Akoke小風擋住了小風的路耶。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？小風穿著小小風的內褲就變成格鬥系Akoke小風，就不知不覺力氣變大，小風可以舉起兩個小馬了..."
+  },
+  {
+    "speaker": "protagonist",
+    "text": "好，那就來比一場吧！",
+    "action": "enter_challenge"
+  }
+]

@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "等等，這是...超能力小風？！"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？小風有一天在路上撿到鐵條，不知道為什麼就自動彎曲，結果拿給小馬也是一樣，他們就不知不覺有了..."
+  },
+  {
+    "speaker": "protagonist",
+    "text": "看來得讓你認識一下小風的厲害了！",
+    "action": "enter_challenge"
+  }
+]

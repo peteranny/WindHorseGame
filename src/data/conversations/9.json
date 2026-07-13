@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "小風歪著頭：這隻是駱駝小馬嗎？"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？由於小馬是綠色的，兩隻小風看不出來草地跟小馬的分別，因此誤以為小馬是草地，就直接在小馬身上..."
+  },
+  {
+    "speaker": "protagonist",
+    "text": "既然這樣，小風要認真了！",
+    "action": "enter_challenge"
+  }
+]

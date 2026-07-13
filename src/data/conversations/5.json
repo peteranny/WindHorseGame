@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "咦？前面怎麼會有一隻騾子小馬！"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？螺子很可愛，但小馬比較可愛，所以委屈小馬扮演騾子小馬。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "既然這樣，小風要認真了！",
+    "action": "enter_challenge"
+  }
+]

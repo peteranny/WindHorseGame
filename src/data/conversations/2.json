@@ -1,0 +1,15 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "哇，沒想到會在這裡遇到牽牛小馬。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？牽小馬牛的項鍊的花。"
+  },
+  {
+    "speaker": "protagonist",
+    "text": "看來得讓你認識一下小風的厲害了！",
+    "action": "enter_challenge"
+  }
+]
