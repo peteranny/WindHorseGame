@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useReducer } from "react";
+import React, { useCallback, useMemo } from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 import SCALE from "../../scale";
@@ -6,13 +6,11 @@ import simpleMap from "./map.txt";
 import { useGameStore } from "../../store/gameStore";
 import { useFlowStore } from "../../store/flowStore";
 import MONSTERS from "../../data/monsters/monsters";
-import { isUnlockConditionMet } from "../../data/monsters/unlockCondition";
 import { CELL_TYPE, compileMap } from "./compileMap";
 import { computeMonsterIds } from "./monsterPositions";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 
 const CELL_SIZE = 100 * SCALE;
-const UNLOCK_CHECK_INTERVAL_MS = 60000;
 
 interface MazeProps {
   center: [number, number];
@@ -26,14 +24,6 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const captured = useGameStore((state) => state.captured);
   const flowMode = useFlowStore((state) => state.mode);
   const startEncounter = useFlowStore((state) => state.startEncounter);
-
-  // Unlock conditions are time-based, so re-render periodically to keep
-  // locked/challengeable markers current without requiring a reload.
-  const [, forceTick] = useReducer((n: number) => n + 1, 0);
-  useEffect(() => {
-    const id = setInterval(forceTick, UNLOCK_CHECK_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, []);
 
   const isPassable = useCallback(
     (r: number, c: number): boolean => {
@@ -110,9 +100,6 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
               monster !== null && captured[monster.id] !== undefined;
             const isMonsterCell = monster !== null && !isCaptured;
             const cellClass = cell === CELL_TYPE.WALL ? "wall" : "road";
-            const isLocked =
-              isMonsterCell &&
-              !isUnlockConditionMet(monster!.unlockCondition, new Date());
             return (
               <div
                 key={c}
@@ -129,10 +116,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                     <img
                       src={monster!.icon}
                       alt={monster!.name}
-                      className={cn(
-                        styles.monsterIcon,
-                        isLocked && styles.monsterLocked
-                      )}
+                      className={styles.monsterIcon}
                     />
                   )}
                 </div>

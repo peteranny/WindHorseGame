@@ -70,7 +70,7 @@ The battle screen shows the wild monster (name, HP bar) at the top, and the prot
 
 - During map wandering (not during a battle or conversation), the player can open a **monster index** via a persistent on-screen button
 - The index shows only **captured** monsters, each with its capture date — uncaptured/locked monsters don't appear in the index at all
-- Monster nodes on the map are visually marked when challengeable, dimmed when locked, and plain road once captured
+- Monster nodes on the map look the same whether challengeable or locked (the conversation is what reveals lock state); once captured, the cell is plain road with no marker
 
 ### Win Condition
 
