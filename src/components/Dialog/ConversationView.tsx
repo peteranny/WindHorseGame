@@ -10,6 +10,7 @@ import { computeWildMaxHp } from "../../data/monsters/battleFormulas";
 import { isUnlockConditionMet } from "../../data/monsters/unlockCondition";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 import { paginateText } from "./paginateText";
+import { useTypewriter } from "./useTypewriter";
 
 const MAX_LINES_PER_PAGE = 2;
 
@@ -71,12 +72,18 @@ const ConversationView = () => {
   }, [activeMonsterId, pageIndex]);
 
   const isLastSubPage = subPageIndex === textChunks.length - 1;
-  const displayedText = textChunks[subPageIndex] ?? "";
+  const [displayedText, isTypingDone, completeTyping] = useTypewriter(
+    textChunks[subPageIndex] ?? ""
+  );
 
   if (activeMonsterId === null || !page) return null;
   const monster = MONSTERS[activeMonsterId];
 
   const advance = (): void => {
+    if (!isTypingDone) {
+      completeTyping();
+      return;
+    }
     if (!isLastSubPage) {
       setSubPageIndex((i) => i + 1);
       return;

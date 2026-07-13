@@ -26,6 +26,8 @@ src/
     Maze/                 # Core game logic. Grid rendering, click-to-move, monster blocking/markers, player sprite.
                           # compileMap.ts/monsterPositions.ts are shared with MiniMap.
     Dialog/               # Bottom panel; renders ConversationView while a conversation is active.
+                          # paginateText.ts splits a page's full text into <=2-line, DOM-measured
+                          # chunks (joined with "..."); useTypewriter.ts types out the current chunk.
     Battle/               # Full-screen real-time battle UI (replaces Maze/Dialog while mode === "battle").
     MonsterIndex/         # On-screen button + modal listing captured monsters and capture dates.
     MiniMap/              # Small corner overview of the whole map: player position and uncaptured monsters.
@@ -84,7 +86,7 @@ On first launch (or whenever no key is stored), `StateKeyGate` blocks rendering:
 
 ### Monster blocking, capture, and unlock conditions
 
-`Maze` scans `map.txt` top-to-bottom/left-to-right; the *n*th `M` it finds is `MONSTERS[n]`. An uncaptured monster cell blocks movement like a wall, except that the player can move directly onto it from an adjacent cell — that's what starts the encounter (`flowStore.startEncounter`), rather than actually moving there. A captured monster's cell is just a normal road from then on. Every monster is visible on the map regardless of lock state — the marker just renders dimmed (via `isUnlockConditionMet`) when its `unlockCondition` (weekday / time-of-day / date-parity / date-divisibility) isn't currently met.
+`Maze` scans `map.txt` top-to-bottom/left-to-right; the *n*th `M` it finds is `MONSTERS[n]`. An uncaptured monster cell blocks movement like a wall, except that the player can move directly onto it from an adjacent cell — that's what starts the encounter (`flowStore.startEncounter`), rather than actually moving there. A captured monster's cell is just a normal road from then on. Every monster is visible on the map regardless of lock state — the marker looks the same either way; only the conversation reveals whether its `unlockCondition` (weekday / time-of-day / date-parity / date-divisibility) is currently met.
 
 ### Conversation -> Battle flow
 

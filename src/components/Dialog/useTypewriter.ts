@@ -1,33 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 const TYPING_INTERVAL_MS = 30;
 
-export const useTypewriter = (
-  text: string,
-  resetKey: string | number
-): [string, boolean, () => void] => {
+export const useTypewriter = (text: string): [string, boolean, () => void] => {
   const [length, setLength] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     setLength(0);
-    intervalRef.current = setInterval(() => {
+    if (text.length === 0) return undefined;
+    const id = setInterval(() => {
       setLength((current) => {
-        if (current >= text.length) return current;
-        return current + 1;
+        const next = current + 1;
+        if (next >= text.length) {
+          clearInterval(id);
+          return text.length;
+        }
+        return next;
       });
     }, TYPING_INTERVAL_MS);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resetKey]);
-
-  useEffect(() => {
-    if (length >= text.length && intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-  }, [length, text.length]);
+    return () => clearInterval(id);
+  }, [text]);
 
   const complete = (): void => setLength(text.length);
 
