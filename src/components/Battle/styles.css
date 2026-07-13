@@ -13,12 +13,28 @@
   position: relative;
   flex: 1;
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   padding: calc(16px * var(--scale));
 }
 
-.enemyInfo {
+.playerSide {
   align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(8px * var(--scale));
+}
+
+.enemySide {
+  align-self: flex-start;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: calc(8px * var(--scale));
+}
+
+.enemyInfo,
+.playerInfo {
   background: white;
   border: 2px solid black;
   border-radius: 4px;
@@ -26,33 +42,96 @@
   width: calc(150px * var(--scale));
 }
 
-.enemySprite {
-  position: absolute;
-  top: calc(16px * var(--scale));
-  right: calc(16px * var(--scale));
+.enemySprite,
+.playerSprite {
   width: calc(100px * var(--scale));
   height: calc(100px * var(--scale));
   object-fit: contain;
 }
 
 .playerSprite {
-  position: absolute;
-  bottom: calc(16px * var(--scale));
-  left: calc(16px * var(--scale));
-  width: calc(100px * var(--scale));
-  height: calc(100px * var(--scale));
-  object-fit: contain;
   transform: scaleX(-1);
 }
 
-.playerInfo {
-  align-self: flex-end;
-  margin-top: auto;
-  background: white;
-  border: 2px solid black;
-  border-radius: 4px;
-  padding: calc(8px * var(--scale));
-  width: calc(150px * var(--scale));
+@keyframes player-attack {
+  0%,
+  100% {
+    transform: scaleX(-1) translateX(0);
+  }
+
+  30% {
+    transform: scaleX(-1) translateX(calc(20px * var(--scale)));
+  }
+}
+
+@keyframes enemy-attack {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  30% {
+    transform: translateX(calc(-20px * var(--scale)));
+  }
+}
+
+@keyframes player-hit {
+  0% {
+    transform: scaleX(-1) translateY(0) rotate(0deg);
+  }
+
+  40% {
+    transform: scaleX(-1) translateY(calc(12px * var(--scale))) rotate(20deg);
+  }
+
+  100% {
+    transform: scaleX(-1) translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes enemy-hit {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  40% {
+    transform: translateY(calc(12px * var(--scale))) rotate(-20deg);
+  }
+
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes player-heal {
+  0%,
+  100% {
+    filter: none;
+  }
+
+  50% {
+    filter: drop-shadow(0 0 calc(8px * var(--scale)) limegreen);
+  }
+}
+
+.playerAttack {
+  animation: player-attack 300ms ease;
+}
+
+.enemyAttack {
+  animation: enemy-attack 300ms ease;
+}
+
+.playerHit {
+  animation: player-hit 300ms ease;
+}
+
+.enemyHit {
+  animation: enemy-hit 300ms ease;
+}
+
+.playerHeal {
+  animation: player-heal 300ms ease;
 }
 
 .hpBarOuter {

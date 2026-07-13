@@ -49,7 +49,7 @@ Conversation progress isn't persisted, so re-entering an uncaptured monster's ce
 
 #### Battle UI
 
-The battle screen shows the wild monster (name, HP bar) at the top, and the protagonist's HP plus a row of buttons — one per captured monster, plus the protagonist's own innate attack — at the bottom, used to attack. A button still on cooldown shows its remaining wait time instead of being usable.
+The battle screen shows the protagonist on the left and the wild monster on the right, each paired with its own name/HP bar (protagonist's above its sprite, wild monster's below its sprite) — never crossed with the other side's. A row of buttons below — one per captured monster, plus the protagonist's own innate attack — is used to attack. A button still on cooldown shows its remaining wait time instead of being usable. Attacking plays a brief lunge toward the opponent; being hit plays a knocked-down stumble (rotate + drop) rather than a plain shake; healing plays a glow on the protagonist instead — all simple CSS keyframe animations so actions read clearly in real time.
 
 - There are **40 monsters**, each associated with a node on the map
 - Battles are **real-time, not turn-based** — there are no turns to pass; both sides act on their own clocks:
@@ -65,6 +65,7 @@ The battle screen shows the wild monster (name, HP bar) at the top, and the prot
 - Each of the 40 monsters has an **unlock condition** — a battle time window drawn from a fixed pool of rule types: specific weekday (e.g. Monday only), time-of-day (morning 6-12 / afternoon 12-18 / evening 18-22 / night 22-6, device local time), date parity (even-numbered day of month), or date divisibility (e.g. multiples of 3). Conditions are assigned independently across the 40 (not tied to each monster's own source date), overlapping only slightly so no two monsters are simultaneously available too often, and calibrated so no single monster is trivially always-on or near-impossible. A monster's cell still blocks movement like a wall while its condition is unmet, but tapping it still starts a (shorter) conversation — one that tells the player the condition itself (e.g. "只有在星期三才會出現") instead of leading into a challenge
 - Successfully defeating a monster **captures it** and records the capture date
 - Losing a challenge simply returns the player to the map — the monster stays uncaptured and can be retried immediately
+- However a battle ends — win, lose, or escape — a short one-line conversation (小風 reacting: "太好了，成功抓到...", "小風被...打倒了...", "先撤退好了...") plays before dropping back to the map, so the outcome is acknowledged rather than just silently returning
 
 ### Monster Index
 

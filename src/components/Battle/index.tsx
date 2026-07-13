@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
@@ -14,6 +21,9 @@ import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 
 const INNATE_KEY = "innate";
 const TICK_MS = 500;
+const EFFECT_DURATION_MS = 300;
+
+type SpriteEffect = "attack" | "hit" | "heal" | null;
 
 interface AttackOption {
   key: string;
@@ -32,6 +42,17 @@ const HpBar = ({ hp, maxHp }: { hp: number; maxHp: number }) => (
   </div>
 );
 
+const useSpriteEffect = (): [SpriteEffect, (effect: SpriteEffect) => void] => {
+  const [effect, setEffect] = useState<SpriteEffect>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trigger = useCallback((next: SpriteEffect) => {
+    setEffect(next);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setEffect(null), EFFECT_DURATION_MS);
+  }, []);
+  return [effect, trigger];
+};
+
 const Battle = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
   const wildHp = useFlowStore((state) => state.wildHp);
@@ -40,12 +61,15 @@ const Battle = () => {
   const damageWild = useFlowStore((state) => state.damageWild);
   const damageProtagonist = useFlowStore((state) => state.damageProtagonist);
   const healProtagonist = useFlowStore((state) => state.healProtagonist);
-  const endEncounter = useFlowStore((state) => state.endEncounter);
+  const concludeBattle = useFlowStore((state) => state.concludeBattle);
 
   const captured = useGameStore((state) => state.captured);
   const cooldowns = useGameStore((state) => state.cooldowns);
   const setCooldown = useGameStore((state) => state.setCooldown);
   const captureMonster = useGameStore((state) => state.captureMonster);
+
+  const [playerEffect, triggerPlayerEffect] = useSpriteEffect();
+  const [enemyEffect, triggerEnemyEffect] = useSpriteEffect();
 
   const [, forceTick] = useReducer((n: number) => n + 1, 0);
   const nextWildAttackAtRef = useRef(Date.now() + WILD_ATTACK_INTERVAL_MS);
@@ -54,28 +78,24 @@ const Battle = () => {
     const id = setInterval(() => {
       if (Date.now() >= nextWildAttackAtRef.current) {
         damageProtagonist(WILD_ATTACK_DAMAGE);
+        triggerEnemyEffect("attack");
+        triggerPlayerEffect("hit");
         nextWildAttackAtRef.current += WILD_ATTACK_INTERVAL_MS;
       }
       forceTick();
     }, TICK_MS);
     return () => clearInterval(id);
-  }, [damageProtagonist]);
+  }, [damageProtagonist, triggerEnemyEffect, triggerPlayerEffect]);
 
   useEffect(() => {
     if (activeMonsterId === null) return;
     if (wildHp <= 0) {
       captureMonster(activeMonsterId);
-      endEncounter();
+      concludeBattle("win");
     } else if (protagonistHp <= 0) {
-      endEncounter();
+      concludeBattle("lose");
     }
-  }, [
-    activeMonsterId,
-    wildHp,
-    protagonistHp,
-    captureMonster,
-    endEncounter,
-  ]);
+  }, [activeMonsterId, wildHp, protagonistHp, captureMonster, concludeBattle]);
 
   const attackOptions: AttackOption[] = useMemo(() => {
     const options: AttackOption[] = [
@@ -107,11 +127,24 @@ const Battle = () => {
     (option: AttackOption) => {
       const now = Date.now();
       if ((cooldowns[option.key] ?? 0) > now) return;
-      if (option.isHealer) healProtagonist(option.healAmount);
-      else damageWild(ATTACK_DAMAGE);
+      if (option.isHealer) {
+        healProtagonist(option.healAmount);
+        triggerPlayerEffect("heal");
+      } else {
+        damageWild(ATTACK_DAMAGE);
+        triggerPlayerEffect("attack");
+        triggerEnemyEffect("hit");
+      }
       setCooldown(option.key, now + ATTACK_COOLDOWN_MS);
     },
-    [cooldowns, healProtagonist, damageWild, setCooldown]
+    [
+      cooldowns,
+      healProtagonist,
+      damageWild,
+      setCooldown,
+      triggerPlayerEffect,
+      triggerEnemyEffect,
+    ]
   );
 
   if (activeMonsterId === null) return null;
@@ -120,21 +153,33 @@ const Battle = () => {
   return (
     <div className={styles.battle}>
       <div className={styles.battlefield}>
-        <div className={styles.enemyInfo}>
-          <div>{monster.name}</div>
-          <HpBar hp={wildHp} maxHp={wildMaxHp} />
-        </div>
-        <img src={monster.icon} alt={monster.name} className={styles.enemySprite} />
-        <img
-          src={PLAYER_SPRITE}
-          alt="小風"
-          className={styles.playerSprite}
-        />
-        <div className={styles.playerInfo}>
-          <div>
-            小風 {protagonistHp}/10
+        <div className={styles.playerSide}>
+          <div className={styles.playerInfo}>
+            <div>小風 {protagonistHp}/10</div>
+            <HpBar hp={protagonistHp} maxHp={10} />
           </div>
-          <HpBar hp={protagonistHp} maxHp={10} />
+          <img
+            src={PLAYER_SPRITE}
+            alt="小風"
+            className={cn(
+              styles.playerSprite,
+              playerEffect && styles[`player${capitalize(playerEffect)}`]
+            )}
+          />
+        </div>
+        <div className={styles.enemySide}>
+          <img
+            src={monster.icon}
+            alt={monster.name}
+            className={cn(
+              styles.enemySprite,
+              enemyEffect && styles[`enemy${capitalize(enemyEffect)}`]
+            )}
+          />
+          <div className={styles.enemyInfo}>
+            <div>{monster.name}</div>
+            <HpBar hp={wildHp} maxHp={wildMaxHp} />
+          </div>
         </div>
       </div>
       <div className={styles.actionBar}>
@@ -170,7 +215,7 @@ const Battle = () => {
         <button
           type="button"
           className={styles.escapeButton}
-          onClick={() => endEncounter()}
+          onClick={() => concludeBattle("escape")}
         >
           逃跑
         </button>
@@ -178,5 +223,8 @@ const Battle = () => {
     </div>
   );
 };
+
+const capitalize = (text: string): string =>
+  text.charAt(0).toUpperCase() + text.slice(1);
 
 export default Battle;

@@ -43,3 +43,37 @@ export const terminalAction = (
   index: number
 ): ConversationPage["action"] | undefined =>
   isTerminalPage(conversation, index) ? conversation[index]?.action : undefined;
+
+export type BattleOutcome = "win" | "lose" | "escape";
+
+export const buildOutcomeConversation = (
+  monsterName: string,
+  outcome: BattleOutcome
+): Conversation => {
+  switch (outcome) {
+    case "win":
+      return [
+        {
+          speaker: "protagonist",
+          text: `太好了，成功抓到${monsterName}了！`,
+          action: "end",
+        },
+      ];
+    case "lose":
+      return [
+        {
+          speaker: "protagonist",
+          text: `唔...小風被${monsterName}打倒了，下次準備好了再來挑戰吧。`,
+          action: "end",
+        },
+      ];
+    case "escape":
+      return [
+        {
+          speaker: "protagonist",
+          text: `先撤退好了，${monsterName}下次再說！`,
+          action: "end",
+        },
+      ];
+  }
+};

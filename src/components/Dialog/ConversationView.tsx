@@ -5,7 +5,12 @@ import { useGameStore } from "../../store/gameStore";
 import MONSTERS from "../../data/monsters/monsters";
 import CONVERSATIONS from "../../data/conversations";
 import LOCKED_CONVERSATIONS from "../../data/conversations/locked";
-import { isTerminalPage, nextPageIndex, terminalAction } from "../../data/conversations/engine";
+import {
+  buildOutcomeConversation,
+  isTerminalPage,
+  nextPageIndex,
+  terminalAction,
+} from "../../data/conversations/engine";
 import { computeWildMaxHp } from "../../data/monsters/battleFormulas";
 import { isUnlockConditionMet } from "../../data/monsters/unlockCondition";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
@@ -16,6 +21,7 @@ const MAX_LINES_PER_PAGE = 2;
 
 const ConversationView = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
+  const battleOutcome = useFlowStore((state) => state.battleOutcome);
   const enterBattle = useFlowStore((state) => state.enterBattle);
   const endEncounter = useFlowStore((state) => state.endEncounter);
   const capturedCount = useGameStore(
@@ -42,11 +48,13 @@ const ConversationView = () => {
 
   useEffect(() => {
     setPageIndex(0);
-  }, [activeMonsterId]);
+  }, [activeMonsterId, battleOutcome]);
 
   const pages =
     activeMonsterId === null
       ? []
+      : battleOutcome !== null
+      ? buildOutcomeConversation(MONSTERS[activeMonsterId].name, battleOutcome)
       : isUnlocked
       ? CONVERSATIONS[activeMonsterId]
       : LOCKED_CONVERSATIONS[activeMonsterId];
@@ -69,7 +77,7 @@ const ConversationView = () => {
       })
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeMonsterId, pageIndex]);
+  }, [activeMonsterId, battleOutcome, pageIndex]);
 
   const isLastSubPage = subPageIndex === textChunks.length - 1;
   const [displayedText, isTypingDone, completeTyping] = useTypewriter(

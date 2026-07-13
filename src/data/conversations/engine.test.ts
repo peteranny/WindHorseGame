@@ -1,4 +1,5 @@
 import {
+  buildOutcomeConversation,
   isTerminalPage,
   nextPageIndex,
   parseConversation,
@@ -69,5 +70,27 @@ describe("page navigation", () => {
   it("signals challenge entry only from the terminal page's action", () => {
     expect(terminalAction(pages, 0)).toBeUndefined();
     expect(terminalAction(pages, 2)).toBe("enter_challenge");
+  });
+});
+
+describe("buildOutcomeConversation", () => {
+  it.each([
+    ["win", "太好了，成功抓到長頸鹿小馬了！"],
+    ["lose", "唔...小風被長頸鹿小馬打倒了，下次準備好了再來挑戰吧。"],
+    ["escape", "先撤退好了，長頸鹿小馬下次再說！"],
+  ] as const)("mentions the monster's name for a %s outcome", (outcome, expectedText) => {
+    const pages = buildOutcomeConversation("長頸鹿小馬", outcome);
+    expect(pages).toEqual([
+      { speaker: "protagonist", text: expectedText, action: "end" },
+    ]);
+  });
+
+  it("never leads into a challenge", () => {
+    (["win", "lose", "escape"] as const).forEach((outcome) => {
+      const pages = buildOutcomeConversation("測試怪獸", outcome);
+      expect(terminalAction(pages, pages.length - 1)).not.toBe(
+        "enter_challenge"
+      );
+    });
   });
 });
