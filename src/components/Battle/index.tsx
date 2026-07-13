@@ -167,6 +167,13 @@ const Battle = () => {
             );
           })}
         </div>
+        <button
+          type="button"
+          className={styles.escapeButton}
+          onClick={() => endEncounter()}
+        >
+          逃跑
+        </button>
       </div>
     </div>
   );

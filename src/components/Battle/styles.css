@@ -73,12 +73,25 @@
   background: white;
   border-top: 4px solid black;
   padding: calc(12px * var(--scale));
+  display: flex;
+  align-items: flex-start;
+  gap: calc(12px * var(--scale));
 }
 
 .attackGrid {
+  flex: 1;
   display: flex;
   flex-wrap: wrap;
   gap: calc(8px * var(--scale));
+}
+
+.escapeButton {
+  flex-shrink: 0;
+  font-size: inherit;
+  padding: calc(8px * var(--scale)) calc(12px * var(--scale));
+  border: 2px solid black;
+  border-radius: 4px;
+  background: white;
 }
 
 .attackButton {
