@@ -69,20 +69,6 @@ const Game = () => {
             )}
           </ScreenTransition>
         </StateKeyGate>
-        {__DEPLOY_DATE__ && (
-          <div
-            style={{
-              position: "absolute",
-              top: 4,
-              right: 8,
-              opacity: 0.35,
-              pointerEvents: "none",
-              color: "white",
-            }}
-          >
-            Last Updated: {__DEPLOY_DATE__}
-          </div>
-        )}
       </Screen>
     </MouseContext.Provider>
   );

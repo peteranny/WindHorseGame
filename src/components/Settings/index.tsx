@@ -26,6 +26,9 @@ const Settings = () => {
       <button type="button" onClick={() => history.push("/")}>
         返回遊戲
       </button>
+      {__DEPLOY_DATE__ && (
+        <p className={styles.advancedInfo}>Last Updated: {__DEPLOY_DATE__}</p>
+      )}
     </Screen>
   );
 };

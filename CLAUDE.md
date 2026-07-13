@@ -94,7 +94,7 @@ Walking into a monster shows its portrait conversation (`Dialog`/`ConversationVi
 
 ### Deploy date label
 
-`src/scale.ts` aside, the other build-time injection is `__DEPLOY_DATE__` — a webpack `DefinePlugin` value set to `DEPLOY_DATE=$(date "+%Y-%m-%d %H:%M")` by the deploy script. Shown as a subtle overlay in the top-right corner of the screen. Empty in production if not set; shows `1970-01-01 00:00` stub in local dev.
+`src/scale.ts` aside, the other build-time injection is `__DEPLOY_DATE__` — a webpack `DefinePlugin` value set to `DEPLOY_DATE=$(date "+%Y-%m-%d %H:%M")` by the deploy script. Shown as an "advanced info" field on the `/settings` page rather than on the map screen. Empty in production if not set; shows `1970-01-01 00:00` stub in local dev.
 
 ## Dev setup
 

@@ -11,3 +11,9 @@
     font-size: inherit;
   }
 }
+
+.advancedInfo {
+  margin-top: calc(24px * var(--scale));
+  opacity: 0.5;
+  font-size: calc(9pt * var(--scale));
+}
