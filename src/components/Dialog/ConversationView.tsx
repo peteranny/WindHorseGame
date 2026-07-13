@@ -4,6 +4,7 @@ import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
 import MONSTERS from "../../data/monsters/monsters";
 import CONVERSATIONS from "../../data/conversations";
+import { isTerminalPage, nextPageIndex, terminalAction } from "../../data/conversations/engine";
 import { computeWildMaxHp } from "../../data/monsters/battleFormulas";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 
@@ -24,18 +25,17 @@ const ConversationView = () => {
   const monster = MONSTERS[activeMonsterId];
   const pages = CONVERSATIONS[activeMonsterId];
   const page = pages[pageIndex];
-  const isLastPage = pageIndex === pages.length - 1;
 
   const advance = (): void => {
-    if (isLastPage) {
-      if (page.action === "enter_challenge") {
+    if (isTerminalPage(pages, pageIndex)) {
+      if (terminalAction(pages, pageIndex) === "enter_challenge") {
         enterBattle(computeWildMaxHp(capturedCount));
       } else {
         endEncounter();
       }
       return;
     }
-    setPageIndex((i) => i + 1);
+    setPageIndex((i) => nextPageIndex(pages, i));
   };
 
   const portrait = page.speaker === "monster" ? monster.icon : PLAYER_SPRITE;

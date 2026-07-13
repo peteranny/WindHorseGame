@@ -8,6 +8,7 @@ import {
   setStoredStateKey,
 } from "./persistence";
 import { PersistedGameState } from "./types";
+import { captureMonster as captureMonsterPure } from "../data/monsters/captureLogic";
 
 const DEFAULT_POSITION: [number, number] = [2, 1];
 const SAVE_DEBOUNCE_MS = 500;
@@ -65,7 +66,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   captureMonster: (monsterId, capturedAt = new Date().toISOString()) => {
     set((state) => ({
-      captured: { ...state.captured, [monsterId]: capturedAt },
+      captured: captureMonsterPure(state.captured, monsterId, capturedAt),
     }));
     scheduleSave();
   },

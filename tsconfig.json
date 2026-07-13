@@ -3,7 +3,7 @@
     "ignoreDeprecations": "6.0",
     "target": "ES2017",
     "skipLibCheck": true,
-    "lib": ["dom", "ES2017"],
+    "lib": ["dom", "ES2019"],
     "jsx": "react",
     "strict": true,
     "noEmit": true,
@@ -11,7 +11,8 @@
     "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "types": ["jest"]
   },
   "include": ["src"]
 }
