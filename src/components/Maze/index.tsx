@@ -1,11 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useReducer } from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 import SCALE from "../../scale";
@@ -170,14 +163,7 @@ interface ContainerProps {
 }
 
 const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
-  const x = useGameStore((state) => state.position[0]);
-  const [facing, setFacing] = useState<"left" | "right">("left");
-  const prevXRef = useRef(x);
-  useEffect(() => {
-    if (x > prevXRef.current) setFacing("right");
-    else if (x < prevXRef.current) setFacing("left");
-    prevXRef.current = x;
-  }, [x]);
+  const facing = useGameStore((state) => state.facing);
   return (
     <div className={styles.container}>
       <Maze center={[centerX, centerY]} />

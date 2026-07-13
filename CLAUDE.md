@@ -44,7 +44,7 @@ src/
       engine.ts            # Pure parseConversation/isTerminalPage/nextPageIndex/terminalAction helpers.
       index.ts              # Imports all 40 files, runs each through parseConversation, keyed by monster id.
   store/
-    gameStore.ts          # Zustand store: position, captured, cooldowns - the persisted slice (see below).
+    gameStore.ts          # Zustand store: position, facing, captured, cooldowns - the persisted slice (see below).
     flowStore.ts          # Zustand store: mode ("map"|"conversation"|"battle"), activeMonsterId, battle HP -
                            # ephemeral, never persisted.
     persistence.ts        # localStorage + google.script.run read/write helpers for the persisted slice.
@@ -73,7 +73,7 @@ To make the UI bigger or smaller, change only `SCALE` in `scale.ts`.
 
 ### Game state & persistence
 
-The persisted slice (`store/gameStore.ts`) holds only: player map coordinate, captured monsters (id -> ISO capture date), and per-attack cooldowns (monster id, or `"innate"` for the protagonist's own attack -> next-available timestamp in ms). Everything else — conversation progress, in-battle HP, which page/screen is showing — lives in the ephemeral `store/flowStore.ts` and is never persisted, so a reload mid-conversation or mid-battle just drops back to the map with no side effects (cooldowns already spent still apply).
+The persisted slice (`store/gameStore.ts`) holds only: player map coordinate, the sprite's last facing direction (`"left"` | `"right"`, updated automatically by `setPosition` based on which way x moved), captured monsters (id -> ISO capture date), and per-attack cooldowns (monster id, or `"innate"` for the protagonist's own attack -> next-available timestamp in ms). Everything else — conversation progress, in-battle HP, which page/screen is showing — lives in the ephemeral `store/flowStore.ts` and is never persisted, so a reload mid-conversation or mid-battle just drops back to the map with no side effects (cooldowns already spent still apply).
 
 On first launch (or whenever no key is stored), `StateKeyGate` blocks rendering: in local dev it silently assigns `"local-dev"`; in the deployed GAS environment it prompts the player for a save-state key. The key is stored in `localStorage` and used to look up/save a single JSON blob (position + captured + cooldowns + a timestamp) both to `localStorage` (for instant reload) and to the Google Sheet (keyed by that string, via `google.script.run`, guarded by `typeof google !== "undefined"` so local dev is unaffected). On hydrate, whichever of local/remote has the newer timestamp wins — same pattern the old position-only code used. `/settings` lets the player view/change their key at any time, which re-hydrates from the new key's slot.
 

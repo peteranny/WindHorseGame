@@ -7,16 +7,18 @@ import {
   setLocalSnapshot,
   setStoredStateKey,
 } from "./persistence";
-import { PersistedGameState } from "./types";
+import { Facing, PersistedGameState } from "./types";
 import { captureMonster as captureMonsterPure } from "../data/monsters/captureLogic";
 
 const DEFAULT_POSITION: [number, number] = [2, 1];
+const DEFAULT_FACING: Facing = "left";
 const SAVE_DEBOUNCE_MS = 500;
 
 interface GameState {
   hydrated: boolean;
   stateKey: string | null;
   position: [number, number];
+  facing: Facing;
   captured: Record<number, string>;
   cooldowns: Record<string, number>;
   setStateKey: (key: string) => Promise<void>;
@@ -28,6 +30,7 @@ interface GameState {
 
 const toPersisted = (state: GameState): PersistedGameState => ({
   position: state.position,
+  facing: state.facing,
   captured: state.captured,
   cooldowns: state.cooldowns,
   timestamp: Date.now(),
@@ -50,6 +53,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   hydrated: false,
   stateKey: getStoredStateKey(),
   position: DEFAULT_POSITION,
+  facing: DEFAULT_FACING,
   captured: {},
   cooldowns: {},
 
@@ -60,7 +64,11 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   setPosition: (x, y) => {
-    set({ position: [x, y] });
+    set((state) => ({
+      position: [x, y],
+      facing:
+        x > state.position[0] ? "right" : x < state.position[0] ? "left" : state.facing,
+    }));
     scheduleSave();
   },
 
@@ -89,6 +97,7 @@ export const useGameStore = create<GameState>((set, get) => ({
             : local;
         set({
           position: winner?.position ?? DEFAULT_POSITION,
+          facing: winner?.facing ?? DEFAULT_FACING,
           captured: winner?.captured ?? {},
           cooldowns: winner?.cooldowns ?? {},
           hydrated: true,
