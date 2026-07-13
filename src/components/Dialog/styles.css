@@ -40,6 +40,7 @@
 .speakerText {
   flex: 1;
   min-height: 0;
+  max-height: calc(50px * var(--scale));
   overflow: hidden;
   white-space: normal;
   word-break: break-word;
@@ -47,7 +48,7 @@
 
 .outer {
   position: relative;
-  height: calc(160px * var(--scale));
+  height: calc(120px * var(--scale));
   background: white;
 
   .inner {

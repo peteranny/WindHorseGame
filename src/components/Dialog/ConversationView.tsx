@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
@@ -10,6 +10,9 @@ import { computeWildMaxHp } from "../../data/monsters/battleFormulas";
 import { isUnlockConditionMet } from "../../data/monsters/unlockCondition";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 import { useTypewriter } from "./useTypewriter";
+import { paginateText } from "./paginateText";
+
+const MAX_LINES_PER_PAGE = 2;
 
 const ConversationView = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
@@ -19,6 +22,10 @@ const ConversationView = () => {
     (state) => Object.keys(state.captured).length
   );
   const [pageIndex, setPageIndex] = useState(0);
+  const [subPageIndex, setSubPageIndex] = useState(0);
+  const [textChunks, setTextChunks] = useState<string[]>([""]);
+  const speakerTextRef = useRef<HTMLDivElement>(null);
+
   // Computed synchronously (not via effect) so it's already correct on the very
   // first render for a new encounter - an effect would leave a stale value for
   // that first render, mismatched with the resetKey the typewriter keys off of.
@@ -44,9 +51,30 @@ const ConversationView = () => {
       ? CONVERSATIONS[activeMonsterId]
       : LOCKED_CONVERSATIONS[activeMonsterId];
   const page = pages[pageIndex];
+
+  // Re-paginate the current page's full text to fit the dialog box whenever the
+  // page itself changes. Runs before paint so the player never sees the
+  // unpaginated text flash by.
+  useLayoutEffect(() => {
+    setSubPageIndex(0);
+    const el = speakerTextRef.current;
+    if (!el || !page) return;
+    const computed = getComputedStyle(el);
+    setTextChunks(
+      paginateText(page.text, MAX_LINES_PER_PAGE, {
+        width: el.clientWidth,
+        fontSize: computed.fontSize,
+        lineHeight: computed.lineHeight,
+        fontFamily: computed.fontFamily,
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeMonsterId, pageIndex]);
+
+  const isLastSubPage = subPageIndex === textChunks.length - 1;
   const [displayedText, isTypingDone, completeTyping] = useTypewriter(
-    page?.text ?? "",
-    `${activeMonsterId}-${pageIndex}`
+    textChunks[subPageIndex] ?? "",
+    `${activeMonsterId}-${pageIndex}-${subPageIndex}`
   );
 
   if (activeMonsterId === null || !page) return null;
@@ -55,6 +83,10 @@ const ConversationView = () => {
   const advance = (): void => {
     if (!isTypingDone) {
       completeTyping();
+      return;
+    }
+    if (!isLastSubPage) {
+      setSubPageIndex((i) => i + 1);
       return;
     }
     if (isTerminalPage(pages, pageIndex)) {
@@ -76,7 +108,9 @@ const ConversationView = () => {
       <img src={portrait} alt={speakerName} className={styles.portrait} />
       <div className={styles.textBlock}>
         <div className={styles.speakerName}>{speakerName}</div>
-        <div className={styles.speakerText}>{displayedText}</div>
+        <div ref={speakerTextRef} className={styles.speakerText}>
+          {displayedText}
+        </div>
       </div>
     </div>
   );
