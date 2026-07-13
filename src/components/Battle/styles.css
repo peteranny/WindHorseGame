@@ -1,0 +1,118 @@
+.battle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: skyblue;
+}
+
+.battlefield {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: calc(16px * var(--scale));
+}
+
+.enemyInfo {
+  align-self: flex-start;
+  background: white;
+  border: 2px solid black;
+  border-radius: 4px;
+  padding: calc(8px * var(--scale));
+  width: calc(150px * var(--scale));
+}
+
+.enemySprite {
+  position: absolute;
+  top: calc(16px * var(--scale));
+  right: calc(16px * var(--scale));
+  width: calc(100px * var(--scale));
+  height: calc(100px * var(--scale));
+  object-fit: contain;
+}
+
+.playerSprite {
+  position: absolute;
+  bottom: calc(16px * var(--scale));
+  left: calc(16px * var(--scale));
+  width: calc(100px * var(--scale));
+  height: calc(100px * var(--scale));
+  object-fit: contain;
+  transform: scaleX(-1);
+}
+
+.playerInfo {
+  align-self: flex-end;
+  margin-top: auto;
+  background: white;
+  border: 2px solid black;
+  border-radius: 4px;
+  padding: calc(8px * var(--scale));
+  width: calc(150px * var(--scale));
+}
+
+.hpBarOuter {
+  height: calc(8px * var(--scale));
+  background: #ccc;
+  border-radius: calc(4px * var(--scale));
+  overflow: hidden;
+  margin-top: calc(4px * var(--scale));
+}
+
+.hpBarInner {
+  height: 100%;
+  background: limegreen;
+  transition: width 0.2s;
+}
+
+.actionBar {
+  background: white;
+  border-top: 4px solid black;
+  padding: calc(12px * var(--scale));
+}
+
+.attackGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(8px * var(--scale));
+}
+
+.attackButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: calc(80px * var(--scale));
+  border: 2px solid black;
+  border-radius: 4px;
+  background: white;
+  font-size: inherit;
+  padding: calc(4px * var(--scale));
+
+  &.onCooldown {
+    opacity: 0.5;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.attackIcon {
+  width: calc(48px * var(--scale));
+  height: calc(48px * var(--scale));
+  object-fit: contain;
+}
+
+.attackLabel {
+  font-size: calc(10pt * var(--scale));
+  text-align: center;
+}
+
+.cooldownLabel {
+  font-size: calc(9pt * var(--scale));
+  color: #888;
+}

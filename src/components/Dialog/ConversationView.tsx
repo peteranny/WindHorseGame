@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from "react";
 import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
+import { useGameStore } from "../../store/gameStore";
 import MONSTERS from "../../data/monsters/monsters";
 import CONVERSATIONS from "../../data/conversations";
+import { computeWildMaxHp } from "../../data/monsters/battleFormulas";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 
 const ConversationView = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
   const enterBattle = useFlowStore((state) => state.enterBattle);
   const endEncounter = useFlowStore((state) => state.endEncounter);
+  const capturedCount = useGameStore(
+    (state) => Object.keys(state.captured).length
+  );
   const [pageIndex, setPageIndex] = useState(0);
 
   useEffect(() => {
@@ -23,8 +28,11 @@ const ConversationView = () => {
 
   const advance = (): void => {
     if (isLastPage) {
-      if (page.action === "enter_challenge") enterBattle();
-      else endEncounter();
+      if (page.action === "enter_challenge") {
+        enterBattle(computeWildMaxHp(capturedCount));
+      } else {
+        endEncounter();
+      }
       return;
     }
     setPageIndex((i) => i + 1);
