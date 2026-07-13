@@ -21,6 +21,27 @@
   &.wall {
     /* Apply the screen background */
   }
+
+  &.monster {
+    /* Blocks like a wall until captured; the screen background shows through */
+  }
+}
+
+.monsterIcon {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+}
+
+.monsterLocked {
+  opacity: 0.35;
+  filter: grayscale(1);
+}
+
+.playerSprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .cell {

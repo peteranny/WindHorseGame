@@ -1,9 +1,21 @@
-import React, { useCallback, useMemo } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 import SCALE from "../../scale";
 import simpleMap from "./map.txt";
 import { useGameStore } from "../../store/gameStore";
+import { useFlowStore } from "../../store/flowStore";
+import MONSTERS from "../../data/monsters/monsters";
+import { isUnlockConditionMet } from "../../data/monsters/unlockCondition";
+import { computeMonsterIds } from "./monsterPositions";
+import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 
 const CELL_TYPE = {
   ROAD: " ",
@@ -11,23 +23,13 @@ const CELL_TYPE = {
 } as const;
 
 const CELL_SIZE = 100 * SCALE;
+const UNLOCK_CHECK_INTERVAL_MS = 60000;
 
 interface MazeProps {
   center: [number, number];
 }
 
 const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
-  const classNameForCell = useCallback((cell: string): string | null => {
-    switch (cell) {
-      case CELL_TYPE.ROAD:
-        return "road";
-      case CELL_TYPE.WALL:
-        return "wall";
-      default:
-        return null;
-    }
-  }, []);
-  const contentForCell = useCallback((_cell: string): string => "", []);
   const compileMap = useCallback(
     (mapString: string): string[][] =>
       mapString
@@ -38,35 +40,66 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
     []
   );
   const map = useMemo(() => compileMap(simpleMap), [compileMap]);
+  const monsterIds = useMemo(() => computeMonsterIds(map), [map]);
   const [x, y] = useGameStore((state) => state.position);
   const setPosition = useGameStore((state) => state.setPosition);
+  const captured = useGameStore((state) => state.captured);
+  const startEncounter = useFlowStore((state) => state.startEncounter);
+
+  // Unlock conditions are time-based, so re-render periodically to keep
+  // locked/challengeable markers current without requiring a reload.
+  const [, forceTick] = useReducer((n: number) => n + 1, 0);
+  useEffect(() => {
+    const id = setInterval(forceTick, UNLOCK_CHECK_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  const isPassable = useCallback(
+    (r: number, c: number): boolean => {
+      const cell = map[r][c];
+      if (cell === CELL_TYPE.ROAD) return true;
+      if (cell === CELL_TYPE.WALL) return false;
+      const monsterId = monsterIds[r][c];
+      return monsterId !== null && captured[monsterId] !== undefined;
+    },
+    [map, monsterIds, captured]
+  );
   const isReachableAt = useCallback(
     (r: number, c: number): boolean => {
       if (r === y) {
-        let isReachable = true;
-        const from = x < c ? x : c;
-        const to = c > x ? c : x;
-        for (let i = from; i <= to; i++)
-          if (map[r][i] !== " ") isReachable = false;
-        return isReachable;
+        const from = Math.min(x, c);
+        const to = Math.max(x, c);
+        for (let i = from; i <= to; i++) {
+          if (i === c) continue;
+          if (!isPassable(r, i)) return false;
+        }
+      } else if (c === x) {
+        const from = Math.min(y, r);
+        const to = Math.max(y, r);
+        for (let i = from; i <= to; i++) {
+          if (i === r) continue;
+          if (!isPassable(i, c)) return false;
+        }
+      } else {
+        return false;
       }
-      if (c === x) {
-        let isReachable = true;
-        const from = y < r ? y : r;
-        const to = r > y ? r : y;
-        for (let i = from; i <= to; i++)
-          if (map[i][c] !== " ") isReachable = false;
-        return isReachable;
-      }
-      return false;
+      if (isPassable(r, c)) return true;
+      const distance = Math.abs(r - y) + Math.abs(c - x);
+      return distance === 1 && monsterIds[r][c] !== null;
     },
-    [map, x, y]
+    [x, y, isPassable, monsterIds]
   );
   const goto = useCallback(
     (r: number, c: number): void => {
-      if (isReachableAt(r, c)) setPosition(c, r);
+      if (!isReachableAt(r, c)) return;
+      const monsterId = monsterIds[r][c];
+      if (monsterId !== null && captured[monsterId] === undefined) {
+        startEncounter(monsterId);
+        return;
+      }
+      setPosition(c, r);
     },
-    [isReachableAt, setPosition]
+    [isReachableAt, monsterIds, captured, startEncounter, setPosition]
   );
   const centerRect = {
     left: x * CELL_SIZE,
@@ -89,7 +122,19 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
       {map.map((cells, r) => (
         <div key={r} className={styles.row}>
           {cells.map((cell, c) => {
-            const cellClass = classNameForCell(cell);
+            const monsterId = monsterIds[r][c];
+            const monster = monsterId !== null ? MONSTERS[monsterId] : null;
+            const isCaptured =
+              monster !== null && captured[monster.id] !== undefined;
+            const isMonsterCell = monster !== null && !isCaptured;
+            const cellClass = isMonsterCell
+              ? "monster"
+              : cell === CELL_TYPE.WALL
+              ? "wall"
+              : "road";
+            const isLocked =
+              isMonsterCell &&
+              !isUnlockConditionMet(monster!.unlockCondition, new Date());
             return (
               <div
                 key={c}
@@ -101,13 +146,17 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                 }}
                 onClick={() => goto(r, c)}
               >
-                <div
-                  className={cn(
-                    styles.cellContent,
-                    cellClass !== null ? styles[cellClass] : undefined
+                <div className={cn(styles.cellContent, styles[cellClass])}>
+                  {isMonsterCell && (
+                    <img
+                      src={monster!.icon}
+                      alt={monster!.name}
+                      className={cn(
+                        styles.monsterIcon,
+                        isLocked && styles.monsterLocked
+                      )}
+                    />
                   )}
-                >
-                  {contentForCell(cell)}
                 </div>
               </div>
             );
@@ -123,6 +172,14 @@ interface ContainerProps {
 }
 
 const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
+  const x = useGameStore((state) => state.position[0]);
+  const [facing, setFacing] = useState<"left" | "right">("left");
+  const prevXRef = useRef(x);
+  useEffect(() => {
+    if (x > prevXRef.current) setFacing("right");
+    else if (x < prevXRef.current) setFacing("left");
+    prevXRef.current = x;
+  }, [x]);
   return (
     <div className={styles.container}>
       <Maze center={[centerX, centerY]} />
@@ -135,7 +192,12 @@ const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
           top: centerY - CELL_SIZE / 2,
         }}
       >
-        V
+        <img
+          src={PLAYER_SPRITE}
+          alt="player"
+          className={styles.playerSprite}
+          style={{ transform: facing === "right" ? "scaleX(-1)" : undefined }}
+        />
       </div>
     </div>
   );
