@@ -53,10 +53,10 @@ export const useGameStore = create<GameState>((set, get) => ({
   captured: {},
   cooldowns: {},
 
-  setStateKey: async (key) => {
+  setStateKey: (key) => {
     setStoredStateKey(key);
     set({ stateKey: key, hydrated: false });
-    await get().hydrate();
+    return get().hydrate();
   },
 
   setPosition: (x, y) => {
@@ -78,19 +78,22 @@ export const useGameStore = create<GameState>((set, get) => ({
     scheduleSave();
   },
 
-  hydrate: async () => {
+  hydrate: () => {
     const key = get().stateKey;
     const local = getLocalSnapshot();
-    const remote = key ? await loadRemoteState(key) : null;
-    const winner =
-      remote && (!local || remote.timestamp >= local.timestamp)
-        ? remote
-        : local;
-    set({
-      position: winner?.position ?? DEFAULT_POSITION,
-      captured: winner?.captured ?? {},
-      cooldowns: winner?.cooldowns ?? {},
-      hydrated: true,
-    });
+    return (key ? loadRemoteState(key) : Promise.resolve(null)).then(
+      (remote) => {
+        const winner =
+          remote && (!local || remote.timestamp >= local.timestamp)
+            ? remote
+            : local;
+        set({
+          position: winner?.position ?? DEFAULT_POSITION,
+          captured: winner?.captured ?? {},
+          cooldowns: winner?.cooldowns ?? {},
+          hydrated: true,
+        });
+      }
+    );
   },
 }));
