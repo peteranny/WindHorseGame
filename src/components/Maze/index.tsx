@@ -129,11 +129,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
             const isCaptured =
               monster !== null && captured[monster.id] !== undefined;
             const isMonsterCell = monster !== null && !isCaptured;
-            const cellClass = isMonsterCell
-              ? "monster"
-              : cell === CELL_TYPE.WALL
-              ? "wall"
-              : "road";
+            const cellClass = cell === CELL_TYPE.WALL ? "wall" : "road";
             const isLocked =
               isMonsterCell &&
               !isUnlockConditionMet(monster!.unlockCondition, new Date());

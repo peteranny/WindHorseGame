@@ -21,10 +21,6 @@
   &.wall {
     /* Apply the screen background */
   }
-
-  &.monster {
-    /* Blocks like a wall until captured; the screen background shows through */
-  }
 }
 
 .monsterIcon {
