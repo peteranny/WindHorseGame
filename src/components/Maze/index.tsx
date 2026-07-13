@@ -68,12 +68,31 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
       if (!isReachableAt(r, c)) return;
       const monsterId = monsterIds[r][c];
       if (monsterId !== null && captured[monsterId] === undefined) {
-        startEncounter(monsterId);
+        // Blocks like a wall: walk up to the adjacent cell first, same as
+        // approaching any other obstacle. Only once already there does
+        // tapping the monster start the encounter.
+        const isRow = r === y;
+        const stepR = isRow ? y : r > y ? r - 1 : r + 1;
+        const stepC = isRow ? (c > x ? c - 1 : c + 1) : x;
+        if (stepR === y && stepC === x) {
+          startEncounter(monsterId);
+        } else {
+          setPosition(stepC, stepR);
+        }
         return;
       }
       setPosition(c, r);
     },
-    [flowMode, isReachableAt, monsterIds, captured, startEncounter, setPosition]
+    [
+      flowMode,
+      isReachableAt,
+      monsterIds,
+      captured,
+      startEncounter,
+      setPosition,
+      x,
+      y,
+    ]
   );
   const centerRect = {
     left: x * CELL_SIZE,
