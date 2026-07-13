@@ -35,7 +35,7 @@ src/
                                 # unlockCondition, isHealer/healAmount). Sourced from a separate WindHorseNote
                                 # project's creatures data (copied, not referenced live) plus 1 placeholder.
       types.ts, monsters.ts    # Monster/UnlockCondition types and the typed loader over the generated JSON.
-      unlockCondition.ts       # Pure isUnlockConditionMet(condition, now) evaluator.
+      unlockCondition.ts       # Pure isUnlockConditionMet(condition, now) and describeUnlockCondition evaluators.
       captureLogic.ts          # Pure captureMonster/isFullyCaptured helpers (used by gameStore).
       battleFormulas.ts        # computeWildMaxHp and the battle constants (cooldown, damage, HP, tick rate).
     conversations/
@@ -43,6 +43,9 @@ src/
                            # array of {speaker, text, action?} pages - linear, no branching.
       engine.ts            # Pure parseConversation/isTerminalPage/nextPageIndex/terminalAction helpers.
       index.ts              # Imports all 40 files, runs each through parseConversation, keyed by monster id.
+      locked/<id>.json, locked/index.ts  # Same shape, one per monster: what's shown instead when its
+                           # unlockCondition isn't currently met - names the condition, ends in "end" not
+                           # "enter_challenge". Generated from describeUnlockCondition, not runtime-computed.
   store/
     gameStore.ts          # Zustand store: position, facing, captured, cooldowns - the persisted slice (see below).
     flowStore.ts          # Zustand store: mode ("map"|"conversation"|"battle"), activeMonsterId, battle HP -
@@ -79,11 +82,11 @@ On first launch (or whenever no key is stored), `StateKeyGate` blocks rendering:
 
 ### Monster blocking, capture, and unlock conditions
 
-`Maze` scans `map.txt` top-to-bottom/left-to-right; the *n*th `M` it finds is `MONSTERS[n]`. An uncaptured monster cell blocks movement like a wall, except that the player can move directly onto it from an adjacent cell — that's what starts the encounter (`flowStore.startEncounter`), rather than actually moving there. A captured monster's cell is just a normal road from then on. Each monster also carries an `unlockCondition` (weekday / time-of-day / date-parity / date-divisibility, evaluated against the current time by `isUnlockConditionMet`); while unmet, the cell still blocks like a wall and the conversation won't trigger, and the map marker renders dimmed.
+`Maze` scans `map.txt` top-to-bottom/left-to-right; the *n*th `M` it finds is `MONSTERS[n]`. An uncaptured monster cell blocks movement like a wall, except that the player can move directly onto it from an adjacent cell — that's what starts the encounter (`flowStore.startEncounter`), rather than actually moving there. A captured monster's cell is just a normal road from then on. Every monster is visible on the map regardless of lock state — the marker just renders dimmed (via `isUnlockConditionMet`) when its `unlockCondition` (weekday / time-of-day / date-parity / date-divisibility) isn't currently met.
 
 ### Conversation -> Battle flow
 
-Walking into a monster shows its portrait conversation (`Dialog`/`ConversationView`) — linear pages alternating between the protagonist (小風) and the monster, tap to advance. The terminal page's `enter_challenge` action computes the wild monster's max HP from the player's current capture count (`computeWildMaxHp`) and switches `flowStore.mode` to `"battle"`, which swaps `Maze`/`Dialog` out for the full-screen `Battle` component. Battles are real-time: the player can tap any captured monster (plus their own innate attack) to deal 1 damage, each on an independent 1-minute cooldown persisted in `gameStore`; the wild monster automatically deals 1 damage every 10 seconds; healer monsters (~5% of the roster) restore HP instead of dealing damage. Reaching 0 wild HP captures the monster and returns to the map; reaching 0 player HP just returns to the map with the monster still uncaptured.
+Walking into a monster shows its portrait conversation (`Dialog`/`ConversationView`) — linear pages alternating between the protagonist (小風) and the monster, tap to advance. `ConversationView` checks `isUnlockConditionMet` once when the encounter starts: if met, it plays `data/conversations/<id>.json` (ends in an `enter_challenge` action); if not, it plays `data/conversations/locked/<id>.json` instead — a short generated aside naming the monster's actual condition (e.g. "只有在星期三才會出現") that ends in `"end"`, so it never enters battle. The terminal page's `enter_challenge` action computes the wild monster's max HP from the player's current capture count (`computeWildMaxHp`) and switches `flowStore.mode` to `"battle"`, which swaps `Maze`/`Dialog` out for the full-screen `Battle` component. Battles are real-time: the player can tap any captured monster (plus their own innate attack) to deal 1 damage, each on an independent 1-minute cooldown persisted in `gameStore`; the wild monster automatically deals 1 damage every 10 seconds; healer monsters (~5% of the roster) restore HP instead of dealing damage; an escape button leaves the battle at any time with the same outcome as losing. Reaching 0 wild HP captures the monster and returns to the map; reaching 0 player HP (or escaping) just returns to the map with the monster still uncaptured.
 
 ### Deploy date label
 
