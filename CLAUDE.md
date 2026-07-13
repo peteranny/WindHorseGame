@@ -2,60 +2,101 @@
 
 > **For AI:** Keep this file up to date as the codebase evolves. After any task that changes the architecture, adds a new concept, or modifies how a key system works, update the relevant section here before committing.
 
-A browser-based maze navigation game built with React and webpack.
+A browser-based maze/monster-capture game built with React, TypeScript, and webpack. Full design rationale and decisions live in `PLAN.md`.
 
 ## What it does
 
-The player sees a 2D grid maze from a top-down perspective and navigates by clicking cells. Movement is only allowed in straight lines (horizontally or vertically) with no walls in between — diagonal moves and jumps over walls are rejected. The player character is always centered on screen; the viewport shifts around them as they move.
+The player navigates a 2D grid maze from a top-down perspective by clicking cells, in straight lines only (no diagonals, no jumping over walls). The maze holds 40 monster nodes; an uncaptured monster blocks its cell like a wall. Walking directly adjacent to one starts a short conversation, which transitions into a real-time battle — the player attacks with their already-captured monsters (each on its own cooldown) until the wild monster's HP hits 0 (captured) or the player's HP hits 0 (returned to the map, monster stays uncaptured, retryable anytime the monster's unlock condition allows). The game is "won" when all 40 are captured. Captured monsters and their capture dates are viewable in an in-game index.
 
 ## Current state
 
-Early-stage prototype. The maze layout is hardcoded, and the only UI beyond the maze is a placeholder dialog below it. React Router is wired up but only one route exists.
+Core loop is implemented end-to-end: map traversal, capture-gated blocking, conversation, real-time battle, persistence, and a monster index. Content is a first draft, not final: the 40 monster definitions and their conversation scripts were bulk-generated from source material and are meant to be hand-revisited (see `PLAN.md`'s Open Questions).
 
 ## App structure
 
 ```
 src/
-  index.js          # Entry point. Imports scale.js first to set --scale CSS var, then mounts <App>.
-  scale.js          # Single source of truth for global UI scale. Change SCALE here to resize everything.
+  index.tsx            # Entry point. Imports scale first to set --scale CSS var, mounts <App> in a Router.
+  scale.ts              # Single source of truth for global UI scale. Change SCALE here to resize everything.
+  globals.d.ts          # __DEPLOY_DATE__, the google.script.run (GAS) surface, and *.css/*.txt module typings.
   components/
-    App.js          # Root component. Wires up MouseContext, Screen, Maze, Dialog, and the deploy date label.
-    Screen/         # Full-viewport container div. Sets base font-size via calc(13pt * var(--scale)).
-    Maze/           # Core game logic. Renders the grid, tracks player position, handles click-to-move.
-    Dialog/         # Placeholder bottom panel. Height and padding scale with --scale.
+    App.tsx             # Router shell: "/" -> Game, "/settings" -> Settings.
+    Game/                # The main screen: wires MouseContext, Screen, Maze, Dialog, MonsterIndex, Battle.
+    Screen/              # Full-viewport container div. Sets base font-size via calc(13pt * var(--scale)).
+    Maze/                 # Core game logic. Grid rendering, click-to-move, monster blocking/markers, player sprite.
+    Dialog/               # Bottom panel; renders ConversationView while a conversation is active.
+    Battle/               # Full-screen real-time battle UI (replaces Maze/Dialog while mode === "battle").
+    MonsterIndex/         # On-screen button + modal listing captured monsters and capture dates.
+    StateKeyGate/         # Blocks rendering until the save-state key is set and state is hydrated.
+    Settings/             # /settings route: view/change the save-state key.
+  data/
+    monsters/
+      monsters.generated.json  # The 40 monster definitions (name, description, family, icon as base64 data URI,
+                                # unlockCondition, isHealer/healAmount). Sourced from a separate WindHorseNote
+                                # project's creatures data (copied, not referenced live) plus 1 placeholder.
+      types.ts, monsters.ts    # Monster/UnlockCondition types and the typed loader over the generated JSON.
+      unlockCondition.ts       # Pure isUnlockConditionMet(condition, now) evaluator.
+      captureLogic.ts          # Pure captureMonster/isFullyCaptured helpers (used by gameStore).
+      battleFormulas.ts        # computeWildMaxHp and the battle constants (cooldown, damage, HP, tick rate).
+    conversations/
+      <id>.json           # One file per monster (id = its index/position in monsters.generated.json), a plain
+                           # array of {speaker, text, action?} pages - linear, no branching.
+      engine.ts            # Pure parseConversation/isTerminalPage/nextPageIndex/terminalAction helpers.
+      index.ts              # Imports all 40 files, runs each through parseConversation, keyed by monster id.
+  store/
+    gameStore.ts          # Zustand store: position, captured, cooldowns - the persisted slice (see below).
+    flowStore.ts          # Zustand store: mode ("map"|"conversation"|"battle"), activeMonsterId, battle HP -
+                           # ephemeral, never persisted.
+    persistence.ts        # localStorage + google.script.run read/write helpers for the persisted slice.
+    types.ts              # PersistedGameState shape.
+  assets/
+    playerSprite.generated.ts  # wind-1.png embedded as a base64 data URI (the protagonist's map/battle sprite).
   contexts/
-    MouseContext.js # Provides global mouse position to the tree.
+    MouseContext.ts       # Provides global mouse position to the tree.
   hooks/
-    useMouse.js     # Tracks click coordinates, exposed via MouseContext.
-    useQuery.js     # URL query param helper (unused in main flow).
+    useMouse.ts           # Tracks click coordinates, exposed via MouseContext.
+    useQuery.ts           # URL query param helper (unused in main flow).
 gas/
-  Code.js           # GAS server functions: doGet (serves the app), savePosition, getPosition.
-  index.html        # Production build output — inlined React bundle, generated by npm run build.
+  Code.js                 # GAS server functions: doGet (serves the app), saveState, loadState.
+  index.html              # Production build output — inlined React bundle, generated by npm run build.
 ```
+
+Everything the deployed app needs (including all monster icons and the player sprite) ships inlined in one JS bundle as base64 data URIs — the GAS web app only serves a single HTML file, there's no separate static asset serving.
 
 ### Global scale
 
-`src/scale.js` exports a `SCALE` constant (currently `3`) and sets it as the `--scale` CSS custom property on `<html>`. All sizing derives from this:
+`src/scale.ts` exports a `SCALE` constant (currently `3`) and sets it as the `--scale` CSS custom property on `<html>`. All sizing derives from this:
 - JS: `CELL_SIZE = 100 * SCALE`
 - CSS: `font-size: calc(13pt * var(--scale))`, dialog height `calc(100px * var(--scale))`, etc.
 
-To make the UI bigger or smaller, change only `SCALE` in `scale.js`.
+To make the UI bigger or smaller, change only `SCALE` in `scale.ts`.
 
-### Player position & persistence
+### Game state & persistence
 
-Position state lives in the `Maze` component as `[x, y]` (column, row indices into the maze grid). On mount it starts as `null` and is resolved asynchronously — either fetched from the Google Sheet (deployed) or defaulted to `[2, 1]` (local dev) — before the maze renders, to avoid a glitch. On each move it's saved back to the Sheet.
+The persisted slice (`store/gameStore.ts`) holds only: player map coordinate, captured monsters (id -> ISO capture date), and per-attack cooldowns (monster id, or `"innate"` for the protagonist's own attack -> next-available timestamp in ms). Everything else — conversation progress, in-battle HP, which page/screen is showing — lives in the ephemeral `store/flowStore.ts` and is never persisted, so a reload mid-conversation or mid-battle just drops back to the map with no side effects (cooldowns already spent still apply).
 
-Each device gets a stable random ID stored in `localStorage` (`deviceId`). The Sheet stores one row per device: `[deviceId, x, y]`.
+On first launch (or whenever no key is stored), `StateKeyGate` blocks rendering: in local dev it silently assigns `"local-dev"`; in the deployed GAS environment it prompts the player for a save-state key. The key is stored in `localStorage` and used to look up/save a single JSON blob (position + captured + cooldowns + a timestamp) both to `localStorage` (for instant reload) and to the Google Sheet (keyed by that string, via `google.script.run`, guarded by `typeof google !== "undefined"` so local dev is unaffected). On hydrate, whichever of local/remote has the newer timestamp wins — same pattern the old position-only code used. `/settings` lets the player view/change their key at any time, which re-hydrates from the new key's slot.
 
-The `google.script.run` API is only available in the deployed GAS environment. All calls are guarded with `typeof google !== "undefined"` so local dev is unaffected.
+### Monster blocking, capture, and unlock conditions
+
+`Maze` scans `map.txt` top-to-bottom/left-to-right; the *n*th `M` it finds is `MONSTERS[n]`. An uncaptured monster cell blocks movement like a wall, except that the player can move directly onto it from an adjacent cell — that's what starts the encounter (`flowStore.startEncounter`), rather than actually moving there. A captured monster's cell is just a normal road from then on. Each monster also carries an `unlockCondition` (weekday / time-of-day / date-parity / date-divisibility, evaluated against the current time by `isUnlockConditionMet`); while unmet, the cell still blocks like a wall and the conversation won't trigger, and the map marker renders dimmed.
+
+### Conversation -> Battle flow
+
+Walking into a monster shows its portrait conversation (`Dialog`/`ConversationView`) — linear pages alternating between the protagonist (小風) and the monster, tap to advance. The terminal page's `enter_challenge` action computes the wild monster's max HP from the player's current capture count (`computeWildMaxHp`) and switches `flowStore.mode` to `"battle"`, which swaps `Maze`/`Dialog` out for the full-screen `Battle` component. Battles are real-time: the player can tap any captured monster (plus their own innate attack) to deal 1 damage, each on an independent 1-minute cooldown persisted in `gameStore`; the wild monster automatically deals 1 damage every 10 seconds; healer monsters (~5% of the roster) restore HP instead of dealing damage. Reaching 0 wild HP captures the monster and returns to the map; reaching 0 player HP just returns to the map with the monster still uncaptured.
 
 ### Deploy date label
 
-`src/scale.js` aside, the other build-time injection is `__DEPLOY_DATE__` — a webpack `DefinePlugin` value set to `DEPLOY_DATE=$(date "+%Y-%m-%d %H:%M")` by the deploy script. Shown as a subtle overlay in the top-right corner of the screen. Empty in production if not set; shows `1970-01-01 00:00` stub in local dev.
+`src/scale.ts` aside, the other build-time injection is `__DEPLOY_DATE__` — a webpack `DefinePlugin` value set to `DEPLOY_DATE=$(date "+%Y-%m-%d %H:%M")` by the deploy script. Shown as a subtle overlay in the top-right corner of the screen. Empty in production if not set; shows `1970-01-01 00:00` stub in local dev.
 
 ## Dev setup
 
 Uses webpack 4 + Node 18, which requires `NODE_OPTIONS=--openssl-legacy-provider` — already set in the npm scripts, so `npm start` and `npm build` work as-is.
+
+```sh
+npm run typecheck   # tsc --noEmit
+npm test            # jest — unit tests for the capture and conversation systems
+```
 
 ## Deployment (Google Apps Script)
 
@@ -76,4 +117,4 @@ npm run deploy         # build, push, and activate the live deployment
 
 ## Google Sheet integration
 
-The GAS project is container-bound to a Google Sheet. Each time the player moves, the app calls `google.script.run.savePosition(deviceId, x, y)` which finds the device's row (by deviceId in column A) and overwrites columns B and C with the current position, appending a new row if the device is new. On load, `getPosition(deviceId)` reads back that row. Column layout: A = deviceId, B = x, C = y.
+The GAS project is container-bound to a Google Sheet, storing one row per save-state key: column A = key, column B = the full state JSON blob (position, captured monsters, cooldowns, timestamp — see `store/types.ts`). `google.script.run.saveState(key, json)` finds the key's row and overwrites column B (appending a new row if the key is new); `loadState(key)` reads it back. There's no more per-field (x/y) column layout — the whole persisted slice travels as one JSON string.
