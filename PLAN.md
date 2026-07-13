@@ -13,6 +13,16 @@ A maze navigation game where the player explores a map and encounters **40 pocke
 - An **uncaptured** monster cell acts like a wall — it blocks movement and must be challenged before the player can pass through
 - A **captured** monster's cell becomes a road — it is permanently passable and the monster no longer appears there
 - Walking into a monster cell (adjacent move onto it) triggers the conversation system, then the challenge
+- The player's map sprite is copied from `wind-1.png` (a facing-left illustration) — mirrored horizontally when moving right so it always faces its direction of travel
+
+### Monster Data
+
+**Decision:** the 40 monster definitions are sourced from a separate personal project, `/Users/peteranny/Documents/WindHorseNote/src/models/creatures/index.json`. Its contents (and each entry's `icon` image) are **copied** into this app, not moved/referenced in place.
+
+- The source file has 39 entries; all 39 are used, plus 1 placeholder monster to reach exactly 40
+- Each entry's `family` (`wind` or `horse`) is carried over as flavor text only — no gameplay effect, both families are equally capturable
+- Only the `icon` illustration is used in-game (map marker, battle sprite, dialog portrait) — the `descriptionImage` photo is not used
+- Monster order/index follows the source file's existing order; the "one monster per year of life" framing is narrative flavor, not a literal date mapping
 
 ### Conversation System (entry point to every challenge)
 
@@ -22,68 +32,45 @@ Before challenging a monster, the player goes through a conversation. The conver
 
 - Is **stored in a file** (one file per monster node), loaded and displayed in the existing dialog box
 - Is presented **page by page** — one speaker per page, text must not overflow the dialog box
-- The player **taps to advance** through pages
-- Can include **choices** — when a page presents options, each option can branch to a different path within the same conversation file
-- The **end of the conversation** (or a specific terminal page) transitions into the challenge
+- The player **taps to advance** through pages, in order, with no branching
+- The **end of the conversation** transitions into the challenge
 
-#### Conversation file format (TBD, but should express)
-- Speaker identity per page
-- Page text content
-- Optional choices with labels and target page references (for branching)
-- A terminal flag or action (e.g. `enter_challenge: monster_id`) to trigger the challenge on completion
+#### Conversation file format
 
-Example flow:
-```
-Page 1 [Monster]: "You dare face me?"
-  → tap to continue
+**Decision:** JSON, one file per monster. Each file holds an ordered array of pages (speaker, text) — plain enough to write by hand.
 
-Page 2 [Monster]: "Then choose how you approach."
-  Option A → Page 3
-  Option B → Page 4
+Conversation progress isn't persisted, so re-entering an uncaptured monster's cell always restarts its conversation from the top. A captured monster's cell is just road and never triggers a conversation again.
 
-Page 3 [Monster]: "So be it. Fight!" → enter_challenge
-Page 4 [Monster]: "Come back when you're ready." → end (no challenge)
-```
+**Decision:** speaker identity is shown as a **full character portrait** (the monster's `icon` image) alongside the dialog text, not just a name label.
+
+**Decision:** each script is a short (2-3 page) back-and-forth between the protagonist (小風) and the monster, adapted from that monster's source `description` — playful, "cute", often with the monster being a bit dumb/confused (「？？？」) in tone, per the established 小風小馬 universe. The protagonist is just "小風" and has no special relation to the other 小風/小馬-named monsters — they're simply a big family the protagonist needs to capture.
 
 ### Monster Challenges
 
 #### Battle UI
 
-The battle screen follows a Pokémon-style layout:
-
-```
-┌─────────────────────────────────────────┐
-│  [Enemy name / lv / HP bar]             │
-│                          [Enemy sprite] │
-│  [Player sprite]                        │
-│                [Player name / lv / HP]  │
-├───────────────────┬─────────────────────┤
-│  What will        │  [FIGHT]  [BAG]     │
-│  {monster} do?    │  [MON ]  [RUN]      │
-└───────────────────┴─────────────────────┘
-```
-
-- **Top half:** battlefield with enemy sprite (top-right, facing player) and player's active monster sprite (bottom-left, back-facing)
-- **Enemy info panel** (top-left): monster name, gender, level, HP bar
-- **Player info panel** (bottom-right): monster name, gender, level, HP bar with numeric HP
-- **Bottom bar** splits into:
-  - Left: dialogue text (e.g. "野生的 皮丘 出現了！")
-  - Right: 2×2 action button grid — **戰鬥 / 道具 / 寶可夢 / 逃跑** (or equivalent in Traditional Chinese)
+The battle screen shows the wild monster (name, HP bar) at the top, and the protagonist's HP plus a row of buttons — one per captured monster, plus the protagonist's own innate attack — at the bottom, used to attack. A button still on cooldown shows its remaining wait time instead of being usable.
 
 - There are **40 monsters**, each associated with a node on the map
-- Each challenge is a battle: the player uses their **currently captured monsters** to attack
-- Force/damage calculation is TBD
-- Each unchallenged monster may have **unlock conditions** before it can be challenged, e.g.:
-  - Only available during a specific time window
-  - Only available after a specific other monster is captured
-  - Specific conditions TBD per monster
+- Battles are **real-time, not turn-based** — there are no turns to pass; both sides act on their own clocks:
+  - The protagonist has an **innate base attack**, always available (not tied to captured monsters), so the very first battle — before anything is captured — is still winnable. It deals the same flat damage and has the same cooldown as a regular monster attack (see below)
+  - The player can tap any of their captured monsters (or the innate attack) to attack at any time, but each needs a **1-minute real-world cooldown** afterward before it can attack again
+  - Every attack deals a **flat 1 damage** to the wild monster, regardless of which monster (or the innate attack) was used — no per-monster power stat
+  - Cooldowns are tracked **per monster** (and for the innate attack) and **persisted**, so they carry over across leaving/re-entering a battle and across sessions
+  - The wild monster attacks automatically, dealing **1 damage every 10 seconds**
+  - The protagonist has **10 life points**, reset at the start of each battle (not persisted) — reaching 0 ends the battle as a loss
+  - There's no explicit flee/retreat action — the only ways out of a battle are winning, losing, or navigating away (which abandons it per the persistence rules below)
+- The wild monster's life points scale with how many monsters the player has captured so far: `life = 2 × (capturedCount + 1)` — the very first battle (0 captured) starts at 2, the second battle (1 captured) at 4, and so on
+- **5% of monsters are healers**: tapping one restores 1-2 (random) of the protagonist's life points instead of attacking the wild monster. Which monsters heal (and by how much) is defined per-monster in the monster table, same as any other stat — healers still have their own attack cooldown
+- Each of the 40 monsters has an **unlock condition** — a battle time window drawn from a fixed pool of rule types: specific weekday (e.g. Monday only), time-of-day (morning 6-12 / afternoon 12-18 / evening 18-22 / night 22-6, device local time), date parity (even-numbered day of month), or date divisibility (e.g. multiples of 3). Conditions are assigned independently across the 40 (not tied to each monster's own source date), overlapping only slightly so no two monsters are simultaneously available too often, and calibrated so no single monster is trivially always-on or near-impossible. While a monster's condition is unmet, its cell still blocks like a wall but the conversation/challenge won't trigger
 - Successfully defeating a monster **captures it** and records the capture date
+- Losing a challenge simply returns the player to the map — the monster stays uncaptured and can be retried immediately
 
 ### Monster Index
 
-- During map wandering (not during a battle or conversation), the player can open a **monster index**
-- The index shows all 40 monsters, indicating which are captured and which are not yet encountered
-- Captured monsters show their capture date
+- During map wandering (not during a battle or conversation), the player can open a **monster index** via a persistent on-screen button
+- The index shows only **captured** monsters, each with its capture date — uncaptured/locked monsters don't appear in the index at all
+- Monster nodes on the map are visually marked when challengeable, dimmed when locked, and plain road once captured
 
 ### Win Condition
 
@@ -93,16 +80,18 @@ The game is cleared when all 40 monsters are captured.
 
 ### State management
 
-The game's core state is managed with a **state container** (Redux, Zustand, or similar — chosen for ease of unit testing). All game logic is driven by this state.
+**Decision:** Zustand — less boilerplate than Redux and easy to unit test. All game logic is driven by this state.
 
 ### What the state includes (persisted)
 - Player map coordinate
 - List of captured monsters with their capture dates
+- Each captured monster's attack cooldown, plus the protagonist's innate-attack cooldown (next time each is available to attack again)
 - Any other core business logic state (TBD)
 
 ### What the state excludes (not persisted)
 - UI / rendering state (animation frame progress, transition state)
 - Conversation progress (resets to beginning on reload — acceptable)
+- In-progress battle state (wild monster's current HP, protagonist's current HP) — if the app reloads mid-battle, the battle is abandoned and the player returns to the map with the monster still uncaptured; only cooldowns survive
 
 ### Persistence
 
@@ -121,27 +110,19 @@ Unit tests are required for the two core systems to ensure robustness as the gam
 - Capturing a monster records it correctly with a timestamp
 - Capturing the same monster twice does not duplicate it
 - Win condition triggers correctly when all 40 monsters are captured
-- Unlock conditions are evaluated correctly (time window, prerequisite capture, etc.)
+- Unlock conditions are evaluated correctly for each rule type (weekday, time-of-day, date parity, date divisibility)
 - State serialises and deserialises correctly
 
 ### Conversation system
 - Parsing a conversation file into pages correctly
 - Advancing through pages in order
-- Branching to the correct target page when an option is chosen
-- Terminal page correctly signals challenge entry (or conversation end)
-- Graceful handling of malformed files (missing target page, empty text, etc.)
+- Reaching the end of the conversation correctly signals challenge entry
+- Graceful handling of malformed files (empty text, etc.)
 
 Test framework TBD (likely Jest, given the React/webpack stack).
 
 ## Open Questions
 
-- What are the 40 monsters? Names, types, artwork?
-- What is the force/damage calculation in battles?
-- What are the specific unlock conditions per monster?
-- Conversation file format — JSON, YAML, plain text with custom syntax?
-- How is speaker identity shown in the dialog UI? (name label, avatar, bubble style?)
-- Can a conversation be skipped / re-entered after the first time?
-- What happens if the player loses a challenge — can they retry?
-- State container choice — Redux, Zustand, or other?
-- How is the monster index triggered — a button on screen, a specific cell on the map?
-- Is there a map indicator showing which monster nodes are locked / unlocked / captured?
+- Placeholder content (name, description, icon) for the 40th monster, since the source data only has 39
+- The exact per-monster unlock condition values (which weekday/time-window/date-rule goes to which of the 40) — the rule pool and assignment approach are decided, the concrete table is an implementation-time content task
+- Conversation script content for each of the 40 monsters (still needs writing, one file per monster)
