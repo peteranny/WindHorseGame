@@ -9,6 +9,7 @@ import Dialog from "../Dialog";
 import Battle from "../Battle";
 import StateKeyGate from "../StateKeyGate";
 import MonsterIndex from "../MonsterIndex";
+import MiniMap from "../MiniMap";
 import ScreenTransition from "../ScreenTransition";
 import { useFlowStore } from "../../store/flowStore";
 
@@ -30,7 +31,7 @@ const Game = () => {
               <Battle />
             ) : (
               <>
-                <div ref={ref} style={{ flex: 1 }}>
+                <div ref={ref} style={{ flex: 1, position: "relative" }}>
                   <div
                     style={{
                       position: "absolute",
@@ -43,6 +44,7 @@ const Game = () => {
                     {width > 0 && height > 0 && <Maze center={center} />}
                   </div>
                   <MonsterIndex />
+                  <MiniMap />
                   <Link
                     to="/settings"
                     style={{

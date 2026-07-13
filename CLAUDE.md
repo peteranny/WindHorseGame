@@ -24,9 +24,11 @@ src/
     Game/                # The main screen: wires MouseContext, Screen, Maze, Dialog, MonsterIndex, Battle.
     Screen/              # Full-viewport container div. Sets base font-size via calc(13pt * var(--scale)).
     Maze/                 # Core game logic. Grid rendering, click-to-move, monster blocking/markers, player sprite.
+                          # compileMap.ts/monsterPositions.ts are shared with MiniMap.
     Dialog/               # Bottom panel; renders ConversationView while a conversation is active.
     Battle/               # Full-screen real-time battle UI (replaces Maze/Dialog while mode === "battle").
     MonsterIndex/         # On-screen button + modal listing captured monsters and capture dates.
+    MiniMap/              # Small corner overview of the whole map: player position and uncaptured monsters.
     StateKeyGate/         # Blocks rendering until the save-state key is set and state is hydrated.
     Settings/             # /settings route: view/change the save-state key.
   data/

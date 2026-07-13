@@ -7,13 +7,9 @@ import { useGameStore } from "../../store/gameStore";
 import { useFlowStore } from "../../store/flowStore";
 import MONSTERS from "../../data/monsters/monsters";
 import { isUnlockConditionMet } from "../../data/monsters/unlockCondition";
+import { CELL_TYPE, compileMap } from "./compileMap";
 import { computeMonsterIds } from "./monsterPositions";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
-
-const CELL_TYPE = {
-  ROAD: " ",
-  WALL: "X",
-} as const;
 
 const CELL_SIZE = 100 * SCALE;
 const UNLOCK_CHECK_INTERVAL_MS = 60000;
@@ -23,16 +19,7 @@ interface MazeProps {
 }
 
 const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
-  const compileMap = useCallback(
-    (mapString: string): string[][] =>
-      mapString
-        .replace(/^\n*/, "")
-        .replace(/\n*$/, "")
-        .split("\n")
-        .map((rowString) => rowString.split("")),
-    []
-  );
-  const map = useMemo(() => compileMap(simpleMap), [compileMap]);
+  const map = useMemo(() => compileMap(simpleMap), []);
   const monsterIds = useMemo(() => computeMonsterIds(map), [map]);
   const [x, y] = useGameStore((state) => state.position);
   const setPosition = useGameStore((state) => state.setPosition);
