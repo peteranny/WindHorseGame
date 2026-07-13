@@ -1,0 +1,11 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "等等，番茄小風好像現在沒辦法應戰。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？（只有在晚上10點到隔天早上6點之間才會出現，現在還不是時候唷。）",
+    "action": "end"
+  }
+]

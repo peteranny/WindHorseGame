@@ -1,0 +1,11 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "小風靠近了牽牛小馬，但牠只是打了個呵欠。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？（只有在星期二才會出現，現在還不是時候唷。）",
+    "action": "end"
+  }
+]

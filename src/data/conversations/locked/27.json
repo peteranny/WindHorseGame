@@ -1,0 +1,11 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "等等，Akoke小馬好像現在沒辦法應戰。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？（只有在日期是7的倍數時（7號、14號⋯）才會出現，現在還不是時候唷。）",
+    "action": "end"
+  }
+]

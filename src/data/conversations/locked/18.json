@@ -1,0 +1,11 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "等等，電電小風好像現在沒辦法應戰。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？（只有在晚上6點到10點之間才會出現，現在還不是時候唷。）",
+    "action": "end"
+  }
+]

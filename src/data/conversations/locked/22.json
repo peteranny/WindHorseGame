@@ -1,0 +1,11 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "水水小風搖搖頭，看起來不是挑戰的時候。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？（只有在晚上6點到10點之間才會出現，現在還不是時候唷。）",
+    "action": "end"
+  }
+]

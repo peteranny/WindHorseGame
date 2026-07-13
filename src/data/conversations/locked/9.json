@@ -1,0 +1,11 @@
+[
+  {
+    "speaker": "protagonist",
+    "text": "等等，駱駝小馬好像現在沒辦法應戰。"
+  },
+  {
+    "speaker": "monster",
+    "text": "？？？（只有在星期二才會出現，現在還不是時候唷。）",
+    "action": "end"
+  }
+]

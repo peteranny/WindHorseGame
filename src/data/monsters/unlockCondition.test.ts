@@ -1,4 +1,4 @@
-import { isUnlockConditionMet } from "./unlockCondition";
+import { describeUnlockCondition, isUnlockConditionMet } from "./unlockCondition";
 
 describe("isUnlockConditionMet", () => {
   it("matches the correct weekday", () => {
@@ -52,5 +52,31 @@ describe("isUnlockConditionMet", () => {
     expect(
       isUnlockConditionMet({ type: "dateParity", parity: "odd" }, odd)
     ).toBe(true);
+  });
+});
+
+describe("describeUnlockCondition", () => {
+  it("describes a weekday condition", () => {
+    expect(describeUnlockCondition({ type: "weekday", day: 3 })).toBe(
+      "只有在星期三才會出現"
+    );
+  });
+
+  it("describes a time-of-day condition", () => {
+    expect(
+      describeUnlockCondition({ type: "timeOfDay", period: "night" })
+    ).toBe("只有在晚上10點到隔天早上6點之間才會出現");
+  });
+
+  it("describes a date-divisibility condition", () => {
+    expect(
+      describeUnlockCondition({ type: "dateDivisibleBy", divisor: 3 })
+    ).toBe("只有在日期是3的倍數時（3號、6號⋯）才會出現");
+  });
+
+  it("describes a date-parity condition", () => {
+    expect(
+      describeUnlockCondition({ type: "dateParity", parity: "even" })
+    ).toBe("只有在日期是偶數時才會出現");
   });
 });

@@ -4,8 +4,10 @@ import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
 import MONSTERS from "../../data/monsters/monsters";
 import CONVERSATIONS from "../../data/conversations";
+import LOCKED_CONVERSATIONS from "../../data/conversations/locked";
 import { isTerminalPage, nextPageIndex, terminalAction } from "../../data/conversations/engine";
 import { computeWildMaxHp } from "../../data/monsters/battleFormulas";
+import { isUnlockConditionMet } from "../../data/monsters/unlockCondition";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 import { useTypewriter } from "./useTypewriter";
 
@@ -17,12 +19,26 @@ const ConversationView = () => {
     (state) => Object.keys(state.captured).length
   );
   const [pageIndex, setPageIndex] = useState(0);
+  const [isUnlocked, setIsUnlocked] = useState(true);
 
   useEffect(() => {
     setPageIndex(0);
+    if (activeMonsterId !== null) {
+      setIsUnlocked(
+        isUnlockConditionMet(
+          MONSTERS[activeMonsterId].unlockCondition,
+          new Date()
+        )
+      );
+    }
   }, [activeMonsterId]);
 
-  const pages = activeMonsterId !== null ? CONVERSATIONS[activeMonsterId] : [];
+  const pages =
+    activeMonsterId === null
+      ? []
+      : isUnlocked
+      ? CONVERSATIONS[activeMonsterId]
+      : LOCKED_CONVERSATIONS[activeMonsterId];
   const page = pages[pageIndex];
   const [displayedText, isTypingDone, completeTyping] = useTypewriter(
     page?.text ?? "",
