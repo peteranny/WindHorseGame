@@ -9,6 +9,7 @@ import Dialog from "../Dialog";
 import Battle from "../Battle";
 import StateKeyGate from "../StateKeyGate";
 import MonsterIndex from "../MonsterIndex";
+import ScreenTransition from "../ScreenTransition";
 import { useFlowStore } from "../../store/flowStore";
 
 const Game = () => {
@@ -16,6 +17,7 @@ const Game = () => {
   const [ref, { width, height }] = useMeasure<HTMLDivElement>();
   const center: [number, number] = [width / 2, height / 2];
   const mode = useFlowStore((state) => state.mode);
+  const screenKey = mode === "battle" ? "battle" : "game";
   return (
     <MouseContext.Provider value={mouse}>
       <Screen
@@ -23,44 +25,47 @@ const Game = () => {
         onClick={handleMouseClick}
       >
         <StateKeyGate>
-          {mode === "battle" ? (
-            <Battle />
-          ) : (
-            <>
-              <div ref={ref} style={{ flex: 1 }}>
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                  }}
-                >
-                  {width > 0 && height > 0 && <Maze center={center} />}
+          <ScreenTransition screenKey={screenKey}>
+            {mode === "battle" ? (
+              <Battle />
+            ) : (
+              <>
+                <div ref={ref} style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                    }}
+                  >
+                    {width > 0 && height > 0 && <Maze center={center} />}
+                  </div>
+                  <MonsterIndex />
+                  <Link
+                    to="/settings"
+                    style={{
+                      position: "absolute",
+                      top: "calc(8px * var(--scale))",
+                      right: "calc(8px * var(--scale))",
+                      fontSize: "inherit",
+                      padding:
+                        "calc(6px * var(--scale)) calc(12px * var(--scale))",
+                      border: "2px solid black",
+                      borderRadius: "4px",
+                      background: "white",
+                      color: "black",
+                      textDecoration: "none",
+                    }}
+                  >
+                    設定
+                  </Link>
                 </div>
-                <MonsterIndex />
-                <Link
-                  to="/settings"
-                  style={{
-                    position: "absolute",
-                    top: "calc(8px * var(--scale))",
-                    right: "calc(8px * var(--scale))",
-                    fontSize: "inherit",
-                    padding: "calc(6px * var(--scale)) calc(12px * var(--scale))",
-                    border: "2px solid black",
-                    borderRadius: "4px",
-                    background: "white",
-                    color: "black",
-                    textDecoration: "none",
-                  }}
-                >
-                  設定
-                </Link>
-              </div>
-              <Dialog />
-            </>
-          )}
+                <Dialog />
+              </>
+            )}
+          </ScreenTransition>
         </StateKeyGate>
         {__DEPLOY_DATE__ && (
           <div

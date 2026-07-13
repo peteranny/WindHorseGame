@@ -9,7 +9,7 @@
 
 .conversation {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   height: 100%;
   cursor: pointer;
 }
@@ -24,17 +24,21 @@
 
 .textBlock {
   flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
 .speakerName {
   font-weight: bold;
   margin-bottom: calc(4px * var(--scale));
+  flex-shrink: 0;
 }
 
 .speakerText {
+  flex: 1;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .outer {
