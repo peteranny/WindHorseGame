@@ -6,7 +6,7 @@ A browser-based maze/monster-capture game built with React, TypeScript, and webp
 
 ## What it does
 
-The player navigates a 2D grid maze from a top-down perspective by clicking cells, in straight lines only (no diagonals, no jumping over walls). The maze holds 40 monster nodes; an uncaptured monster blocks its cell like a wall. Walking directly adjacent to one starts a short conversation, which transitions into a real-time battle — the player attacks with their already-captured monsters (each on its own cooldown) until the wild monster's HP hits 0 (captured) or the player's HP hits 0 (returned to the map, monster stays uncaptured, retryable anytime the monster's unlock condition allows). The game is "won" when all 40 are captured. Captured monsters and their capture dates are viewable in an in-game index.
+The player navigates a 2D grid maze from a top-down perspective by clicking cells, in straight lines only (no diagonals, no jumping over walls). The maze holds 40 monster nodes; an uncaptured monster blocks its cell like a wall. Tapping one (from anywhere with a clear straight-line path, same as tapping any other cell) starts a short conversation, which transitions into a real-time battle — the player attacks with their already-captured monsters (each on its own cooldown) until the wild monster's HP hits 0 (captured) or the player's HP hits 0 (returned to the map, monster stays uncaptured, retryable anytime the monster's unlock condition allows). The game is "won" when all 40 are captured. Captured monsters and their capture dates are viewable in an in-game index.
 
 ## Current state
 
@@ -86,7 +86,7 @@ On first launch (or whenever no key is stored), `StateKeyGate` blocks rendering:
 
 ### Monster blocking, capture, and unlock conditions
 
-`Maze` scans `map.txt` top-to-bottom/left-to-right; the *n*th `M` it finds is `MONSTERS[n]`. An uncaptured monster cell blocks movement like a wall, except that the player can move directly onto it from an adjacent cell — that's what starts the encounter (`flowStore.startEncounter`), rather than actually moving there. A captured monster's cell is just a normal road from then on. Every monster is visible on the map regardless of lock state — the marker looks the same either way; only the conversation reveals whether its `unlockCondition` (weekday / time-of-day / date-parity / date-divisibility) is currently met.
+`Maze` scans `map.txt` top-to-bottom/left-to-right; the *n*th `M` it finds is `MONSTERS[n]`. An uncaptured monster cell blocks movement like a wall — except that, like any other cell, it's still a valid tap target from anywhere along a clear straight line; tapping it starts the encounter (`flowStore.startEncounter`) instead of actually moving there. A captured monster's cell is just a normal road from then on. Every monster is visible on the map regardless of lock state — the marker looks the same either way; only the conversation reveals whether its `unlockCondition` (weekday / time-of-day / date-parity / date-divisibility) is currently met.
 
 ### Conversation -> Battle flow
 

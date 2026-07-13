@@ -55,8 +55,10 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
         return false;
       }
       if (isPassable(r, c)) return true;
-      const distance = Math.abs(r - y) + Math.abs(c - x);
-      return distance === 1 && monsterIds[r][c] !== null;
+      // An uncaptured monster blocks movement like a wall, but - like any other
+      // cell - is a valid tap target from anywhere in the same row/column as
+      // long as everything up to it is clear, not just from an adjacent cell.
+      return monsterIds[r][c] !== null;
     },
     [x, y, isPassable, monsterIds]
   );
