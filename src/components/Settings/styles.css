@@ -1,0 +1,13 @@
+.screen {
+  padding: calc(24px * var(--scale));
+  color: white;
+
+  input {
+    font-size: inherit;
+    margin-right: calc(8px * var(--scale));
+  }
+
+  button {
+    font-size: inherit;
+  }
+}
