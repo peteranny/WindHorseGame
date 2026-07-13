@@ -25,5 +25,5 @@ X X X X X X  X X  XXXXXXXXX X
 X X X X X X MX XXM    M     X
 X X X X X XXXX X       M    X
 X X X X X  M   X   M        X
-X M X X XXXXXXXXX    M      X
+X M X X XXXXXXXXX           X
 XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
