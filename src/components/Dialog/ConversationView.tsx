@@ -7,6 +7,7 @@ import CONVERSATIONS from "../../data/conversations";
 import { isTerminalPage, nextPageIndex, terminalAction } from "../../data/conversations/engine";
 import { computeWildMaxHp } from "../../data/monsters/battleFormulas";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
+import { useTypewriter } from "./useTypewriter";
 
 const ConversationView = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
@@ -21,12 +22,21 @@ const ConversationView = () => {
     setPageIndex(0);
   }, [activeMonsterId]);
 
-  if (activeMonsterId === null) return null;
-  const monster = MONSTERS[activeMonsterId];
-  const pages = CONVERSATIONS[activeMonsterId];
+  const pages = activeMonsterId !== null ? CONVERSATIONS[activeMonsterId] : [];
   const page = pages[pageIndex];
+  const [displayedText, isTypingDone, completeTyping] = useTypewriter(
+    page?.text ?? "",
+    `${activeMonsterId}-${pageIndex}`
+  );
+
+  if (activeMonsterId === null || !page) return null;
+  const monster = MONSTERS[activeMonsterId];
 
   const advance = (): void => {
+    if (!isTypingDone) {
+      completeTyping();
+      return;
+    }
     if (isTerminalPage(pages, pageIndex)) {
       if (terminalAction(pages, pageIndex) === "enter_challenge") {
         enterBattle(computeWildMaxHp(capturedCount));
@@ -46,7 +56,7 @@ const ConversationView = () => {
       <img src={portrait} alt={speakerName} className={styles.portrait} />
       <div className={styles.textBlock}>
         <div className={styles.speakerName}>{speakerName}</div>
-        <div className={styles.speakerText}>{page.text}</div>
+        <div className={styles.speakerText}>{displayedText}</div>
       </div>
     </div>
   );
