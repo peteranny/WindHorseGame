@@ -29,6 +29,19 @@
   object-fit: contain;
 }
 
+.footShadow {
+  position: absolute;
+  bottom: 6%;
+  left: 50%;
+  width: 55%;
+  height: 16%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 50%;
+  filter: blur(2px);
+  pointer-events: none;
+}
+
 .playerSprite {
   width: 100%;
   height: 100%;

@@ -140,14 +140,17 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
               >
                 <div className={cn(styles.cellContent, styles[cellClass])}>
                   {isMonsterCell && (
-                    <img
-                      src={monster!.icon}
-                      alt={monster!.name}
-                      className={cn(
-                        styles.monsterIcon,
-                        isTalking && styles.talking
-                      )}
-                    />
+                    <>
+                      <div className={styles.footShadow} />
+                      <img
+                        src={monster!.icon}
+                        alt={monster!.name}
+                        className={cn(
+                          styles.monsterIcon,
+                          isTalking && styles.talking
+                        )}
+                      />
+                    </>
                   )}
                 </div>
               </div>
@@ -178,6 +181,7 @@ const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
           top: centerY - CELL_SIZE / 2,
         }}
       >
+        <div className={styles.footShadow} />
         <img
           src={PLAYER_SPRITE}
           alt="player"
