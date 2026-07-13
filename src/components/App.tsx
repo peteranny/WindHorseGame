@@ -7,6 +7,7 @@ import Maze from "./Maze";
 import Dialog from "./Dialog";
 import Battle from "./Battle";
 import StateKeyGate from "./StateKeyGate";
+import MonsterIndex from "./MonsterIndex";
 import { useFlowStore } from "../store/flowStore";
 
 const App = () => {
@@ -37,6 +38,7 @@ const App = () => {
                 >
                   {width > 0 && height > 0 && <Maze center={center} />}
                 </div>
+                <MonsterIndex />
               </div>
               <Dialog />
             </>
