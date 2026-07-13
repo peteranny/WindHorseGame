@@ -9,7 +9,6 @@ import { isTerminalPage, nextPageIndex, terminalAction } from "../../data/conver
 import { computeWildMaxHp } from "../../data/monsters/battleFormulas";
 import { isUnlockConditionMet } from "../../data/monsters/unlockCondition";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
-import { useTypewriter } from "./useTypewriter";
 import { paginateText } from "./paginateText";
 
 const MAX_LINES_PER_PAGE = 2;
@@ -28,7 +27,7 @@ const ConversationView = () => {
 
   // Computed synchronously (not via effect) so it's already correct on the very
   // first render for a new encounter - an effect would leave a stale value for
-  // that first render, mismatched with the resetKey the typewriter keys off of.
+  // that first render, picking the wrong pages array before it corrects itself.
   const isUnlocked = useMemo(
     () =>
       activeMonsterId === null
@@ -72,19 +71,12 @@ const ConversationView = () => {
   }, [activeMonsterId, pageIndex]);
 
   const isLastSubPage = subPageIndex === textChunks.length - 1;
-  const [displayedText, isTypingDone, completeTyping] = useTypewriter(
-    textChunks[subPageIndex] ?? "",
-    `${activeMonsterId}-${pageIndex}-${subPageIndex}`
-  );
+  const displayedText = textChunks[subPageIndex] ?? "";
 
   if (activeMonsterId === null || !page) return null;
   const monster = MONSTERS[activeMonsterId];
 
   const advance = (): void => {
-    if (!isTypingDone) {
-      completeTyping();
-      return;
-    }
     if (!isLastSubPage) {
       setSubPageIndex((i) => i + 1);
       return;
