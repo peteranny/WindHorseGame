@@ -3,13 +3,8 @@ declare const __DEPLOY_DATE__: string;
 interface GASRun {
   withSuccessHandler<T>(fn: (result: T) => void): GASRun;
   withFailureHandler(fn: (error: Error) => void): GASRun;
-  getPosition(deviceId: string): GASRun;
-  savePosition(
-    deviceId: string,
-    x: number,
-    y: number,
-    timestamp: number
-  ): GASRun;
+  loadState(key: string): GASRun;
+  saveState(key: string, json: string): GASRun;
 }
 
 declare const google: {

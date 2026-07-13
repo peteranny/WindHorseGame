@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 import SCALE from "../../scale";
 import simpleMap from "./map.txt";
+import { useGameStore } from "../../store/gameStore";
 
 const CELL_TYPE = {
   ROAD: " ",
@@ -10,38 +11,6 @@ const CELL_TYPE = {
 } as const;
 
 const CELL_SIZE = 100 * SCALE;
-
-const deviceId = (() => {
-  let id = localStorage.getItem("deviceId");
-  if (!id) {
-    id =
-      Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-    localStorage.setItem("deviceId", id);
-  }
-  return id;
-})();
-
-interface StoredPosition {
-  x: number;
-  y: number;
-  timestamp: number;
-}
-
-const getLocalPosition = (): StoredPosition | null => {
-  try {
-    const raw = localStorage.getItem("position");
-    return raw ? (JSON.parse(raw) as StoredPosition) : null;
-  } catch {
-    return null;
-  }
-};
-
-const setLocalPosition = (x: number, y: number): void => {
-  localStorage.setItem(
-    "position",
-    JSON.stringify({ x, y, timestamp: Date.now() })
-  );
-};
 
 interface MazeProps {
   center: [number, number];
@@ -69,27 +38,8 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
     []
   );
   const map = useMemo(() => compileMap(simpleMap), [compileMap]);
-  const [position, setPosition] = useState<[number, number] | null>(null);
-  const x = position ? position[0] : 0;
-  const y = position ? position[1] : 0;
-  useEffect(() => {
-    const local = getLocalPosition();
-    if (typeof google !== "undefined") {
-      google.script.run
-        .withSuccessHandler<StoredPosition | null>((remote) => {
-          if (remote && (!local || remote.timestamp >= local.timestamp)) {
-            setPosition([remote.x, remote.y]);
-          } else {
-            const pos = local ?? { x: 2, y: 1 };
-            setPosition([pos.x, pos.y]);
-          }
-        })
-        .getPosition(deviceId);
-    } else {
-      const pos = local ?? { x: 2, y: 1 };
-      setPosition([pos.x, pos.y]);
-    }
-  }, []);
+  const [x, y] = useGameStore((state) => state.position);
+  const setPosition = useGameStore((state) => state.setPosition);
   const isReachableAt = useCallback(
     (r: number, c: number): boolean => {
       if (r === y) {
@@ -114,19 +64,10 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   );
   const goto = useCallback(
     (r: number, c: number): void => {
-      if (isReachableAt(r, c)) setPosition([c, r]);
+      if (isReachableAt(r, c)) setPosition(c, r);
     },
-    [isReachableAt]
+    [isReachableAt, setPosition]
   );
-  useEffect(() => {
-    if (position) {
-      setLocalPosition(x, y);
-      if (typeof google !== "undefined") {
-        google.script.run.savePosition(deviceId, x, y, Date.now());
-      }
-    }
-  }, [x, y, position]);
-  if (!position) return null;
   const centerRect = {
     left: x * CELL_SIZE,
     top: y * CELL_SIZE,
