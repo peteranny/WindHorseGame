@@ -12,29 +12,33 @@
 .battlefield {
   position: relative;
   flex: 1;
+  min-height: 0;
   display: flex;
   justify-content: space-between;
   padding: calc(16px * var(--scale));
 }
 
 .playerSide {
-  align-self: flex-start;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   align-items: flex-start;
-  gap: calc(8px * var(--scale));
 }
 
 .enemySide {
-  align-self: flex-start;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   align-items: flex-end;
-  gap: calc(8px * var(--scale));
 }
 
 .enemyInfo,
 .playerInfo {
+  flex-shrink: 0;
   background: white;
   border: 2px solid black;
   border-radius: 4px;
@@ -44,8 +48,12 @@
 
 .enemySprite,
 .playerSprite {
+  flex: 0 1 calc(100px * var(--scale));
+  min-height: 0;
   width: calc(100px * var(--scale));
-  height: calc(100px * var(--scale));
+  max-width: 100%;
+  /* stylelint-disable-next-line property-no-unknown */
+  aspect-ratio: 1 / 1;
   object-fit: contain;
 }
 
@@ -53,14 +61,25 @@
   transform: scaleX(-1);
 }
 
+/*
+ * The player sprite carries a constant scaleX(-1) (it faces right, mirrored
+ * from source art that faces left). Composing "scaleX(-1) translateX(20px)"
+ * would apply the translate *before* the mirror, so the mirror flips the
+ * translate's direction too - the sprite would visually lunge left instead
+ * of right, toward the opponent. Listing the dynamic transform first and
+ * scaleX(-1) last keeps the mirror as the outermost, constant transform, so
+ * translateX/rotate move in real screen directions exactly like the enemy's
+ * (unmirrored) equivalents - only the animation itself needs to move
+ * opposite ways, never the composition order.
+ */
 @keyframes player-attack {
   0%,
   100% {
-    transform: scaleX(-1) translateX(0);
+    transform: translateX(0) scaleX(-1);
   }
 
   30% {
-    transform: scaleX(-1) translateX(calc(20px * var(--scale)));
+    transform: translateX(calc(20px * var(--scale))) scaleX(-1);
   }
 }
 
@@ -77,15 +96,15 @@
 
 @keyframes player-hit {
   0% {
-    transform: scaleX(-1) translateY(0) rotate(0deg);
+    transform: translateY(0) rotate(0deg) scaleX(-1);
   }
 
   40% {
-    transform: scaleX(-1) translateY(calc(12px * var(--scale))) rotate(20deg);
+    transform: translateY(calc(12px * var(--scale))) rotate(20deg) scaleX(-1);
   }
 
   100% {
-    transform: scaleX(-1) translateY(0) rotate(0deg);
+    transform: translateY(0) rotate(0deg) scaleX(-1);
   }
 }
 
@@ -149,22 +168,27 @@
 }
 
 .actionBar {
+  flex-shrink: 0;
+  max-height: 40%;
   background: white;
   border-top: 4px solid black;
   padding: calc(12px * var(--scale));
   display: flex;
-  align-items: flex-start;
   gap: calc(12px * var(--scale));
 }
 
 .attackGrid {
   flex: 1;
+  min-width: 0;
+  overflow-y: auto;
   display: flex;
   flex-wrap: wrap;
+  align-content: flex-start;
   gap: calc(8px * var(--scale));
 }
 
 .escapeButton {
+  align-self: flex-start;
   flex-shrink: 0;
   font-size: inherit;
   padding: calc(8px * var(--scale)) calc(12px * var(--scale));
