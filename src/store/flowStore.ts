@@ -3,11 +3,13 @@ import { PROTAGONIST_MAX_HP } from "../data/monsters/battleFormulas";
 import { BattleOutcome } from "../data/conversations/engine";
 
 type Mode = "map" | "conversation" | "battle";
+type TalkingSpeaker = "protagonist" | "monster" | null;
 
 interface FlowState {
   mode: Mode;
   activeMonsterId: number | null;
   battleOutcome: BattleOutcome | null;
+  talkingSpeaker: TalkingSpeaker;
   wildHp: number;
   wildMaxHp: number;
   protagonistHp: number;
@@ -18,12 +20,14 @@ interface FlowState {
   healProtagonist: (amount: number) => void;
   concludeBattle: (outcome: BattleOutcome) => void;
   endEncounter: () => void;
+  setTalkingSpeaker: (speaker: TalkingSpeaker) => void;
 }
 
 export const useFlowStore = create<FlowState>((set) => ({
   mode: "map",
   activeMonsterId: null,
   battleOutcome: null,
+  talkingSpeaker: null,
   wildHp: 0,
   wildMaxHp: 0,
   protagonistHp: PROTAGONIST_MAX_HP,
@@ -52,5 +56,11 @@ export const useFlowStore = create<FlowState>((set) => ({
   concludeBattle: (outcome) =>
     set({ mode: "conversation", battleOutcome: outcome }),
   endEncounter: () =>
-    set({ mode: "map", activeMonsterId: null, battleOutcome: null }),
+    set({
+      mode: "map",
+      activeMonsterId: null,
+      battleOutcome: null,
+      talkingSpeaker: null,
+    }),
+  setTalkingSpeaker: (speaker) => set({ talkingSpeaker: speaker }),
 }));

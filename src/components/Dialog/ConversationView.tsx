@@ -24,6 +24,7 @@ const ConversationView = () => {
   const battleOutcome = useFlowStore((state) => state.battleOutcome);
   const enterBattle = useFlowStore((state) => state.enterBattle);
   const endEncounter = useFlowStore((state) => state.endEncounter);
+  const setTalkingSpeaker = useFlowStore((state) => state.setTalkingSpeaker);
   const capturedCount = useGameStore(
     (state) => Object.keys(state.captured).length
   );
@@ -83,6 +84,15 @@ const ConversationView = () => {
   const [displayedText, isTypingDone, completeTyping] = useTypewriter(
     textChunks[subPageIndex] ?? ""
   );
+
+  // Drives the "jump" animation on the actual map sprite (player or monster)
+  // that's currently talking, rather than the dialog's own portrait image.
+  // Keyed on page?.speaker (not the page object) since buildOutcomeConversation
+  // returns a fresh array/object every render.
+  const currentSpeaker = page?.speaker ?? null;
+  useEffect(() => {
+    setTalkingSpeaker(isTypingDone ? null : currentSpeaker);
+  }, [currentSpeaker, isTypingDone, setTalkingSpeaker]);
 
   if (activeMonsterId === null || !page) return null;
   const monster = MONSTERS[activeMonsterId];

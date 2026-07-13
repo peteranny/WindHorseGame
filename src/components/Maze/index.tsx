@@ -23,6 +23,8 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const setPosition = useGameStore((state) => state.setPosition);
   const captured = useGameStore((state) => state.captured);
   const flowMode = useFlowStore((state) => state.mode);
+  const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
+  const talkingSpeaker = useFlowStore((state) => state.talkingSpeaker);
   const startEncounter = useFlowStore((state) => state.startEncounter);
 
   const isPassable = useCallback(
@@ -121,6 +123,10 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
               monster !== null && captured[monster.id] !== undefined;
             const isMonsterCell = monster !== null && !isCaptured;
             const cellClass = cell === CELL_TYPE.WALL ? "wall" : "road";
+            const isTalking =
+              isMonsterCell &&
+              monster!.id === activeMonsterId &&
+              talkingSpeaker === "monster";
             return (
               <div
                 key={c}
@@ -137,7 +143,10 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                     <img
                       src={monster!.icon}
                       alt={monster!.name}
-                      className={styles.monsterIcon}
+                      className={cn(
+                        styles.monsterIcon,
+                        isTalking && styles.talking
+                      )}
                     />
                   )}
                 </div>
@@ -156,6 +165,7 @@ interface ContainerProps {
 
 const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
   const facing = useGameStore((state) => state.facing);
+  const talkingSpeaker = useFlowStore((state) => state.talkingSpeaker);
   return (
     <div className={styles.container}>
       <Maze center={[centerX, centerY]} />
@@ -171,8 +181,15 @@ const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
         <img
           src={PLAYER_SPRITE}
           alt="player"
-          className={styles.playerSprite}
-          style={{ transform: facing === "right" ? "scaleX(-1)" : undefined }}
+          className={cn(
+            styles.playerSprite,
+            talkingSpeaker === "protagonist" && styles.talking
+          )}
+          style={
+            {
+              "--facing-scale": facing === "right" ? -1 : 1,
+            } as React.CSSProperties
+          }
         />
       </div>
     </div>

@@ -33,6 +33,37 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+  transform: scaleX(var(--facing-scale, 1));
+}
+
+@keyframes player-talk-jump {
+  0%,
+  100% {
+    transform: scaleX(var(--facing-scale, 1)) translateY(0);
+  }
+
+  50% {
+    transform: scaleX(var(--facing-scale, 1)) translateY(calc(-8px * var(--scale)));
+  }
+}
+
+@keyframes monster-talk-jump {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(calc(-8px * var(--scale)));
+  }
+}
+
+.playerSprite.talking {
+  animation: player-talk-jump 400ms ease-in-out infinite;
+}
+
+.monsterIcon.talking {
+  animation: monster-talk-jump 400ms ease-in-out infinite;
 }
 
 .cell {

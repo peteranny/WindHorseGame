@@ -41,7 +41,7 @@ Before challenging a monster, the player goes through a conversation. The conver
 
 Conversation progress isn't persisted, so re-entering an uncaptured monster's cell always restarts its conversation from the top. A captured monster's cell is just road and never triggers a conversation again.
 
-**Decision:** speaker identity is shown as a **full character portrait** (the monster's `icon` image) alongside the dialog text, not just a name label.
+**Decision:** speaker identity is shown as a **full character portrait** (the monster's `icon` image) alongside the dialog text, not just a name label. While a page's text is being typed out, the current speaker's sprite *on the map itself* (the player's sprite, or the monster's map icon) plays a small looping "jump" animation to show who's talking; it stops once the line finishes typing.
 
 **Decision:** each script is a short (2-3 page) back-and-forth between the protagonist (小風) and the monster, adapted from that monster's source `description` — playful, "cute", often with the monster being a bit dumb/confused (「？？？」) in tone, per the established 小風小馬 universe. The protagonist is just "小風" and has no special relation to the other 小風/小馬-named monsters — they're simply a big family the protagonist needs to capture.
 
@@ -49,7 +49,7 @@ Conversation progress isn't persisted, so re-entering an uncaptured monster's ce
 
 #### Battle UI
 
-The battle screen shows the protagonist on the left and the wild monster on the right, each paired with its own name/HP bar (protagonist's above its sprite, wild monster's below its sprite) — never crossed with the other side's. A row of buttons below — one per captured monster, plus the protagonist's own innate attack — is used to attack. A button still on cooldown shows its remaining wait time instead of being usable. Attacking plays a brief lunge toward the opponent; being hit plays a knocked-down stumble (rotate + drop) rather than a plain shake; healing plays a glow on the protagonist instead — all simple CSS keyframe animations so actions read clearly in real time.
+The battle screen shows the protagonist on the left and the wild monster on the right, each paired with its own name/HP bar (protagonist's above its sprite, wild monster's below its sprite) — never crossed with the other side's. The battlefield half of the screen is flexible height; the button row below it — one per captured monster, plus the protagonist's own innate attack, used to attack — is capped at 40% of the screen height and scrolls internally once there are more buttons (up to 41, as the roster grows) than fit, so it can never push content off-screen. A button still on cooldown shows its remaining wait time instead of being usable. Attacking plays a brief lunge toward the opponent; being hit plays a knocked-down stumble (rotate + drop) rather than a plain shake; healing plays a glow on the protagonist instead — all simple CSS keyframe animations so actions read clearly in real time.
 
 - There are **40 monsters**, each associated with a node on the map
 - Battles are **real-time, not turn-based** — there are no turns to pass; both sides act on their own clocks:
