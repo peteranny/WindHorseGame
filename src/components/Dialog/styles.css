@@ -48,6 +48,15 @@
 
 .outer {
   position: relative;
+
+  /*
+   * Higher than any .followerIcon can reach (their z-index is at most the
+   * captured count, well under 1000) - without this, a follower whose
+   * resampled point strays past the maze's own box (nothing currently
+   * clips it) could paint over this panel despite coming earlier in the
+   * DOM, since explicit z-index always outranks auto.
+   */
+  z-index: 1000;
   height: calc(120px * var(--scale));
   background: white;
 
