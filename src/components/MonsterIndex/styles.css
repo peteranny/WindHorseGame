@@ -70,7 +70,15 @@
 
 .name {
   font-size: calc(9pt * var(--scale));
+  line-height: calc(11px * var(--scale));
+  max-height: calc(22px * var(--scale));
   text-align: center;
+  overflow: hidden;
+  display: -webkit-box;
+  /* stylelint-disable-next-line property-no-unknown */
+  -webkit-box-orient: vertical;
+  /* stylelint-disable-next-line property-no-unknown */
+  -webkit-line-clamp: 2;
 }
 
 .date {

@@ -72,7 +72,7 @@ The battle screen shows the protagonist on the left and the wild monster on the 
 ### Monster Index
 
 - During map wandering (not during a battle or conversation), the player can open a **monster index** via a persistent on-screen button
-- The index shows only **captured** monsters, each with its capture date — uncaptured monsters don't appear in the index at all
+- The index shows only **captured** monsters, each with its capture date — uncaptured monsters don't appear in the index at all. Each entry's name label is clamped to 2 lines (ellipsized beyond that) so a long name can't stretch the entry's block height
 - Monster nodes on the map always look challengeable; once captured, the cell is plain road with no marker
 
 ### Win Condition
