@@ -169,7 +169,7 @@
   height: calc(48px * var(--scale));
   object-fit: contain;
   pointer-events: none;
-  animation: throw-arc 1000ms ease-out forwards;
+  animation: throw-arc 2000ms ease-out forwards;
 }
 
 @keyframes throw-arc {
