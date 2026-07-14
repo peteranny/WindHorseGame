@@ -35,6 +35,7 @@
   width: 80%;
   height: 80%;
   object-fit: contain;
+  transform: scaleX(var(--facing-scale, 1));
 }
 
 .footShadow {
@@ -71,11 +72,13 @@
 @keyframes monster-talk-jump {
   0%,
   100% {
-    transform: translateY(0);
+    transform: scaleX(var(--facing-scale, 1)) translateY(0);
   }
 
   50% {
-    transform: translateY(calc(-8px * var(--scale)));
+    transform:
+      scaleX(var(--facing-scale, 1))
+      translateY(calc(-8px * var(--scale)));
   }
 }
 

@@ -196,10 +196,11 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
               monster !== null && captured[monster.id] !== undefined;
             const isMonsterCell = monster !== null && !isCaptured;
             const cellClass = cell === CELL_TYPE.WALL ? "wall" : "road";
-            const isTalking =
+            const isBeingTalkedTo =
               isMonsterCell &&
               monster!.id === activeMonsterId &&
-              talkingSpeaker === "monster";
+              flowMode === "conversation";
+            const isTalking = isBeingTalkedTo && talkingSpeaker === "monster";
             return (
               <div
                 key={c}
@@ -222,6 +223,15 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                           styles.monsterIcon,
                           isTalking && styles.talking
                         )}
+                        style={
+                          {
+                            // Monster art is native left-facing - flip only
+                            // when the player is to its right, so it faces
+                            // the player throughout the conversation.
+                            "--facing-scale":
+                              isBeingTalkedTo && x > c ? -1 : 1,
+                          } as React.CSSProperties
+                        }
                       />
                     </>
                   )}
