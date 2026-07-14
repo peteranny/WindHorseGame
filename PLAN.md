@@ -63,7 +63,7 @@ The battle screen shows the protagonist on the left and the wild monster on the 
   - An **escape button** lets the player leave a battle at any time — same outcome as losing (monster stays uncaptured, no penalty, retryable immediately)
 - The wild monster's life points scale with how many monsters the player has captured so far: `life = 2 × (capturedCount + 1)` — the very first battle (0 captured) starts at 2, the second battle (1 captured) at 4, and so on
 - **5% of monsters are healers**: tapping one restores 1-2 (random) of the protagonist's life points instead of attacking the wild monster. Which monsters heal (and by how much) is defined per-monster in the monster table, same as any other stat — healers still have their own attack cooldown
-- Each of the 40 monsters has an **unlock condition** — a battle time window drawn from a fixed pool of rule types: specific weekday (e.g. Monday only), time-of-day (morning 6-12 / afternoon 12-18 / evening 18-22 / night 22-6, device local time), date parity (even-numbered day of month), or date divisibility (e.g. multiples of 3). Conditions are assigned independently across the 40 (not tied to each monster's own source date), overlapping only slightly so no two monsters are simultaneously available too often, and calibrated so no single monster is trivially always-on or near-impossible. A monster's cell still blocks movement like a wall while its condition is unmet, but tapping it still starts a (shorter) conversation — one that tells the player the condition itself (e.g. "只有在星期三才會出現") instead of leading into a challenge
+- There's no unlock condition or time window of any kind — every monster can be challenged at any time, and re-challenged as many times as needed after a loss or escape
 - Successfully defeating a monster **captures it** and records the capture date
 - Losing a challenge simply returns the player to the map — the monster stays uncaptured and can be retried immediately
 - However a battle ends — win, lose, or escape — a short one-line conversation (小風 reacting: "太好了，成功抓到...", "小風被...打倒了...", "先撤退好了...") plays before dropping back to the map, so the outcome is acknowledged rather than just silently returning
@@ -71,8 +71,8 @@ The battle screen shows the protagonist on the left and the wild monster on the 
 ### Monster Index
 
 - During map wandering (not during a battle or conversation), the player can open a **monster index** via a persistent on-screen button
-- The index shows only **captured** monsters, each with its capture date — uncaptured/locked monsters don't appear in the index at all
-- Monster nodes on the map look the same whether challengeable or locked (the conversation is what reveals lock state); once captured, the cell is plain road with no marker
+- The index shows only **captured** monsters, each with its capture date — uncaptured monsters don't appear in the index at all
+- Monster nodes on the map always look challengeable; once captured, the cell is plain road with no marker
 
 ### Win Condition
 
@@ -112,7 +112,6 @@ Unit tests are required for the two core systems to ensure robustness as the gam
 - Capturing a monster records it correctly with a timestamp
 - Capturing the same monster twice does not duplicate it
 - Win condition triggers correctly when all 40 monsters are captured
-- Unlock conditions are evaluated correctly for each rule type (weekday, time-of-day, date parity, date divisibility)
 - State serialises and deserialises correctly
 
 ### Conversation system
@@ -126,5 +125,4 @@ Test framework TBD (likely Jest, given the React/webpack stack).
 ## Open Questions
 
 - Placeholder content (name, description, icon) for the 40th monster, since the source data only has 39
-- The exact per-monster unlock condition values (which weekday/time-window/date-rule goes to which of the 40) — the rule pool and assignment approach are decided, the concrete table is an implementation-time content task
 - Conversation script content for each of the 40 monsters (still needs writing, one file per monster)

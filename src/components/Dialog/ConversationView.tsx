@@ -1,10 +1,9 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
 import MONSTERS from "../../data/monsters/monsters";
 import CONVERSATIONS from "../../data/conversations";
-import LOCKED_CONVERSATIONS from "../../data/conversations/locked";
 import {
   buildOutcomeConversation,
   isTerminalPage,
@@ -12,7 +11,6 @@ import {
   terminalAction,
 } from "../../data/conversations/engine";
 import { computeWildMaxHp } from "../../data/monsters/battleFormulas";
-import { isUnlockConditionMet } from "../../data/monsters/unlockCondition";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 import { paginateText } from "./paginateText";
 import { useTypewriter } from "./useTypewriter";
@@ -33,20 +31,6 @@ const ConversationView = () => {
   const [textChunks, setTextChunks] = useState<string[]>([""]);
   const speakerTextRef = useRef<HTMLDivElement>(null);
 
-  // Computed synchronously (not via effect) so it's already correct on the very
-  // first render for a new encounter - an effect would leave a stale value for
-  // that first render, picking the wrong pages array before it corrects itself.
-  const isUnlocked = useMemo(
-    () =>
-      activeMonsterId === null
-        ? true
-        : isUnlockConditionMet(
-            MONSTERS[activeMonsterId].unlockCondition,
-            new Date()
-          ),
-    [activeMonsterId]
-  );
-
   useEffect(() => {
     setPageIndex(0);
   }, [activeMonsterId, battleOutcome]);
@@ -56,9 +40,7 @@ const ConversationView = () => {
       ? []
       : battleOutcome !== null
       ? buildOutcomeConversation(MONSTERS[activeMonsterId].name, battleOutcome)
-      : isUnlocked
-      ? CONVERSATIONS[activeMonsterId]
-      : LOCKED_CONVERSATIONS[activeMonsterId];
+      : CONVERSATIONS[activeMonsterId];
   const page = pages[pageIndex];
 
   // Re-paginate the current page's full text to fit the dialog box whenever the
