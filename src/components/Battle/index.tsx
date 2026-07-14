@@ -18,7 +18,7 @@ import {
   WILD_ATTACK_INTERVAL_MS,
 } from "../../data/monsters/battleFormulas";
 import { orderByMostRecentlyCaptured } from "../Maze/followerTrail";
-import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
+import PLAYER_SPRITE from "../../assets/playerSprite.png";
 
 const INNATE_KEY = "innate";
 const TICK_MS = 500;
