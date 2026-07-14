@@ -146,18 +146,25 @@ const Battle = () => {
   useEffect(() => {
     if (activeMonsterId === null || pendingOutcome !== null) return;
     if (wildHp <= 0) {
-      captureMonster(activeMonsterId);
       setPendingOutcome("win");
     } else if (protagonistHp <= 0) {
       setPendingOutcome("lose");
     }
-  }, [activeMonsterId, wildHp, protagonistHp, captureMonster, pendingOutcome]);
+  }, [activeMonsterId, wildHp, protagonistHp, pendingOutcome]);
 
   useEffect(() => {
     if (pendingOutcome === null) return;
-    const id = setTimeout(() => concludeBattle(pendingOutcome), OUTCOME_TOTAL_MS);
+    const id = setTimeout(() => {
+      // Only actually captured once the fade finishes and we're leaving
+      // this screen - otherwise the defeated monster would show up in the
+      // attack grid below while its own defeat is still being shown above.
+      if (pendingOutcome === "win" && activeMonsterId !== null) {
+        captureMonster(activeMonsterId);
+      }
+      concludeBattle(pendingOutcome);
+    }, OUTCOME_TOTAL_MS);
     return () => clearTimeout(id);
-  }, [pendingOutcome, concludeBattle]);
+  }, [pendingOutcome, activeMonsterId, captureMonster, concludeBattle]);
 
   const attackOptions: AttackOption[] = useMemo(() => {
     const options: AttackOption[] = [
