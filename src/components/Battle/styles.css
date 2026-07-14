@@ -193,6 +193,8 @@
   flex-direction: column;
   align-items: center;
   width: calc(80px * var(--scale));
+  height: calc(104px * var(--scale));
+  overflow: hidden;
   border: 2px solid black;
   border-radius: 4px;
   background: white;
@@ -212,14 +214,22 @@
   width: calc(48px * var(--scale));
   height: calc(48px * var(--scale));
   object-fit: contain;
+  flex-shrink: 0;
 }
 
 .attackLabel {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   font-size: calc(10pt * var(--scale));
+  line-height: calc(12px * var(--scale));
   text-align: center;
 }
 
 .cooldownLabel {
+  flex-shrink: 0;
+  height: calc(14px * var(--scale));
+  line-height: calc(14px * var(--scale));
   font-size: calc(9pt * var(--scale));
   color: #888;
 }

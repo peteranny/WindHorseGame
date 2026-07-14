@@ -203,11 +203,9 @@ const Battle = () => {
                 <span className={styles.attackLabel}>
                   {option.isHealer ? `${option.label}（治療）` : option.label}
                 </span>
-                {!ready && (
-                  <span className={styles.cooldownLabel}>
-                    {Math.ceil(remainingMs / 1000)}s
-                  </span>
-                )}
+                <span className={styles.cooldownLabel}>
+                  {ready ? " " : `${Math.ceil(remainingMs / 1000)}s`}
+                </span>
               </button>
             );
           })}
