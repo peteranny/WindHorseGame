@@ -51,7 +51,9 @@ src/
     gameStore.ts          # Zustand store: position, facing, captured, cooldowns - the persisted slice (see below).
     flowStore.ts          # Zustand store: mode ("map"|"conversation"|"battle"), activeMonsterId, battle HP -
                            # ephemeral, never persisted.
-    persistence.ts        # localStorage + google.script.run read/write helpers for the persisted slice.
+    persistence.ts        # localStorage (per-key) + google.script.run read/write helpers, plus the pure
+                           # resolveHydratedState local-vs-remote merge decision.
+    remoteSync.ts          # createRemoteSync: DI'd retry controller for not-yet-synced remote writes.
     types.ts              # PersistedGameState shape.
   assets/
     playerSprite.generated.ts  # wind-1.png embedded as a base64 data URI (the protagonist's map/battle sprite).
@@ -79,7 +81,9 @@ To make the UI bigger or smaller, change only `SCALE` in `scale.ts`.
 
 The persisted slice (`store/gameStore.ts`) holds only: player map coordinate, the sprite's last facing direction (`"left"` | `"right"`, updated automatically by `setPosition` based on which way x moved), captured monsters (id -> ISO capture date), and per-attack cooldowns (monster id, or `"innate"` for the protagonist's own attack -> next-available timestamp in ms). Everything else — conversation progress, in-battle HP, which page/screen is showing — lives in the ephemeral `store/flowStore.ts` and is never persisted, so a reload mid-conversation or mid-battle just drops back to the map with no side effects (cooldowns already spent still apply).
 
-On first launch (or whenever no key is stored), `StateKeyGate` blocks rendering: in local dev it silently assigns `"local-dev"`; in the deployed GAS environment it prompts the player for a save-state key. The key is stored in `localStorage` and used to look up/save a single JSON blob (position + captured + cooldowns + a timestamp) both to `localStorage` (for instant reload) and to the Google Sheet (keyed by that string, via `google.script.run`, guarded by `typeof google !== "undefined"` so local dev is unaffected). On hydrate, whichever of local/remote has the newer timestamp wins — same pattern the old position-only code used. `/settings` lets the player view/change their key at any time, which re-hydrates from the new key's slot.
+On first launch (or whenever no key is stored), `StateKeyGate` blocks rendering: in local dev it silently assigns `"local-dev"`; in the deployed GAS environment it prompts the player for a save-state key. The key is stored in `localStorage` and used to look up/save a single JSON blob (position + captured + cooldowns + a timestamp), both to `localStorage` (for instant reload) and to the Google Sheet (via `google.script.run`, guarded by `typeof google !== "undefined"` so local dev is unaffected). The local cache is itself scoped per state key (`gameState:<key>`, not a single shared slot) — critical for `/settings`: changing the key calls `hydrate()` for the *new* key, and since its local cache starts genuinely empty (or reflects only what this device has saved under that specific key before), a fresh remote snapshot is never crowded out by another key's stale local data. Within the same key, `resolveHydratedState` (`store/persistence.ts`) picks whichever of local/remote has the newer timestamp.
+
+Remote saves go through `store/remoteSync.ts`'s `createRemoteSync` — a small controller (DI'd with the actual `saveRemoteState` call) that tracks at most one not-yet-synced write at a time. A failed save (offline, GAS error, etc.) is never retried in a busy-loop; it just stays pending until something external asks again — `gameStore` wires that up via the browser's `online` event plus a 30s fallback timer, so a write made while offline reaches the Sheet once connectivity returns, without the player having to do anything. A newer write always supersedes an older still-pending/in-flight one. Switching state keys (`setStateKey`) calls `clearPending()` first, so an unsynced write for the *old* key doesn't linger and get retried against the wrong slot — it's still safely cached in that old key's local storage, just not pushed further until the player switches back and changes something again.
 
 ### Monster blocking, capture
 

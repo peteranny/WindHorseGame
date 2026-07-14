@@ -101,8 +101,9 @@ State is serialised as JSON and saved to the connected Google Sheet, keyed by a 
 
 - On first launch, the app **prompts the user to enter their state key**
 - The key is used to load the matching state from the Sheet and sync to it
-- A **Settings page** allows the user to change their key at any time, which loads the corresponding memory
+- A **Settings page** allows the user to change their key at any time — this **pulls fresh from the remote immediately**: the local cache is scoped per key, so switching keys can never let a different key's stale local data outrank the new key's actual remote data
 - Multiple users (or save slots) are supported naturally through different keys
+- If a remote save fails (e.g. offline) while the key stays the same, the write **isn't lost** — it stays pending and automatically retries once the connection is restored (or periodically, as a fallback), without any action from the player
 
 ## Testing
 

@@ -3,16 +3,19 @@ import {
   getLocalSnapshot,
   getStoredStateKey,
   loadRemoteState,
+  resolveHydratedState,
   saveRemoteState,
   setLocalSnapshot,
   setStoredStateKey,
 } from "./persistence";
+import { createRemoteSync } from "./remoteSync";
 import { Facing, PersistedGameState } from "./types";
 import { captureMonster as captureMonsterPure } from "../data/monsters/captureLogic";
 
 const DEFAULT_POSITION: [number, number] = [2, 1];
 const DEFAULT_FACING: Facing = "left";
 const SAVE_DEBOUNCE_MS = 500;
+const RETRY_INTERVAL_MS = 30000;
 
 interface GameState {
   hydrated: boolean;
@@ -36,16 +39,28 @@ const toPersisted = (state: GameState): PersistedGameState => ({
   timestamp: Date.now(),
 });
 
+const remoteSync = createRemoteSync({ save: saveRemoteState });
+
+// A failed remote save is never retried on a timer of its own (see
+// remoteSync.ts) - something external has to ask it to try again. The
+// "online" event covers the common case (the connection actually dropped);
+// the periodic sweep is a fallback for anything that event doesn't catch.
+if (typeof window !== "undefined") {
+  window.addEventListener("online", () => remoteSync.retryPending());
+  setInterval(() => remoteSync.retryPending(), RETRY_INTERVAL_MS);
+}
+
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 const scheduleSave = (): void => {
   const state = useGameStore.getState();
-  if (!state.hydrated) return;
+  if (!state.hydrated || !state.stateKey) return;
+  const key = state.stateKey;
   const snapshot = toPersisted(state);
-  setLocalSnapshot(snapshot);
+  setLocalSnapshot(key, snapshot);
   if (saveTimer) clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    if (state.stateKey) saveRemoteState(state.stateKey, snapshot);
+    remoteSync.scheduleSave(key, snapshot);
   }, SAVE_DEBOUNCE_MS);
 };
 
@@ -58,6 +73,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   cooldowns: {},
 
   setStateKey: (key) => {
+    // Switching save slots abandons any not-yet-synced write for the old
+    // key rather than keeping it around to retry against the wrong slot.
+    remoteSync.clearPending();
     setStoredStateKey(key);
     set({ stateKey: key, hydrated: false });
     return get().hydrate();
@@ -88,13 +106,10 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   hydrate: () => {
     const key = get().stateKey;
-    const local = getLocalSnapshot();
+    const local = key ? getLocalSnapshot(key) : null;
     return (key ? loadRemoteState(key) : Promise.resolve(null)).then(
       (remote) => {
-        const winner =
-          remote && (!local || remote.timestamp >= local.timestamp)
-            ? remote
-            : local;
+        const winner = resolveHydratedState(local, remote);
         set({
           position: winner?.position ?? DEFAULT_POSITION,
           facing: winner?.facing ?? DEFAULT_FACING,
