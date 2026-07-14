@@ -154,6 +154,18 @@ const Battle = () => {
   const msUntilWildAttack = nextWildAttackAtRef.current - Date.now();
   const isWildTelegraphing =
     msUntilWildAttack > 0 && msUntilWildAttack <= WILD_ATTACK_TELEGRAPH_MS;
+  // The marks appear one at a time as the countdown runs out, so seeing all
+  // 3 doubles as a "the attack is imminent" cue.
+  const telegraphMarkCount = isWildTelegraphing
+    ? Math.min(
+        3,
+        Math.floor(
+          ((WILD_ATTACK_TELEGRAPH_MS - msUntilWildAttack) /
+            WILD_ATTACK_TELEGRAPH_MS) *
+            3
+        ) + 1
+      )
+    : 0;
 
   return (
     <div className={styles.battle}>
@@ -182,11 +194,13 @@ const Battle = () => {
                 enemyEffect && styles[`enemy${capitalize(enemyEffect)}`]
               )}
             />
-            {isWildTelegraphing && (
+            {telegraphMarkCount > 0 && (
               <div className={styles.telegraph} aria-hidden="true">
-                <span className={styles.telegraphMark}>？</span>
-                <span className={styles.telegraphMark}>？</span>
-                <span className={styles.telegraphMark}>？</span>
+                {Array.from({ length: telegraphMarkCount }, (_, i) => (
+                  <span key={i} className={styles.telegraphMark}>
+                    ？
+                  </span>
+                ))}
               </div>
             )}
           </div>
