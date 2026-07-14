@@ -23,7 +23,7 @@ const INNATE_KEY = "innate";
 const TICK_MS = 500;
 const EFFECT_DURATION_MS = 300;
 const WILD_ATTACK_TELEGRAPH_MS = 2000;
-const THROW_DURATION_MS = 500;
+const THROW_DURATION_MS = 2000;
 const OUTCOME_PAUSE_MS = 500;
 const OUTCOME_FADE_MS = 700;
 const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
@@ -170,11 +170,18 @@ const Battle = () => {
       if (option.isHealer) {
         healProtagonist(option.healAmount);
         triggerPlayerEffect("heal");
-      } else {
+      } else if (option.key === INNATE_KEY) {
         damageWild(ATTACK_DAMAGE);
         triggerPlayerEffect("attack");
         triggerEnemyEffect("hit");
-        if (option.key !== INNATE_KEY) triggerThrow(option.icon);
+      } else {
+        // The hit only lands once the thrown monster actually arrives.
+        triggerPlayerEffect("attack");
+        triggerThrow(option.icon);
+        setTimeout(() => {
+          damageWild(ATTACK_DAMAGE);
+          triggerEnemyEffect("hit");
+        }, THROW_DURATION_MS);
       }
       setCooldown(option.key, now + ATTACK_COOLDOWN_MS);
     },

@@ -164,7 +164,7 @@
   height: calc(48px * var(--scale));
   object-fit: contain;
   pointer-events: none;
-  animation: throw-arc 500ms ease-in forwards;
+  animation: throw-arc 2000ms ease-out forwards;
 }
 
 @keyframes throw-arc {
@@ -177,13 +177,13 @@
   50% {
     left: 45%;
     top: 15%;
-    transform: translate(-50%, -50%) rotate(360deg) scale(0.8);
+    transform: translate(-50%, -50%) rotate(180deg) scale(0.8);
   }
 
   100% {
     left: 88%;
     top: 45%;
-    transform: translate(-50%, -50%) rotate(720deg) scale(0.3);
+    transform: translate(-50%, -50%) rotate(360deg) scale(0.3);
   }
 }
 
