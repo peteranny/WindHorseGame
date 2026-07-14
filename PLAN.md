@@ -2,7 +2,7 @@
 
 ## Core Concept
 
-A maze navigation game where the player explores a map and encounters **40 pocket monsters**. Each monster must be challenged and captured. The game is cleared when all 40 are captured.
+A maze navigation game where the player explores a map and encounters **39 pocket monsters** plus one **goal tile** (39 + 1 = 40, a nod to "40 years of life"). Each monster must be challenged and captured; the goal tile leads into a closing conversation once they all are. The game is cleared when all 39 monsters are captured.
 
 ## Structure
 
@@ -13,16 +13,18 @@ A maze navigation game where the player explores a map and encounters **40 pocke
 - An **uncaptured** monster cell acts like a wall — it blocks movement and must be challenged before the player can pass through
 - A **captured** monster's cell becomes a road — it is permanently passable and the monster no longer appears there
 - Tapping a monster cell from a distance (clear straight-line path) walks the player up to the adjacent cell, same as approaching any other obstacle; tapping it again once already adjacent turns the player's sprite to face the monster (no move happens, so facing wouldn't otherwise update) and triggers the conversation system, then the challenge
+- Tapping a cell whose straight-line path is blocked partway (by a wall, an uncaptured monster, or the goal tile) — not just the obstacle itself — still walks the player as far as that path actually allows, stopping just short of the first thing blocking it, rather than refusing the move outright
+- The map's single `'F'` cell is the **goal tile** — it works exactly like a monster for movement (blocks like a wall, walk-up-then-tap), but leads into a conversation instead of a battle: a hint nudging the player to finish the roster first if fewer than all 39 monsters are captured, or a short closing conversation once they are
 - The player's map sprite tracks the direction of their last move: moving left/right uses `wind-1.png` (flipped horizontally to face right, mirrored back for left), while moving up/down swaps in a dedicated back-facing or front-facing sprite instead of flipping
 - Every sprite on the map (the player, and each uncaptured monster) renders a small soft-edged ellipse shadow under its feet, for a bit of ground contact/depth
 - Every captured monster trails behind the player on the main map (not the mini-map) as a raw, un-decorated icon (no background/border), most-recently-captured closest — like ducklings following their mother, purely for visual flavor, and each mirrored to match the player's own current facing direction (monster icon art is natively left-facing, the opposite convention from the player's own right-facing sprite, so the two mirror on opposite conditions). Rather than one slot per grid cell (which reads as jumpy, blocky steps), followers sit at fine, evenly-spaced points resampled directly along the actual pixel path the player walked (not persisted, reset every session), packed close enough together that most of even a large captured roster stays visible on screen at once instead of trailing off past the edge. The closest follower sits half a cell behind the player (falling back to the player's own cell if that spot turns out to be a wall or an uncaptured monster, before there's an actual walked path to place it on instead); every one after that is spaced much tighter, keeping the line itself compact. The whole trail always renders behind (lower z-index than) both the player's own sprite and the dialog panel below the map
-- A corner **mini-map** shows the whole grid at a glance (player position, uncaptured monsters) — but only for cells the player has actually walked past; unexplored cells render as fog until then, revealing progressively as the player explores (not just the destination of each move, but every cell along the way, since a single tap can slide through several cells at once). The fogged/revealed state persists like the rest of the save data. The main map view itself is never fogged — only the mini-map is. The player's own dot pulses with a looping radar-ping ring (an expanding, fading circle) so it stays visually distinct from the monster/road dots at that scale
+- A corner **mini-map** shows the whole grid at a glance — but only for cells the player has actually walked past; unexplored cells render as fog until then, revealing progressively as the player explores (not just the destination of each move, but every cell along the way, since a single tap can slide through several cells at once). The fogged/revealed state persists like the rest of the save data. The main map view itself is never fogged — only the mini-map is. Every uncaptured monster and the goal tile are exceptions: they act as beacons that punch through the fog regardless of whether that area's been explored, since finding the actual path there on foot is the point, not knowing it exists. The player's own dot pulses with a looping radar-ping ring (an expanding, fading circle) so it stays visually distinct from the monster/goal/road dots at that scale
 
 ### Monster Data
 
-**Decision:** the 40 monster definitions are sourced from a separate personal project, `/Users/peteranny/Documents/WindHorseNote/src/models/creatures/index.json`. Its contents (and each entry's `icon` image) are **copied** into this app, not moved/referenced in place.
+**Decision:** the 39 monster definitions are sourced from a separate personal project, `/Users/peteranny/Documents/WindHorseNote/src/models/creatures/index.json`. Its contents (and each entry's `icon` image) are **copied** into this app, not moved/referenced in place.
 
-- The source file has 39 entries; all 39 are used, plus 1 placeholder monster to reach exactly 40
+- The source file has 39 entries; all 39 are used as-is — no placeholder needed, since the goal tile is the 40th "year"
 - Each entry's `family` (`wind` or `horse`) is carried over as flavor text only — no gameplay effect, both families are equally capturable
 - Only the `icon` illustration is used in-game (map marker, battle sprite, dialog portrait) — the `descriptionImage` photo is not used
 - Monster order/index follows the source file's existing order; the "one monster per year of life" framing is narrative flavor, not a literal date mapping
@@ -54,7 +56,7 @@ Conversation progress isn't persisted, so re-entering an uncaptured monster's ce
 
 The battle screen shows the protagonist on the left and the wild monster on the right, each paired with its own name/HP bar (protagonist's above its sprite, wild monster's below its sprite) — never crossed with the other side's. The protagonist's sprite is noticeably larger than the wild monster's, anchored from the top of the battlefield (so it always clears its own info box regardless of viewport height) and hangs low enough to be partly covered by the button row below it, mimicking a "closer to the camera" perspective — the enemy, by contrast, is smaller and fully clear of the panel. The battlefield half of the screen is flexible height; the button row below it — one per captured monster (most-recently-captured first), plus the protagonist's own innate attack, used to attack — is a single horizontally-scrolling row rather than a wrapping/vertically-scrolling grid, so it never grows taller as the roster grows (up to 41 buttons). A white-out gradient with a gently nudging chevron appears on whichever side(s) still have more buttons scrolled out of view, based on actual scroll position, and disappears once there's nothing more that way. Each button is a fixed size regardless of cooldown state, sized to just fit the icon plus a label capped at 2 lines (clipped beyond that) with no excess space below — a dimmed overlay hangs down from the top of the button while it's on cooldown, its height tracking the remaining fraction of the cooldown (full button covered right after use, shrinking back up to nothing as it becomes ready again), rather than a numeric countdown. Attacking plays a brief lunge toward the opponent; being hit plays a knocked-down stumble (rotate away from the attacker + drop) rather than a plain shake; healing plays a glow on the protagonist instead — all simple CSS keyframe animations so actions read clearly in real time. Attacking with a captured monster (not the innate attack, "小風溥儀", which has nothing to throw) also sends that monster's icon arcing from the player's side to the wild monster's, spinning and shrinking from near to far, like it's being thrown; the innate attack instead shoots a water drop straight across. Throwing several different captured monsters in quick succession runs each one's arc independently to completion rather than the latest throw cutting off the previous one's animation. Either way, the hit (damage + the enemy's hit reaction) only lands once its animation actually arrives, not the instant the button is pressed. In the last 2 seconds before the wild monster's next automatic attack, wiggling "？" marks appear over its sprite one at a time as the countdown runs out (all 3 visible only in the final stretch, doubling as a timer) — a nod to every monster's placeholder dialogue being "？？？".
 
-- There are **40 monsters**, each associated with a node on the map
+- There are **39 monsters**, each associated with a node on the map
 - Battles are **real-time, not turn-based** — there are no turns to pass; both sides act on their own clocks:
   - The protagonist has an **innate base attack**, always available (not tied to captured monsters), so the very first battle — before anything is captured — is still winnable. It deals the same flat damage and has the same cooldown as a regular monster attack (see below)
   - The player can tap any of their captured monsters (or the innate attack) to attack at any time, but each needs a **1-minute real-world cooldown** afterward before it can attack again
@@ -79,7 +81,7 @@ There is no separate monster index screen — the duckling trail on the main map
 
 ### Win Condition
 
-The game is cleared when all 40 monsters are captured.
+The game is cleared when all 39 monsters are captured; visiting the map's goal tile (`'F'` in `map.txt`) afterward plays a short closing conversation acknowledging it — visiting it before then instead plays a hint nudging the player to go finish the roster first.
 
 ## Game State
 
@@ -117,7 +119,7 @@ Unit tests are required for the two core systems to ensure robustness as the gam
 ### Scoring / capture system
 - Capturing a monster records it correctly with a timestamp
 - Capturing the same monster twice does not duplicate it
-- Win condition triggers correctly when all 40 monsters are captured
+- Win condition triggers correctly when all 39 monsters are captured
 - State serialises and deserialises correctly
 
 ### Conversation system
@@ -130,5 +132,4 @@ Test framework TBD (likely Jest, given the React/webpack stack).
 
 ## Open Questions
 
-- Placeholder content (name, description, icon) for the 40th monster, since the source data only has 39
-- Conversation script content for each of the 40 monsters (still needs writing, one file per monster)
+- The goal tile's asset and conversation content are a first draft too (like the 39 monsters') and may want revisiting

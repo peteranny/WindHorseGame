@@ -6,11 +6,11 @@ A browser-based maze/monster-capture game built with React, TypeScript, and webp
 
 ## What it does
 
-The player navigates a 2D grid maze from a top-down perspective by clicking cells, in straight lines only (no diagonals, no jumping over walls). The maze holds 40 monster nodes; an uncaptured monster blocks its cell like a wall. Tapping one from a distance walks the player up to it; walking directly adjacent to one starts a short conversation, which transitions into a real-time battle — the player attacks with their already-captured monsters (each on its own cooldown) until the wild monster's HP hits 0 (captured) or the player's HP hits 0 (returned to the map, monster stays uncaptured, retryable anytime). The game is "won" when all 40 are captured. Captured monsters and their capture dates are viewable in an in-game index.
+The player navigates a 2D grid maze from a top-down perspective by clicking cells, in straight lines only (no diagonals, no jumping over walls). The maze holds 39 monster nodes plus one goal tile (39 + 1 = 40, a nod to the "40 years of life" framing); an uncaptured monster (or the goal) blocks its cell like a wall. Tapping one from a distance walks the player up to it; walking directly adjacent to a monster starts a short conversation, which transitions into a real-time battle — the player attacks with their already-captured monsters (each on its own cooldown) until the wild monster's HP hits 0 (captured) or the player's HP hits 0 (returned to the map, monster stays uncaptured, retryable anytime). The goal tile leads into a conversation instead, gated on whether all 39 monsters are captured yet. Every captured monster trails behind the player on the map as a small "duckling train."
 
 ## Current state
 
-Core loop is implemented end-to-end: map traversal, capture-gated blocking, conversation, real-time battle, persistence, and a monster index. Content is a first draft, not final: the 40 monster definitions and their conversation scripts were bulk-generated from source material and are meant to be hand-revisited (see `PLAN.md`'s Open Questions).
+Core loop is implemented end-to-end: map traversal, capture-gated blocking, conversation, real-time battle, and persistence. Content is a first draft, not final: the 39 monster definitions and their conversation scripts were bulk-generated from source material and are meant to be hand-revisited (see `PLAN.md`'s Open Questions).
 
 ## App structure
 
@@ -23,9 +23,12 @@ src/
     App.tsx             # Router shell: "/" -> Game, "/settings" -> Settings.
     Game/                # The main screen: wires MouseContext, Screen, Maze, Dialog, Battle.
     Screen/              # Full-viewport container div. Sets base font-size via calc(13pt * var(--scale)).
-    Maze/                 # Core game logic. Grid rendering, click-to-move, monster blocking/markers, player sprite.
-                          # compileMap.ts/monsterPositions.ts are shared with MiniMap. exploration.ts computes
-                          # which cells a move traverses and merges them into the persisted explored-cells set.
+    Maze/                 # Core game logic. Grid rendering, click-to-move, monster/goal blocking/markers, player sprite.
+                          # compileMap.ts/monsterPositions.ts are shared with MiniMap. goalPosition.ts finds the
+                          # map's single 'F' goal tile. exploration.ts: computeTraversedCells/revealCells for fog
+                          # of war, cellBeforeTarget (the cell just before an obstacle) and findStoppingPoint (walks
+                          # a tapped straight-line move as far as it actually can, stopping short of whatever
+                          # blocks it first instead of refusing the whole move).
                           # followerTrail.ts: pure helpers behind the trailing captured-monster followers - an
                           # ephemeral (non-persisted) cell-by-cell history of the player's own path, and
                           # resamplePath, which turns that into fine, evenly-spaced pixel points to render at.
@@ -33,37 +36,43 @@ src/
                           # paginateText.ts splits a page's full text into <=2-line, DOM-measured
                           # chunks (joined with "..."); useTypewriter.ts types out the current chunk.
     Battle/               # Full-screen real-time battle UI (replaces Maze/Dialog while mode === "battle").
-    MiniMap/              # Small corner overview of the whole map: player position and uncaptured monsters.
-                          # Unexplored cells render as fog until walked past (see "Fog of war" below).
+    MiniMap/              # Small corner overview of the whole map: player position, uncaptured monsters, and
+                          # the goal tile - the latter two always visible as beacons even through unexplored fog.
     StateKeyGate/         # Blocks rendering until the save-state key is set and state is hydrated.
     Settings/             # /settings route: view/change the save-state key.
   data/
     monsters/
-      monsters.generated.json  # The 40 monster definitions (name, description, family, icon as base64 data URI,
-                                # isHealer/healAmount). Sourced from a separate WindHorseNote project's creatures
-                                # data (copied, not referenced live) plus 1 placeholder.
-      types.ts, monsters.ts    # Monster type and the typed loader over the generated JSON.
-      captureLogic.ts          # Pure captureMonster/isFullyCaptured helpers (used by gameStore).
+      monsters.generated.json  # The 39 monster definitions (name, description, family, isHealer/healAmount -
+                                # no icon field, see icons/ below). Sourced from a separate WindHorseNote
+                                # project's creatures data (copied, not referenced live) plus 1 placeholder.
+      icons/<id>.png            # One real image file per monster (39 are .png; the placeholder monster's
+                                # (id 39) is .svg) - types.ts, monsters.ts imports every one by id and merges
+                                # it into the metadata from the JSON above to build the final Monster[].
+      types.ts, monsters.ts    # Monster type and the typed loader that merges monsters.generated.json with icons/.
+      captureLogic.ts          # Pure captureMonster/isFullyCaptured helpers (used by gameStore and the goal tile).
       battleFormulas.ts        # computeWildMaxHp and the battle constants (cooldown, damage, HP, tick rate).
     conversations/
       <id>.json           # One file per monster (id = its index/position in monsters.generated.json), a plain
                            # array of {speaker, text, action?} pages - linear, no branching.
+      goalHint.json, goalFinal.json  # The map's 'F' goal tile's two conversations - hint (shown until all 39
+                           # are captured) and final (shown after), picked in ConversationView via isFullyCaptured.
       engine.ts            # Pure parseConversation/isTerminalPage/nextPageIndex/terminalAction helpers, plus
                            # buildOutcomeConversation for the post-battle win/lose/escape recap.
-      index.ts              # Imports all 40 files, runs each through parseConversation, keyed by monster id.
+      index.ts              # Imports all 39 monster files (parsed, keyed by id) plus the two goal conversations.
   store/
     gameStore.ts          # Zustand store: position, facing, captured, cooldowns - the persisted slice (see below).
-    flowStore.ts          # Zustand store: mode ("map"|"conversation"|"battle"), activeMonsterId, battle HP -
-                           # ephemeral, never persisted.
+    flowStore.ts          # Zustand store: mode ("map"|"conversation"|"battle"), activeMonsterId, isGoalEncounter,
+                           # battle HP, devBattleShortcutsEnabled - all ephemeral, never persisted.
     persistence.ts        # localStorage (per-key) + google.script.run read/write helpers, plus the pure
                            # resolveHydratedState local-vs-remote merge decision.
     remoteSync.ts          # createRemoteSync: DI'd retry controller for not-yet-synced remote writes.
     types.ts              # PersistedGameState shape.
   assets/
-    playerSprite.generated.ts  # wind-1.png (flipped to face right) embedded as a base64 data URI - the
-                               # protagonist's left/right map sprite, and its only battle sprite.
-    playerSpriteFront.generated.ts  # Dedicated front-facing map sprite, used while moving down.
-    playerSpriteBack.generated.ts   # Dedicated back-facing map sprite, used while moving up.
+    playerSprite.png            # wind-1.png flipped to face right - the protagonist's left/right map sprite,
+                                # and its only battle sprite.
+    playerSpriteFront.png       # Dedicated front-facing map sprite, used while moving down.
+    playerSpriteBack.png        # Dedicated back-facing map sprite, used while moving up.
+    goalSprite.png              # The map's 'F' goal tile's sprite.
   contexts/
     MouseContext.ts       # Provides global mouse position to the tree.
   hooks/
@@ -74,7 +83,7 @@ gas/
   index.html              # Production build output — inlined React bundle, generated by npm run build.
 ```
 
-Everything the deployed app needs (including all monster icons and the player sprite) ships inlined in one JS bundle as base64 data URIs — the GAS web app only serves a single HTML file, there's no separate static asset serving.
+Every image in the repo (all 39 monster icons, the goal sprite, the player's 3 map sprites) is a real `.png` file, imported normally in code - webpack's `url-loader` (see `webpack.config.js`, `test: /\.(png|svg)$/` - `.svg` supported too even though nothing currently uses it) always inlines them as base64 data URIs at build time regardless of size, so the final deployed app still ships as one self-contained JS bundle - the GAS web app only serves a single HTML file, there's no separate static asset serving.
 
 ### Global scale
 
@@ -94,15 +103,21 @@ Remote saves go through `store/remoteSync.ts`'s `createRemoteSync` — a small c
 
 ### Fog of war (mini-map)
 
-`gameStore.exploredCells` is a `Record<"x,y", true>` (see `components/Maze/exploration.ts` for the `cellKey`/`computeTraversedCells`/`revealCells` helpers), persisted like everything else. Every `goto` move — including the multi-cell slides this game already supports, not just single steps — reveals every cell along the traversed line, not merely the destination. `MiniMap` renders any cell missing from this set as solid fog regardless of what's actually there (wall/road/monster), so the overview fills in only as the player actually walks past that area; the player's own current cell is always shown regardless. Only `MiniMap` respects fog — the main `Maze` view always shows everything.
+`gameStore.exploredCells` is a `Record<"x,y", true>` (see `components/Maze/exploration.ts` for the `cellKey`/`computeTraversedCells`/`revealCells` helpers), persisted like everything else. Every `goto` move — including the multi-cell slides this game already supports, not just single steps — reveals every cell along the traversed line, not merely the destination. `MiniMap` renders any cell missing from this set as solid fog regardless of what's actually there (wall/road), so the overview fills in only as the player actually walks past that area; the player's own current cell is always shown regardless. Every uncaptured monster and the goal tile are exceptions - they punch through the fog as beacons so the player always knows *something* is there, even in unexplored territory, since finding the actual path there on foot is the point. Only `MiniMap` respects fog — the main `Maze` view always shows everything.
 
 ### Monster blocking, capture
 
-`Maze` scans `map.txt` top-to-bottom/left-to-right; the *n*th `M` it finds is `MONSTERS[n]`. An uncaptured monster cell blocks movement like a wall — it's still a valid tap target from anywhere along a clear straight line, but `goto` only starts the encounter (`flowStore.startEncounter`) when the player is already adjacent; tapping it from further away instead walks the player up to the cell just before it, same as approaching any other obstacle. A captured monster's cell is just a normal road from then on. Every monster can be challenged at any time — there's no unlock condition or time window of any kind.
+`Maze` scans `map.txt` top-to-bottom/left-to-right; the *n*th `M` it finds is `MONSTERS[n]`. An uncaptured monster cell blocks movement like a wall — it's still a valid tap target from anywhere along a clear straight line, but `goto` only starts the encounter (`flowStore.startEncounter`) when the player is already adjacent; tapping it from further away instead walks the player up to the cell just before it, same as approaching any other obstacle. Tapping any cell whose straight-line path is blocked partway (by a wall, an uncaptured monster, or the goal) - not just the obstacle itself - now walks the player as far as `findStoppingPoint` (`exploration.ts`) says is actually reachable, stopping just short of the first blocker, rather than refusing the move outright. A captured monster's cell is just a normal road from then on. Every monster can be challenged at any time — there's no unlock condition or time window of any kind.
+
+### The goal tile
+
+The map's single `'F'` cell (found via `Maze/goalPosition.ts`'s `findGoalCell`) works like a monster for movement purposes — blocks like a wall, walk-up-then-tap same as above — but leads into a conversation instead of a battle (`flowStore.startGoalEncounter`, a separate ephemeral flag from `activeMonsterId` since there's no specific monster involved). `ConversationView` picks between `GOAL_HINT_CONVERSATION` (not all 39 captured yet) and `GOAL_FINAL_CONVERSATION` (`captureLogic.isFullyCaptured`), rendering the goal's own sprite/name in place of a monster's for any `"monster"`-speaker page. Its map icon mirrors to face the player the same way a monster's does while its conversation is active.
 
 ### Conversation -> Battle flow
 
-Walking into a monster shows its portrait conversation (`Dialog`/`ConversationView`) — linear pages alternating between the protagonist (小風) and the monster, tap to advance. While a page is being typed out, `ConversationView` writes the current speaker into `flowStore.talkingSpeaker` ("protagonist" | "monster" | null); `Maze` reads that to play a small looping "jump" animation on the actual map sprite that's talking (the player's sprite, or the active monster's icon) rather than animating the dialog's own portrait image. The terminal page's `enter_challenge` action computes the wild monster's max HP from the player's current capture count (`computeWildMaxHp`) and switches `flowStore.mode` to `"battle"`, which swaps `Maze`/`Dialog` out for the full-screen `Battle` component. Battles are real-time: the protagonist (left, HP above its sprite) and the wild monster (right, HP below its sprite) each show their own name/HP paired only with their own sprite; the player can tap any captured monster (plus their own innate attack) to deal 1 damage, each on an independent 1-minute cooldown persisted in `gameStore`; the wild monster automatically deals 1 damage every 10 seconds; healer monsters (~5% of the roster) restore HP instead of dealing damage; an escape button leaves the battle at any time with the same outcome as losing. Attacking/being-hit/healing each trigger a brief CSS animation (lunge, knocked-down stumble, or glow respectively) on the relevant sprite via `flowStore`-adjacent local component state, not persisted. However the battle ends — win (`flowStore.concludeBattle("win")`), lose, or escape — `mode` returns to `"conversation"` with `battleOutcome` set, so `ConversationView` shows a short generated reaction (`buildOutcomeConversation`) before actually dropping back to the map (`endEncounter`, which also clears `battleOutcome`).
+Walking into a monster shows its portrait conversation (`Dialog`/`ConversationView`) — linear pages alternating between the protagonist (小風) and the monster, tap to advance. While a page is being typed out, `ConversationView` writes the current speaker into `flowStore.talkingSpeaker` ("protagonist" | "monster" | null); `Maze` reads that to play a small looping "jump" animation on the actual map sprite that's talking (the player's sprite, or the active monster's icon) rather than animating the dialog's own portrait image. The terminal page's `enter_challenge` action computes the wild monster's max HP from the player's current capture count (`computeWildMaxHp`) and switches `flowStore.mode` to `"battle"`, which swaps `Maze`/`Dialog` out for the full-screen `Battle` component. Battles are real-time: the protagonist (left, HP above its sprite) and the wild monster (right, HP below its sprite) each show their own name/HP paired only with their own sprite; the player can tap any captured monster (plus their own innate attack) to deal 1 damage, each on an independent 1-minute cooldown persisted in `gameStore`; the wild monster automatically deals 1 damage every 10 seconds; healer monsters (~5% of the roster) restore HP instead of dealing damage; an escape button leaves the battle at any time with the same outcome as losing. Attacking/being-hit/healing each trigger a brief CSS animation (lunge, knocked-down stumble, or glow respectively) on the relevant sprite via `flowStore`-adjacent local component state, not persisted. However the battle ends — win (`flowStore.concludeBattle("win")`), lose, or escape — `mode` returns to `"conversation"` with `battleOutcome` set, so `ConversationView` shows a short generated reaction (`buildOutcomeConversation`) before actually dropping back to the map (`endEncounter`, which also clears `battleOutcome`). A win only actually calls `captureMonster` once the post-battle pause+fade finishes (not the instant HP hits 0), so the just-defeated monster doesn't show up in the attack grid while its own defeat is still playing out.
+
+Settings has a dev-only toggle (`flowStore.devBattleShortcutsEnabled`, visible only under the `"peteranny"` save key) that adds "Capture"/"Lose" buttons to `Battle` - each just deals lethal damage through the normal `damageWild`/`damageProtagonist` path, so they behave exactly like a real killing blow (capture, fade, outcome conversation, all included) rather than a separate force-win code path.
 
 ### Deploy date label
 
