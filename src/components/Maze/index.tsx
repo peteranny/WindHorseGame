@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 import SCALE from "../../scale";
@@ -9,9 +9,17 @@ import MONSTERS from "../../data/monsters/monsters";
 import { CELL_TYPE, compileMap } from "./compileMap";
 import { computeMonsterIds } from "./monsterPositions";
 import { computeTraversedCells } from "./exploration";
+import {
+  distributeFollowers,
+  extendTrail,
+  orderByMostRecentlyCaptured,
+} from "./followerTrail";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 
 const CELL_SIZE = 100 * SCALE;
+// How many trailing "duckling" waypoints follow the player, not counting
+// the player's own current cell (see the `trail` state below).
+const MAX_TRAIL_WAYPOINTS = 8;
 
 interface MazeProps {
   center: [number, number];
@@ -28,6 +36,11 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
   const talkingSpeaker = useFlowStore((state) => state.talkingSpeaker);
   const startEncounter = useFlowStore((state) => state.startEncounter);
+
+  // Ephemeral (not persisted) history of the player's own cell, most recent
+  // first - used purely to lay out the trailing captured-monster followers,
+  // which reset every session same as any other transient UI state.
+  const [trail, setTrail] = useState<Array<[number, number]>>(() => [[x, y]]);
 
   const isPassable = useCallback(
     (r: number, c: number): boolean => {
@@ -83,11 +96,15 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
         } else {
           revealCells(computeTraversedCells(x, y, stepC, stepR));
           setPosition(stepC, stepR);
+          setTrail((current) =>
+            extendTrail(current, stepC, stepR, MAX_TRAIL_WAYPOINTS + 1)
+          );
         }
         return;
       }
       revealCells(computeTraversedCells(x, y, c, r));
       setPosition(c, r);
+      setTrail((current) => extendTrail(current, c, r, MAX_TRAIL_WAYPOINTS + 1));
     },
     [
       flowMode,
@@ -100,6 +117,16 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
       x,
       y,
     ]
+  );
+
+  // The current cell is trail[0]; everything after it is a spot the player
+  // has since moved away from, so those are what the trailing followers
+  // render at (closest/most-recent first).
+  const waypoints = trail.slice(1);
+  const followerGroups = useMemo(
+    () =>
+      distributeFollowers(orderByMostRecentlyCaptured(captured), waypoints.length),
+    [captured, waypoints.length]
   );
   const centerRect = {
     left: x * CELL_SIZE,
@@ -163,6 +190,32 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
           })}
         </div>
       ))}
+      <div className={styles.followerTrail}>
+        {followerGroups.map((group, i) => {
+          const [wx, wy] = waypoints[i];
+          return (
+            <div
+              key={i}
+              className={styles.followerWaypoint}
+              style={{
+                left: wx * CELL_SIZE,
+                top: wy * CELL_SIZE,
+                width: CELL_SIZE,
+                height: CELL_SIZE,
+              }}
+            >
+              {group.map((id) => (
+                <img
+                  key={id}
+                  src={MONSTERS[id].icon}
+                  alt={MONSTERS[id].name}
+                  className={styles.followerIcon}
+                />
+              ))}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

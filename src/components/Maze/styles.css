@@ -107,3 +107,29 @@
   position: relative;
   transition: left 0.3s, top 0.3s;
 }
+
+.followerTrail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.followerWaypoint {
+  position: absolute;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  transition: left 0.3s, top 0.3s;
+}
+
+.followerIcon {
+  width: 32%;
+  height: 32%;
+  object-fit: contain;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  border-radius: 50%;
+  margin: -4%;
+}
