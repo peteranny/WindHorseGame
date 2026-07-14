@@ -26,6 +26,7 @@ const state = (timestamp: number): PersistedGameState => ({
   facing: "left",
   captured: {},
   cooldowns: {},
+  exploredCells: {},
   timestamp,
 });
 

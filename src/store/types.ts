@@ -5,5 +5,6 @@ export interface PersistedGameState {
   facing: Facing;
   captured: Record<number, string>;
   cooldowns: Record<string, number>;
+  exploredCells: Record<string, true>;
   timestamp: number;
 }

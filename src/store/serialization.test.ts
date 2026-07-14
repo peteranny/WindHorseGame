@@ -7,6 +7,7 @@ describe("PersistedGameState JSON round-trip", () => {
       facing: "right",
       captured: { 0: "2024-01-01T00:00:00.000Z", 12: "2024-03-05T00:00:00.000Z" },
       cooldowns: { innate: 1700000000000, 12: 1700000060000 },
+      exploredCells: { "4,7": true, "3,7": true },
       timestamp: 1700000000000,
     };
 
@@ -15,5 +16,6 @@ describe("PersistedGameState JSON round-trip", () => {
     expect(roundTripped).toEqual(state);
     expect(roundTripped.captured[12]).toBe("2024-03-05T00:00:00.000Z");
     expect(roundTripped.cooldowns.innate).toBe(1700000000000);
+    expect(roundTripped.exploredCells["4,7"]).toBe(true);
   });
 });

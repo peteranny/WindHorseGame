@@ -11,6 +11,7 @@ import {
 import { createRemoteSync } from "./remoteSync";
 import { Facing, PersistedGameState } from "./types";
 import { captureMonster as captureMonsterPure } from "../data/monsters/captureLogic";
+import { revealCells as revealCellsPure } from "../components/Maze/exploration";
 
 const DEFAULT_POSITION: [number, number] = [2, 1];
 const DEFAULT_FACING: Facing = "left";
@@ -24,10 +25,12 @@ interface GameState {
   facing: Facing;
   captured: Record<number, string>;
   cooldowns: Record<string, number>;
+  exploredCells: Record<string, true>;
   setStateKey: (key: string) => Promise<void>;
   setPosition: (x: number, y: number) => void;
   captureMonster: (monsterId: number, capturedAt?: string) => void;
   setCooldown: (key: string, availableAt: number) => void;
+  revealCells: (cells: Array<[number, number]>) => void;
   hydrate: () => Promise<void>;
 }
 
@@ -36,6 +39,7 @@ const toPersisted = (state: GameState): PersistedGameState => ({
   facing: state.facing,
   captured: state.captured,
   cooldowns: state.cooldowns,
+  exploredCells: state.exploredCells,
   timestamp: Date.now(),
 });
 
@@ -71,6 +75,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   facing: DEFAULT_FACING,
   captured: {},
   cooldowns: {},
+  exploredCells: {},
 
   setStateKey: (key) => {
     // Switching save slots abandons any not-yet-synced write for the old
@@ -104,17 +109,30 @@ export const useGameStore = create<GameState>((set, get) => ({
     scheduleSave();
   },
 
+  revealCells: (cells) => {
+    set((state) => ({
+      exploredCells: revealCellsPure(state.exploredCells, cells),
+    }));
+    scheduleSave();
+  },
+
   hydrate: () => {
     const key = get().stateKey;
     const local = key ? getLocalSnapshot(key) : null;
     return (key ? loadRemoteState(key) : Promise.resolve(null)).then(
       (remote) => {
         const winner = resolveHydratedState(local, remote);
+        const position = winner?.position ?? DEFAULT_POSITION;
         set({
-          position: winner?.position ?? DEFAULT_POSITION,
+          position,
           facing: winner?.facing ?? DEFAULT_FACING,
           captured: winner?.captured ?? {},
           cooldowns: winner?.cooldowns ?? {},
+          // The player's starting/restored cell is always explored, even on
+          // a brand new save with nothing explored yet.
+          exploredCells: revealCellsPure(winner?.exploredCells ?? {}, [
+            position,
+          ]),
           hydrated: true,
         });
       }

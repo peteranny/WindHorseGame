@@ -32,7 +32,11 @@
   }
 
   &.player {
-    background: #ffd400;
+    background: #adc7dc;
     border-radius: 50%;
+  }
+
+  &.fog {
+    background: rgba(0, 0, 0, 0.85);
   }
 }

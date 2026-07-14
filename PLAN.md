@@ -15,6 +15,7 @@ A maze navigation game where the player explores a map and encounters **40 pocke
 - Tapping a monster cell from a distance (clear straight-line path) walks the player up to the adjacent cell, same as approaching any other obstacle; tapping it again once already adjacent triggers the conversation system, then the challenge
 - The player's map sprite is copied from `wind-1.png`, flipped horizontally to face right — mirrored again (back to facing left) when moving left, so it always faces its direction of travel
 - Every sprite on the map (the player, and each uncaptured monster) renders a small soft-edged ellipse shadow under its feet, for a bit of ground contact/depth
+- A corner **mini-map** shows the whole grid at a glance (player position, uncaptured monsters) — but only for cells the player has actually walked past; unexplored cells render as fog until then, revealing progressively as the player explores (not just the destination of each move, but every cell along the way, since a single tap can slide through several cells at once). The fogged/revealed state persists like the rest of the save data. The main map view itself is never fogged — only the mini-map is
 
 ### Monster Data
 
@@ -88,6 +89,7 @@ The game is cleared when all 40 monsters are captured.
 - Player map coordinate
 - List of captured monsters with their capture dates
 - Each captured monster's attack cooldown, plus the protagonist's innate-attack cooldown (next time each is available to attack again)
+- Which map cells have been explored, for the mini-map's fog of war
 - Any other core business logic state (TBD)
 
 ### What the state excludes (not persisted)

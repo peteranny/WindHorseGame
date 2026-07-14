@@ -24,13 +24,15 @@ src/
     Game/                # The main screen: wires MouseContext, Screen, Maze, Dialog, MonsterIndex, Battle.
     Screen/              # Full-viewport container div. Sets base font-size via calc(13pt * var(--scale)).
     Maze/                 # Core game logic. Grid rendering, click-to-move, monster blocking/markers, player sprite.
-                          # compileMap.ts/monsterPositions.ts are shared with MiniMap.
+                          # compileMap.ts/monsterPositions.ts are shared with MiniMap. exploration.ts computes
+                          # which cells a move traverses and merges them into the persisted explored-cells set.
     Dialog/               # Bottom panel; renders ConversationView while a conversation is active.
                           # paginateText.ts splits a page's full text into <=2-line, DOM-measured
                           # chunks (joined with "..."); useTypewriter.ts types out the current chunk.
     Battle/               # Full-screen real-time battle UI (replaces Maze/Dialog while mode === "battle").
     MonsterIndex/         # On-screen button + modal listing captured monsters and capture dates.
     MiniMap/              # Small corner overview of the whole map: player position and uncaptured monsters.
+                          # Unexplored cells render as fog until walked past (see "Fog of war" below).
     StateKeyGate/         # Blocks rendering until the save-state key is set and state is hydrated.
     Settings/             # /settings route: view/change the save-state key.
   data/
@@ -80,11 +82,15 @@ To make the UI bigger or smaller, change only `SCALE` in `scale.ts`.
 
 ### Game state & persistence
 
-The persisted slice (`store/gameStore.ts`) holds only: player map coordinate, the sprite's last facing direction (`"left"` | `"right"`, updated automatically by `setPosition` based on which way x moved), captured monsters (id -> ISO capture date), and per-attack cooldowns (monster id, or `"innate"` for the protagonist's own attack -> next-available timestamp in ms). Everything else — conversation progress, in-battle HP, which page/screen is showing — lives in the ephemeral `store/flowStore.ts` and is never persisted, so a reload mid-conversation or mid-battle just drops back to the map with no side effects (cooldowns already spent still apply).
+The persisted slice (`store/gameStore.ts`) holds only: player map coordinate, the sprite's last facing direction (`"left"` | `"right"`, updated automatically by `setPosition` based on which way x moved), captured monsters (id -> ISO capture date), per-attack cooldowns (monster id, or `"innate"` for the protagonist's own attack -> next-available timestamp in ms), and explored cells (see "Fog of war" below). Everything else — conversation progress, in-battle HP, which page/screen is showing — lives in the ephemeral `store/flowStore.ts` and is never persisted, so a reload mid-conversation or mid-battle just drops back to the map with no side effects (cooldowns already spent still apply).
 
 On first launch (or whenever no key is stored), `StateKeyGate` blocks rendering: in local dev it silently assigns `"local-dev"`; in the deployed GAS environment it prompts the player for a save-state key. The key is stored in `localStorage` and used to look up/save a single JSON blob (position + captured + cooldowns + a timestamp), both to `localStorage` (for instant reload) and to the Google Sheet (via `google.script.run`, guarded by `typeof google !== "undefined"` so local dev is unaffected). The local cache is itself scoped per state key (`gameState:<key>`, not a single shared slot) — critical for `/settings`: changing the key calls `hydrate()` for the *new* key, and since its local cache starts genuinely empty (or reflects only what this device has saved under that specific key before), a fresh remote snapshot is never crowded out by another key's stale local data. Within the same key, `resolveHydratedState` (`store/persistence.ts`) picks whichever of local/remote has the newer timestamp.
 
 Remote saves go through `store/remoteSync.ts`'s `createRemoteSync` — a small controller (DI'd with the actual `saveRemoteState` call) that tracks at most one not-yet-synced write at a time. A failed save (offline, GAS error, etc.) is never retried in a busy-loop; it just stays pending until something external asks again — `gameStore` wires that up via the browser's `online` event plus a 30s fallback timer, so a write made while offline reaches the Sheet once connectivity returns, without the player having to do anything. A newer write always supersedes an older still-pending/in-flight one. Switching state keys (`setStateKey`) calls `clearPending()` first, so an unsynced write for the *old* key doesn't linger and get retried against the wrong slot — it's still safely cached in that old key's local storage, just not pushed further until the player switches back and changes something again.
+
+### Fog of war (mini-map)
+
+`gameStore.exploredCells` is a `Record<"x,y", true>` (see `components/Maze/exploration.ts` for the `cellKey`/`computeTraversedCells`/`revealCells` helpers), persisted like everything else. Every `goto` move — including the multi-cell slides this game already supports, not just single steps — reveals every cell along the traversed line, not merely the destination. `MiniMap` renders any cell missing from this set as solid fog regardless of what's actually there (wall/road/monster), so the overview fills in only as the player actually walks past that area; the player's own current cell is always shown regardless. Only `MiniMap` respects fog — the main `Maze` view always shows everything.
 
 ### Monster blocking, capture
 

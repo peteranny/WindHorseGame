@@ -8,6 +8,7 @@ import { useFlowStore } from "../../store/flowStore";
 import MONSTERS from "../../data/monsters/monsters";
 import { CELL_TYPE, compileMap } from "./compileMap";
 import { computeMonsterIds } from "./monsterPositions";
+import { computeTraversedCells } from "./exploration";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 
 const CELL_SIZE = 100 * SCALE;
@@ -21,6 +22,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const monsterIds = useMemo(() => computeMonsterIds(map), [map]);
   const [x, y] = useGameStore((state) => state.position);
   const setPosition = useGameStore((state) => state.setPosition);
+  const revealCells = useGameStore((state) => state.revealCells);
   const captured = useGameStore((state) => state.captured);
   const flowMode = useFlowStore((state) => state.mode);
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
@@ -79,10 +81,12 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
         if (stepR === y && stepC === x) {
           startEncounter(monsterId);
         } else {
+          revealCells(computeTraversedCells(x, y, stepC, stepR));
           setPosition(stepC, stepR);
         }
         return;
       }
+      revealCells(computeTraversedCells(x, y, c, r));
       setPosition(c, r);
     },
     [
@@ -92,6 +96,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
       captured,
       startEncounter,
       setPosition,
+      revealCells,
       x,
       y,
     ]
