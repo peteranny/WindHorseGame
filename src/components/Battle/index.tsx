@@ -65,21 +65,23 @@ const useSpriteEffect = (): [SpriteEffect, (effect: SpriteEffect) => void] => {
   return [effect, trigger];
 };
 
-// A captured monster being thrown at the wild monster (the innate fist
-// attack has nothing to throw, so it never uses this). Keyed by an
-// incrementing id so re-throwing the same icon before the previous throw
-// finishes still remounts the element and restarts its CSS animation.
-const useThrowEffect = (): [ThrowEffect | null, (icon: string) => void] => {
-  const [effect, setEffect] = useState<ThrowEffect | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+// Every captured monster currently mid-throw at the wild monster (the
+// innate fist attack has nothing to throw, so it never uses this). Each
+// throw gets its own id and its own timeout that removes only itself, so
+// throwing a second monster before the first one lands doesn't cut the
+// first one's animation short - they each run to completion independently.
+const useThrowEffect = (): [ThrowEffect[], (icon: string) => void] => {
+  const [effects, setEffects] = useState<ThrowEffect[]>([]);
   const nextIdRef = useRef(0);
   const trigger = useCallback((icon: string) => {
     nextIdRef.current += 1;
-    setEffect({ id: nextIdRef.current, icon });
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => setEffect(null), THROW_DURATION_MS);
+    const id = nextIdRef.current;
+    setEffects((current) => [...current, { id, icon }]);
+    setTimeout(() => {
+      setEffects((current) => current.filter((effect) => effect.id !== id));
+    }, THROW_DURATION_MS);
   }, []);
-  return [effect, trigger];
+  return [effects, trigger];
 };
 
 // The innate attack's water-drop spit, shot straight from the player to the
@@ -114,7 +116,7 @@ const Battle = () => {
 
   const [playerEffect, triggerPlayerEffect] = useSpriteEffect();
   const [enemyEffect, triggerEnemyEffect] = useSpriteEffect();
-  const [throwEffect, triggerThrow] = useThrowEffect();
+  const [throwEffects, triggerThrow] = useThrowEffect();
   const [spitEffect, triggerSpit] = useSpitEffect();
   const [pendingOutcome, setPendingOutcome] = useState<PendingOutcome>(null);
 
@@ -280,15 +282,15 @@ const Battle = () => {
             <HpBar hp={wildHp} maxHp={wildMaxHp} />
           </div>
         </div>
-        {throwEffect && (
+        {throwEffects.map((effect) => (
           <img
-            key={throwEffect.id}
-            src={throwEffect.icon}
+            key={effect.id}
+            src={effect.icon}
             alt=""
             aria-hidden="true"
             className={styles.thrownIcon}
           />
-        )}
+        ))}
         {spitEffect !== null && (
           <span key={spitEffect} className={styles.spitDrop} aria-hidden="true">
             💧
