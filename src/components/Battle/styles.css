@@ -64,10 +64,11 @@
  * top instead means the sprite reliably starts below the info box and
  * simply extends however far down that leaves it, naturally spilling under
  * the action bar (a sibling of .battlefield, not a descendant) on most
- * screens - which, painting later in DOM order, covers the overlapping
- * part. That partial overlap plus the larger size reads as "closer to the
- * camera" than the enemy, like the player's own side in a classic RPG
- * battle screen.
+ * screens - which covers the overlapping part (see .actionBar's `position`,
+ * needed so it actually paints above this absolutely-positioned sprite
+ * instead of losing to it by default stacking rules). That partial overlap
+ * plus the larger size reads as "closer to the camera" than the enemy, like
+ * the player's own side in a classic RPG battle screen.
  */
 .playerSprite {
   position: absolute;
@@ -181,6 +182,13 @@
 }
 
 .actionBar {
+  /*
+   * Positioned (with auto z-index) purely so normal tree order decides
+   * stacking against .playerSprite - otherwise that absolutely-positioned
+   * sprite would paint above this non-positioned bar regardless of which
+   * one comes later in the DOM.
+   */
+  position: relative;
   flex-shrink: 0;
   max-height: 40%;
   background: white;
