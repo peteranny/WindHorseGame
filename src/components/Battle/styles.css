@@ -113,7 +113,7 @@
   }
 
   40% {
-    transform: translateY(calc(12px * var(--scale))) rotate(20deg);
+    transform: translateY(calc(12px * var(--scale))) rotate(-20deg);
   }
 
   100% {
@@ -127,7 +127,7 @@
   }
 
   40% {
-    transform: translateY(calc(12px * var(--scale))) rotate(-20deg);
+    transform: translateY(calc(12px * var(--scale))) rotate(20deg);
   }
 
   100% {
