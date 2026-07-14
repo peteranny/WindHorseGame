@@ -21,7 +21,7 @@ src/
   globals.d.ts          # __DEPLOY_DATE__, the google.script.run (GAS) surface, and *.css/*.txt module typings.
   components/
     App.tsx             # Router shell: "/" -> Game, "/settings" -> Settings.
-    Game/                # The main screen: wires MouseContext, Screen, Maze, Dialog, MonsterIndex, Battle.
+    Game/                # The main screen: wires MouseContext, Screen, Maze, Dialog, Battle.
     Screen/              # Full-viewport container div. Sets base font-size via calc(13pt * var(--scale)).
     Maze/                 # Core game logic. Grid rendering, click-to-move, monster blocking/markers, player sprite.
                           # compileMap.ts/monsterPositions.ts are shared with MiniMap. exploration.ts computes
@@ -33,7 +33,6 @@ src/
                           # paginateText.ts splits a page's full text into <=2-line, DOM-measured
                           # chunks (joined with "..."); useTypewriter.ts types out the current chunk.
     Battle/               # Full-screen real-time battle UI (replaces Maze/Dialog while mode === "battle").
-    MonsterIndex/         # On-screen button + modal listing captured monsters and capture dates.
     MiniMap/              # Small corner overview of the whole map: player position and uncaptured monsters.
                           # Unexplored cells render as fog until walked past (see "Fog of war" below).
     StateKeyGate/         # Blocks rendering until the save-state key is set and state is hydrated.
