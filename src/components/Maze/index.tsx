@@ -10,16 +10,21 @@ import { CELL_TYPE, compileMap } from "./compileMap";
 import { computeMonsterIds } from "./monsterPositions";
 import { computeTraversedCells } from "./exploration";
 import {
-  distributeFollowers,
   extendTrail,
   orderByMostRecentlyCaptured,
+  resamplePath,
 } from "./followerTrail";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 
 const CELL_SIZE = 100 * SCALE;
-// How many trailing "duckling" waypoints follow the player, not counting
-// the player's own current cell (see the `trail` state below).
-const MAX_TRAIL_WAYPOINTS = 8;
+// How many cells of the player's own walked path to remember - only needs
+// to be long enough to resample every captured monster's follower point
+// from (see FOLLOWER_SPACING below), with generous headroom.
+const PATH_HISTORY_CELLS = 200;
+// Pixel distance between consecutive trailing followers - deliberately much
+// smaller than a full cell so the "duckling" line is a compact, continuous
+// trail along the actual walked path, not one clump per grid cell.
+const FOLLOWER_SPACING = 20 * SCALE;
 
 interface MazeProps {
   center: [number, number];
@@ -29,6 +34,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const map = useMemo(() => compileMap(simpleMap), []);
   const monsterIds = useMemo(() => computeMonsterIds(map), [map]);
   const [x, y] = useGameStore((state) => state.position);
+  const facing = useGameStore((state) => state.facing);
   const setPosition = useGameStore((state) => state.setPosition);
   const revealCells = useGameStore((state) => state.revealCells);
   const captured = useGameStore((state) => state.captured);
@@ -97,14 +103,14 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
           revealCells(computeTraversedCells(x, y, stepC, stepR));
           setPosition(stepC, stepR);
           setTrail((current) =>
-            extendTrail(current, stepC, stepR, MAX_TRAIL_WAYPOINTS + 1)
+            extendTrail(current, stepC, stepR, PATH_HISTORY_CELLS)
           );
         }
         return;
       }
       revealCells(computeTraversedCells(x, y, c, r));
       setPosition(c, r);
-      setTrail((current) => extendTrail(current, c, r, MAX_TRAIL_WAYPOINTS + 1));
+      setTrail((current) => extendTrail(current, c, r, PATH_HISTORY_CELLS));
     },
     [
       flowMode,
@@ -119,14 +125,16 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
     ]
   );
 
-  // The current cell is trail[0]; everything after it is a spot the player
-  // has since moved away from, so those are what the trailing followers
-  // render at (closest/most-recent first).
-  const waypoints = trail.slice(1);
-  const followerGroups = useMemo(
-    () =>
-      distributeFollowers(orderByMostRecentlyCaptured(captured), waypoints.length),
-    [captured, waypoints.length]
+  const orderedFollowerIds = useMemo(
+    () => orderByMostRecentlyCaptured(captured),
+    [captured]
+  );
+  // Fine-grained points along the player's actual walked path, nearest
+  // first - one per follower, however many that turns out to be, rather
+  // than grouping several into shared per-cell slots.
+  const followerPoints = useMemo(
+    () => resamplePath(trail, CELL_SIZE, FOLLOWER_SPACING, orderedFollowerIds.length),
+    [trail, orderedFollowerIds.length]
   );
   const centerRect = {
     left: x * CELL_SIZE,
@@ -191,28 +199,26 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
         </div>
       ))}
       <div className={styles.followerTrail}>
-        {followerGroups.map((group, i) => {
-          const [wx, wy] = waypoints[i];
+        {orderedFollowerIds.map((id, i) => {
+          const [px, py] =
+            followerPoints.length > 0
+              ? followerPoints[Math.min(i, followerPoints.length - 1)]
+              : [x * CELL_SIZE + CELL_SIZE / 2, y * CELL_SIZE + CELL_SIZE / 2];
           return (
-            <div
-              key={i}
-              className={styles.followerWaypoint}
-              style={{
-                left: wx * CELL_SIZE,
-                top: wy * CELL_SIZE,
-                width: CELL_SIZE,
-                height: CELL_SIZE,
-              }}
-            >
-              {group.map((id) => (
-                <img
-                  key={id}
-                  src={MONSTERS[id].icon}
-                  alt={MONSTERS[id].name}
-                  className={styles.followerIcon}
-                />
-              ))}
-            </div>
+            <img
+              key={id}
+              src={MONSTERS[id].icon}
+              alt={MONSTERS[id].name}
+              className={styles.followerIcon}
+              style={
+                {
+                  left: px,
+                  top: py,
+                  zIndex: orderedFollowerIds.length - i,
+                  "--facing-scale": facing === "left" ? -1 : 1,
+                } as React.CSSProperties
+              }
+            />
           );
         })}
       </div>

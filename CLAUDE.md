@@ -27,8 +27,8 @@ src/
                           # compileMap.ts/monsterPositions.ts are shared with MiniMap. exploration.ts computes
                           # which cells a move traverses and merges them into the persisted explored-cells set.
                           # followerTrail.ts: pure helpers behind the trailing captured-monster followers - an
-                          # ephemeral (non-persisted) waypoint history of the player's own cell, and the packing
-                          # of all captured monsters across however many waypoints exist.
+                          # ephemeral (non-persisted) cell-by-cell history of the player's own path, and
+                          # resamplePath, which turns that into fine, evenly-spaced pixel points to render at.
     Dialog/               # Bottom panel; renders ConversationView while a conversation is active.
                           # paginateText.ts splits a page's full text into <=2-line, DOM-measured
                           # chunks (joined with "..."); useTypewriter.ts types out the current chunk.

@@ -1,47 +1,8 @@
 import {
-  distributeFollowers,
   extendTrail,
   orderByMostRecentlyCaptured,
+  resamplePath,
 } from "./followerTrail";
-
-describe("distributeFollowers", () => {
-  it("returns one item per group when there's room for all of them", () => {
-    expect(distributeFollowers([1, 2, 3], 8)).toEqual([[1], [2], [3]]);
-  });
-
-  it("packs items evenly across the available groups when there are more items than groups", () => {
-    const items = Array.from({ length: 13 }, (_, i) => i);
-    const groups = distributeFollowers(items, 8);
-    expect(groups.length).toBeLessThanOrEqual(8);
-    expect(groups.flat()).toEqual(items);
-    // ceil(13/8) = 2 per group
-    expect(groups[0]).toEqual([0, 1]);
-    expect(groups[groups.length - 1].length).toBeLessThanOrEqual(2);
-  });
-
-  it("keeps the front groups closest to the front of the input order", () => {
-    const groups = distributeFollowers(["a", "b", "c", "d"], 2);
-    expect(groups).toEqual([
-      ["a", "b"],
-      ["c", "d"],
-    ]);
-  });
-
-  it("returns an empty array when there are no items", () => {
-    expect(distributeFollowers([], 8)).toEqual([]);
-  });
-
-  it("returns an empty array when there are no groups to fill", () => {
-    expect(distributeFollowers([1, 2], 0)).toEqual([]);
-  });
-
-  it("never produces more groups than requested, however many items there are", () => {
-    const items = Array.from({ length: 40 }, (_, i) => i);
-    const groups = distributeFollowers(items, 8);
-    expect(groups.length).toBe(8);
-    expect(groups.flat()).toEqual(items);
-  });
-});
 
 describe("orderByMostRecentlyCaptured", () => {
   it("orders monster ids from most to least recently captured", () => {
@@ -100,5 +61,61 @@ describe("extendTrail", () => {
 
   it("starts from the destination when the trail is empty", () => {
     expect(extendTrail([], 4, 4, 10)).toEqual([[4, 4]]);
+  });
+});
+
+describe("resamplePath", () => {
+  it("samples fine, evenly-spaced points along the path, nearest first", () => {
+    const cellPath: Array<[number, number]> = [
+      [10, 0],
+      [9, 0],
+      [8, 0],
+      [7, 0],
+      [6, 0],
+    ];
+    expect(resamplePath(cellPath, 100, 40, 5)).toEqual([
+      [1010, 50],
+      [970, 50],
+      [930, 50],
+      [890, 50],
+      [850, 50],
+    ]);
+  });
+
+  it("samples along vertical movement the same way", () => {
+    const cellPath: Array<[number, number]> = [
+      [0, 3],
+      [0, 2],
+      [0, 1],
+      [0, 0],
+    ];
+    expect(resamplePath(cellPath, 100, 60, 3)).toEqual([
+      [50, 290],
+      [50, 230],
+      [50, 170],
+    ]);
+  });
+
+  it("returns fewer than count points when the walked path isn't long enough", () => {
+    const cellPath: Array<[number, number]> = [
+      [2, 0],
+      [1, 0],
+      [0, 0],
+    ];
+    const result = resamplePath(cellPath, 100, 150, 5);
+    expect(result).toEqual([[100, 50]]);
+  });
+
+  it("returns an empty array when the player hasn't moved yet", () => {
+    expect(resamplePath([[5, 5]], 100, 40, 5)).toEqual([]);
+  });
+
+  it("returns an empty array for a non-positive spacing or count", () => {
+    const cellPath: Array<[number, number]> = [
+      [1, 0],
+      [0, 0],
+    ];
+    expect(resamplePath(cellPath, 100, 0, 5)).toEqual([]);
+    expect(resamplePath(cellPath, 100, 40, 0)).toEqual([]);
   });
 });
