@@ -48,8 +48,8 @@ const Game = () => {
                     aria-label="設定"
                     style={{
                       position: "absolute",
-                      top: "calc(8px * var(--scale))",
-                      right: "calc(8px * var(--scale))",
+                      top: "calc(2px * var(--scale))",
+                      right: "calc(2px * var(--scale))",
                       fontSize: "calc(18pt * var(--scale))",
                       lineHeight: 1,
                       padding: "calc(4px * var(--scale))",
