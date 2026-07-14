@@ -45,21 +45,21 @@ const Game = () => {
                   <MiniMap />
                   <Link
                     to="/settings"
+                    aria-label="設定"
                     style={{
                       position: "absolute",
                       top: "calc(8px * var(--scale))",
                       right: "calc(8px * var(--scale))",
-                      fontSize: "inherit",
-                      padding:
-                        "calc(6px * var(--scale)) calc(12px * var(--scale))",
-                      border: "2px solid black",
-                      borderRadius: "4px",
-                      background: "white",
+                      fontSize: "calc(18pt * var(--scale))",
+                      lineHeight: 1,
+                      padding: "calc(4px * var(--scale))",
+                      background: "transparent",
                       color: "black",
+                      opacity: 0.4,
                       textDecoration: "none",
                     }}
                   >
-                    設定
+                    ⚙
                   </Link>
                 </div>
                 <Dialog />
