@@ -219,6 +219,7 @@
 }
 
 .attackButton {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -256,10 +257,16 @@
   text-align: center;
 }
 
-.cooldownLabel {
-  flex-shrink: 0;
+.cooldownBadge {
+  position: absolute;
+  top: calc(4px * var(--scale));
+  right: calc(4px * var(--scale));
   height: calc(14px * var(--scale));
-  line-height: calc(14px * var(--scale));
-  font-size: calc(9pt * var(--scale));
+  line-height: calc(12px * var(--scale));
+  padding: 0 calc(3px * var(--scale));
+  border: 1px solid black;
+  border-radius: calc(7px * var(--scale));
+  background: white;
+  font-size: calc(7pt * var(--scale));
   color: #888;
 }
