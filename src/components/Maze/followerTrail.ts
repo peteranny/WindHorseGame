@@ -37,21 +37,28 @@ export const extendTrail = (
 // slot per grid cell, letting a compact, tightly-packed line show most of
 // even a large captured roster within view. Returns at most `count` points,
 // nearest to the player first; fewer are returned if the walked path so far
-// isn't long enough to fill them all.
+// isn't long enough to fill them all. The first point sits `initialGap`
+// from the player (defaulting to `spacing` if omitted) - every point after
+// that is `spacing` further along, so the two can differ, e.g. to open up
+// a bigger gap between the player and the closest follower without also
+// spreading the rest of the line out.
 export const resamplePath = (
   cellPath: Array<[number, number]>,
   cellSize: number,
   spacing: number,
-  count: number
+  count: number,
+  initialGap: number = spacing
 ): Array<[number, number]> => {
-  if (cellPath.length < 2 || spacing <= 0 || count <= 0) return [];
+  if (cellPath.length < 2 || spacing <= 0 || count <= 0 || initialGap <= 0) {
+    return [];
+  }
   const toPixel = ([cx, cy]: [number, number]): [number, number] => [
     cx * cellSize + cellSize / 2,
     cy * cellSize + cellSize / 2,
   ];
   const points: Array<[number, number]> = [];
   let cumulative = 0;
-  let nextTarget = spacing;
+  let nextTarget = initialGap;
   for (let i = 0; i < cellPath.length - 1 && points.length < count; i++) {
     const [startX, startY] = toPixel(cellPath[i]);
     const [endX, endY] = toPixel(cellPath[i + 1]);

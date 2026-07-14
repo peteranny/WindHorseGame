@@ -96,6 +96,21 @@ describe("resamplePath", () => {
     ]);
   });
 
+  it("uses a distinct initial gap for the first point only", () => {
+    const cellPath: Array<[number, number]> = [
+      [10, 0],
+      [9, 0],
+      [8, 0],
+      [7, 0],
+      [6, 0],
+    ];
+    expect(resamplePath(cellPath, 100, 40, 3, 150)).toEqual([
+      [900, 50],
+      [860, 50],
+      [820, 50],
+    ]);
+  });
+
   it("returns fewer than count points when the walked path isn't long enough", () => {
     const cellPath: Array<[number, number]> = [
       [2, 0],

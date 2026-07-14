@@ -4,6 +4,14 @@
 
 .pin {
   position: absolute;
+
+  /*
+   * Higher than any .followerIcon can reach (their z-index is at most the
+   * captured count, well under 1000) - without this, a follower with an
+   * explicit positive z-index would paint above the player despite .pin
+   * coming later in the DOM, since explicit z-index always outranks auto.
+   */
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -133,11 +133,36 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   );
   // Fine-grained points along the player's actual walked path, nearest
   // first - one per follower, however many that turns out to be, rather
-  // than grouping several into shared per-cell slots.
+  // than grouping several into shared per-cell slots. The closest follower
+  // sits half a cell from the player; every one after that is the tighter
+  // FOLLOWER_SPACING further along, keeping the line itself compact.
   const followerPoints = useMemo(
-    () => resamplePath(trail, CELL_SIZE, FOLLOWER_SPACING, orderedFollowerIds.length),
+    () =>
+      resamplePath(
+        trail,
+        CELL_SIZE,
+        FOLLOWER_SPACING,
+        orderedFollowerIds.length,
+        CELL_SIZE / 2
+      ),
     [trail, orderedFollowerIds.length]
   );
+  // Before the player has taken a single step this session, the path isn't
+  // long enough to resample from at all - fall back to half a cell behind
+  // the player (opposite their facing), consistent with where the closest
+  // follower sits once there's an actual path to place it on.
+  const cellCenter: [number, number] = [
+    x * CELL_SIZE + CELL_SIZE / 2,
+    y * CELL_SIZE + CELL_SIZE / 2,
+  ];
+  const fallbackFollowerPoint: [number, number] =
+    facing === "right"
+      ? [cellCenter[0] - CELL_SIZE / 2, cellCenter[1]]
+      : facing === "left"
+      ? [cellCenter[0] + CELL_SIZE / 2, cellCenter[1]]
+      : facing === "down"
+      ? [cellCenter[0], cellCenter[1] - CELL_SIZE / 2]
+      : [cellCenter[0], cellCenter[1] + CELL_SIZE / 2];
   const centerRect = {
     left: x * CELL_SIZE,
     top: y * CELL_SIZE,
@@ -205,7 +230,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
           const [px, py] =
             followerPoints.length > 0
               ? followerPoints[Math.min(i, followerPoints.length - 1)]
-              : [x * CELL_SIZE + CELL_SIZE / 2, y * CELL_SIZE + CELL_SIZE / 2];
+              : fallbackFollowerPoint;
           return (
             <img
               key={id}
@@ -217,7 +242,9 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                   left: px,
                   top: py,
                   zIndex: orderedFollowerIds.length - i,
-                  "--facing-scale": facing === "left" ? -1 : 1,
+                  // Unlike the player's own sprite, monster icon art is
+                  // natively left-facing, so it's "right" that needs the flip.
+                  "--facing-scale": facing === "right" ? -1 : 1,
                 } as React.CSSProperties
               }
             />
