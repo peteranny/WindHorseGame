@@ -169,7 +169,7 @@
   height: calc(48px * var(--scale));
   object-fit: contain;
   pointer-events: none;
-  animation: throw-arc 2000ms ease-out forwards;
+  animation: throw-arc 1000ms ease-out forwards;
 }
 
 @keyframes throw-arc {
@@ -225,27 +225,34 @@
 /*
  * The innate attack's water-drop spit - a straight shot rather than the
  * captured-monsters' thrown arc, since there's nothing being "thrown" here.
+ * Starts at .playerSprite's exact center (left:0 + width/2, top's fixed
+ * offset + height/2 - see .playerSprite, which is positioned in the same
+ * fixed px*scale units rather than percentages). rotate(-90deg) turns the
+ * glyph's naturally-pointed top away from the direction of travel, so its
+ * rounded bottom leads toward the wild monster instead.
  */
 .spitDrop {
   position: absolute;
-  top: 45%;
-  left: 10%;
+  top: calc(152px * var(--scale));
+  left: calc(80px * var(--scale));
   font-size: calc(20pt * var(--scale));
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) rotate(-90deg);
   pointer-events: none;
   animation: spit-shoot 500ms ease-in forwards;
 }
 
 @keyframes spit-shoot {
   0% {
-    left: 10%;
-    transform: translate(-50%, -50%) scale(1);
+    left: calc(80px * var(--scale));
+    top: calc(152px * var(--scale));
+    transform: translate(-50%, -50%) rotate(-90deg) scale(1);
     opacity: 1;
   }
 
   100% {
     left: 85%;
-    transform: translate(-50%, -50%) scale(0.6);
+    top: 45%;
+    transform: translate(-50%, -50%) rotate(-90deg) scale(0.6);
     opacity: 0.9;
   }
 }
