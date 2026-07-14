@@ -24,8 +24,12 @@ const TICK_MS = 500;
 const EFFECT_DURATION_MS = 300;
 const WILD_ATTACK_TELEGRAPH_MS = 2000;
 const THROW_DURATION_MS = 500;
+const OUTCOME_PAUSE_MS = 500;
+const OUTCOME_FADE_MS = 700;
+const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 
 type SpriteEffect = "attack" | "hit" | "heal" | null;
+type PendingOutcome = "win" | "lose" | null;
 
 interface AttackOption {
   key: string;
@@ -95,13 +99,14 @@ const Battle = () => {
   const [playerEffect, triggerPlayerEffect] = useSpriteEffect();
   const [enemyEffect, triggerEnemyEffect] = useSpriteEffect();
   const [throwEffect, triggerThrow] = useThrowEffect();
+  const [pendingOutcome, setPendingOutcome] = useState<PendingOutcome>(null);
 
   const [, forceTick] = useReducer((n: number) => n + 1, 0);
   const nextWildAttackAtRef = useRef(Date.now() + WILD_ATTACK_INTERVAL_MS);
 
   useEffect(() => {
     const id = setInterval(() => {
-      if (Date.now() >= nextWildAttackAtRef.current) {
+      if (pendingOutcome === null && Date.now() >= nextWildAttackAtRef.current) {
         damageProtagonist(WILD_ATTACK_DAMAGE);
         triggerEnemyEffect("attack");
         triggerPlayerEffect("hit");
@@ -110,17 +115,26 @@ const Battle = () => {
       forceTick();
     }, TICK_MS);
     return () => clearInterval(id);
-  }, [damageProtagonist, triggerEnemyEffect, triggerPlayerEffect]);
+  }, [pendingOutcome, damageProtagonist, triggerEnemyEffect, triggerPlayerEffect]);
 
+  // Defeat pauses on the battlefield with a fade overlay before actually
+  // leaving - concludeBattle (which swaps this whole screen out) only
+  // fires once that fade has had time to play.
   useEffect(() => {
-    if (activeMonsterId === null) return;
+    if (activeMonsterId === null || pendingOutcome !== null) return;
     if (wildHp <= 0) {
       captureMonster(activeMonsterId);
-      concludeBattle("win");
+      setPendingOutcome("win");
     } else if (protagonistHp <= 0) {
-      concludeBattle("lose");
+      setPendingOutcome("lose");
     }
-  }, [activeMonsterId, wildHp, protagonistHp, captureMonster, concludeBattle]);
+  }, [activeMonsterId, wildHp, protagonistHp, captureMonster, pendingOutcome]);
+
+  useEffect(() => {
+    if (pendingOutcome === null) return;
+    const id = setTimeout(() => concludeBattle(pendingOutcome), OUTCOME_TOTAL_MS);
+    return () => clearTimeout(id);
+  }, [pendingOutcome, concludeBattle]);
 
   const attackOptions: AttackOption[] = useMemo(() => {
     const options: AttackOption[] = [
@@ -150,6 +164,7 @@ const Battle = () => {
 
   const handleAttack = useCallback(
     (option: AttackOption) => {
+      if (pendingOutcome !== null) return;
       const now = Date.now();
       if ((cooldowns[option.key] ?? 0) > now) return;
       if (option.isHealer) {
@@ -164,6 +179,7 @@ const Battle = () => {
       setCooldown(option.key, now + ATTACK_COOLDOWN_MS);
     },
     [
+      pendingOutcome,
       cooldowns,
       healProtagonist,
       damageWild,
@@ -278,11 +294,20 @@ const Battle = () => {
         <button
           type="button"
           className={styles.escapeButton}
+          disabled={pendingOutcome !== null}
           onClick={() => concludeBattle("escape")}
         >
           逃跑
         </button>
       </div>
+      {pendingOutcome !== null && (
+        <div
+          className={cn(
+            styles.outcomeFade,
+            styles[`outcomeFade${capitalize(pendingOutcome)}`]
+          )}
+        />
+      )}
     </div>
   );
 };

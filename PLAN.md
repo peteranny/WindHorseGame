@@ -67,6 +67,7 @@ The battle screen shows the protagonist on the left and the wild monster on the 
 - There's no unlock condition or time window of any kind — every monster can be challenged at any time, and re-challenged as many times as needed after a loss or escape
 - Successfully defeating a monster **captures it** and records the capture date
 - Losing a challenge simply returns the player to the map — the monster stays uncaptured and can be retried immediately
+- A win or a loss (not an escape, which is instant) pauses briefly on the battlefield - attacking and escaping are disabled - then fades the whole battle screen out (to white for a win, to black for a loss) before actually leaving, so the defeated state has a moment to land instead of the screen just switching away
 - However a battle ends — win, lose, or escape — a short one-line conversation (小風 reacting: "太好了，成功抓到...", "小風被...打倒了...", "先撤退好了...") plays before dropping back to the map, so the outcome is acknowledged rather than just silently returning
 
 ### Monster Index

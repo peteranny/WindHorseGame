@@ -9,6 +9,39 @@
   background: skyblue;
 }
 
+/*
+ * Sits on top of the whole battle screen once the fight is decided - a
+ * brief pause at 0 opacity lets the defeated state actually be seen before
+ * the fade to white (win) or black (lose) covers it, right before
+ * concludeBattle swaps this screen out (see Battle/index.tsx's timing).
+ */
+.outcomeFade {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  animation: outcome-fade-out 1200ms ease-in forwards;
+}
+
+.outcomeFadeWin {
+  background: white;
+}
+
+.outcomeFadeLose {
+  background: black;
+}
+
+@keyframes outcome-fade-out {
+  0%,
+  42% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
 .battlefield {
   position: relative;
   flex: 1;
