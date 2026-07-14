@@ -44,6 +44,16 @@ module.exports = {
       { test: /\.tsx?$/, exclude: /node_modules/, use: ["babel-loader"] },
       { test: /\.txt$/, use: "raw-loader" },
       {
+        // Always inlined as a base64 data URI, regardless of size - the
+        // deployed app is a single HTML file (see gas/Code.js's doGet),
+        // so there's no separate host to serve image files from.
+        test: /\.(png|svg)$/,
+        use: {
+          loader: "url-loader",
+          options: { limit: Number.MAX_SAFE_INTEGER },
+        },
+      },
+      {
         test: /.css$/,
         use: [
           "style-loader",

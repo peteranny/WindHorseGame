@@ -9,7 +9,7 @@ XXM  XXXX   XX   XX   M     X
 XXXXXXXXX X XXXX XXXXXXXXXX X
 X    M    X   M   X    M    X
 XX XX XXX XXXX XXXXMXXXXX XXX
-XX XX  M  XXXX   M  XX  M  XX
+XX XX  M  XXXX   M XXX  M  XX
 X  M XXXXXXXXXXXXXXXXXXX M  X
 X   M   M       M      MX   X
 X XXXXXXXXXXXXXXXXXXXXX XXX X
@@ -19,7 +19,7 @@ X X        M           X M  X
 X XXXXXXXXXXXXXX M X   X M  X
 X X   X  M     X   X M X    X
 X X X X XXXXXX X M X   X    X
-X X X X X    X X   X M X    X
+X X X X X    X X   X   X    X
 X X X X X X  X X  X M X     X
 X X X X X X  X X  XXXXXXXXX X
 X X X X X X FX XXM    M     X
