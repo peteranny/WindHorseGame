@@ -1,6 +1,6 @@
 .miniMap {
   position: absolute;
-  right: 8px;
+  left: 8px;
   bottom: 8px;
   display: flex;
   flex-direction: column;
