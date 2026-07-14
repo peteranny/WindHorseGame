@@ -455,16 +455,16 @@
 }
 
 /*
- * Anchored to the bottom of the button, height set inline to the
- * cooldown's remaining percentage - so it covers the whole button right
- * after use and shrinks back down from the top as the cooldown runs out,
- * rather than showing a numeric countdown.
+ * Anchored to the top of the button, height set inline to the cooldown's
+ * remaining percentage - so it covers the whole button right after use
+ * and shrinks back up from the bottom as the cooldown runs out, rather
+ * than showing a numeric countdown.
  */
 .cooldownOverlay {
   position: absolute;
+  top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
   background: rgba(0, 0, 0, 0.55);
   pointer-events: none;
   transition: height 0.2s linear;
