@@ -3,7 +3,10 @@ import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
 import MONSTERS from "../../data/monsters/monsters";
-import CONVERSATIONS from "../../data/conversations";
+import CONVERSATIONS, {
+  GOAL_FINAL_CONVERSATION,
+  GOAL_HINT_CONVERSATION,
+} from "../../data/conversations";
 import {
   buildOutcomeConversation,
   isTerminalPage,
@@ -11,21 +14,24 @@ import {
   terminalAction,
 } from "../../data/conversations/engine";
 import { computeWildMaxHp } from "../../data/monsters/battleFormulas";
-import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
+import { isFullyCaptured } from "../../data/monsters/captureLogic";
+import PLAYER_SPRITE from "../../assets/playerSprite.png";
+import GOAL_SPRITE from "../../assets/goalSprite.png";
 import { paginateText } from "./paginateText";
 import { useTypewriter } from "./useTypewriter";
 
 const MAX_LINES_PER_PAGE = 2;
+const GOAL_NAME = "大風大馬";
 
 const ConversationView = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
+  const isGoalEncounter = useFlowStore((state) => state.isGoalEncounter);
   const battleOutcome = useFlowStore((state) => state.battleOutcome);
   const enterBattle = useFlowStore((state) => state.enterBattle);
   const endEncounter = useFlowStore((state) => state.endEncounter);
   const setTalkingSpeaker = useFlowStore((state) => state.setTalkingSpeaker);
-  const capturedCount = useGameStore(
-    (state) => Object.keys(state.captured).length
-  );
+  const captured = useGameStore((state) => state.captured);
+  const capturedCount = Object.keys(captured).length;
   const [pageIndex, setPageIndex] = useState(0);
   const [subPageIndex, setSubPageIndex] = useState(0);
   const [textChunks, setTextChunks] = useState<string[]>([""]);
@@ -33,14 +39,17 @@ const ConversationView = () => {
 
   useEffect(() => {
     setPageIndex(0);
-  }, [activeMonsterId, battleOutcome]);
+  }, [activeMonsterId, isGoalEncounter, battleOutcome]);
 
-  const pages =
-    activeMonsterId === null
-      ? []
-      : battleOutcome !== null
-      ? buildOutcomeConversation(MONSTERS[activeMonsterId].name, battleOutcome)
-      : CONVERSATIONS[activeMonsterId];
+  const pages = isGoalEncounter
+    ? isFullyCaptured(captured, MONSTERS.length)
+      ? GOAL_FINAL_CONVERSATION
+      : GOAL_HINT_CONVERSATION
+    : activeMonsterId === null
+    ? []
+    : battleOutcome !== null
+    ? buildOutcomeConversation(MONSTERS[activeMonsterId].name, battleOutcome)
+    : CONVERSATIONS[activeMonsterId];
   const page = pages[pageIndex];
 
   // Re-paginate the current page's full text to fit the dialog box whenever the
@@ -60,7 +69,7 @@ const ConversationView = () => {
       })
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeMonsterId, battleOutcome, pageIndex]);
+  }, [activeMonsterId, isGoalEncounter, battleOutcome, pageIndex]);
 
   const isLastSubPage = subPageIndex === textChunks.length - 1;
   const [displayedText, isTypingDone, completeTyping] = useTypewriter(
@@ -76,8 +85,8 @@ const ConversationView = () => {
     setTalkingSpeaker(isTypingDone ? null : currentSpeaker);
   }, [currentSpeaker, isTypingDone, setTalkingSpeaker]);
 
-  if (activeMonsterId === null || !page) return null;
-  const monster = MONSTERS[activeMonsterId];
+  if ((!isGoalEncounter && activeMonsterId === null) || !page) return null;
+  const monster = activeMonsterId !== null ? MONSTERS[activeMonsterId] : null;
 
   const advance = (): void => {
     if (!isTypingDone) {
@@ -99,8 +108,18 @@ const ConversationView = () => {
     setPageIndex((i) => nextPageIndex(pages, i));
   };
 
-  const portrait = page.speaker === "monster" ? monster.icon : PLAYER_SPRITE;
-  const speakerName = page.speaker === "monster" ? monster.name : "小風";
+  const portrait =
+    page.speaker === "monster"
+      ? isGoalEncounter
+        ? GOAL_SPRITE
+        : monster!.icon
+      : PLAYER_SPRITE;
+  const speakerName =
+    page.speaker === "monster"
+      ? isGoalEncounter
+        ? GOAL_NAME
+        : monster!.name
+      : "小風";
 
   return (
     <div className={styles.conversation} onClick={advance}>

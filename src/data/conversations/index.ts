@@ -1,6 +1,9 @@
 import { Conversation } from "./types";
 import { parseConversation } from "./engine";
 
+import goalHint from "./goalHint.json";
+import goalFinal from "./goalFinal.json";
+
 import c0 from "./0.json";
 import c1 from "./1.json";
 import c2 from "./2.json";
@@ -40,7 +43,6 @@ import c35 from "./35.json";
 import c36 from "./36.json";
 import c37 from "./37.json";
 import c38 from "./38.json";
-import c39 from "./39.json";
 
 const CONVERSATIONS: Record<number, Conversation> = {
   0: parseConversation(c0),
@@ -82,7 +84,10 @@ const CONVERSATIONS: Record<number, Conversation> = {
   36: parseConversation(c36),
   37: parseConversation(c37),
   38: parseConversation(c38),
-  39: parseConversation(c39),
 };
+
+export const GOAL_HINT_CONVERSATION: Conversation = parseConversation(goalHint);
+export const GOAL_FINAL_CONVERSATION: Conversation =
+  parseConversation(goalFinal);
 
 export default CONVERSATIONS;
