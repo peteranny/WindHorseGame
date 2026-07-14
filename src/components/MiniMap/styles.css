@@ -32,11 +32,34 @@
   }
 
   &.player {
+    position: relative;
     background: #adc7dc;
     border-radius: 50%;
+    z-index: 1;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: #adc7dc;
+      animation: radar-ping 1.5s ease-out infinite;
+    }
   }
 
   &.fog {
     background: rgba(0, 0, 0, 0.85);
+  }
+}
+
+@keyframes radar-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+
+  100% {
+    transform: scale(3);
+    opacity: 0;
   }
 }
