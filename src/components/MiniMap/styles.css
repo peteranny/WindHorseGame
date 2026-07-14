@@ -26,7 +26,8 @@
     background: rgba(255, 255, 255, 0.35);
   }
 
-  &.monster {
+  &.monster,
+  &.goal {
     background: #ff4d4d;
     border-radius: 50%;
   }
