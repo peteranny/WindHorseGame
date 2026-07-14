@@ -28,6 +28,7 @@ interface GameState {
   exploredCells: Record<string, true>;
   setStateKey: (key: string) => Promise<void>;
   setPosition: (x: number, y: number) => void;
+  setFacing: (facing: Facing) => void;
   captureMonster: (monsterId: number, capturedAt?: string) => void;
   setCooldown: (key: string, availableAt: number) => void;
   revealCells: (cells: Array<[number, number]>) => void;
@@ -101,6 +102,11 @@ export const useGameStore = create<GameState>((set, get) => ({
           : state.facing;
       return { position: [x, y], facing };
     });
+    scheduleSave();
+  },
+
+  setFacing: (facing) => {
+    set({ facing });
     scheduleSave();
   },
 

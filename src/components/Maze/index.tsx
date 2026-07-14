@@ -38,6 +38,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const [x, y] = useGameStore((state) => state.position);
   const facing = useGameStore((state) => state.facing);
   const setPosition = useGameStore((state) => state.setPosition);
+  const setFacing = useGameStore((state) => state.setFacing);
   const revealCells = useGameStore((state) => state.revealCells);
   const captured = useGameStore((state) => state.captured);
   const flowMode = useFlowStore((state) => state.mode);
@@ -100,6 +101,10 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
         const stepR = isRow ? y : r > y ? r - 1 : r + 1;
         const stepC = isRow ? (c > x ? c - 1 : c + 1) : x;
         if (stepR === y && stepC === x) {
+          // Already adjacent - no move happens, so face the monster being
+          // challenged explicitly rather than leaving the sprite's last
+          // travel direction (which may point some other way entirely).
+          setFacing(c > x ? "right" : c < x ? "left" : r > y ? "down" : "up");
           startEncounter(monsterId);
         } else {
           revealCells(computeTraversedCells(x, y, stepC, stepR));
@@ -121,6 +126,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
       captured,
       startEncounter,
       setPosition,
+      setFacing,
       revealCells,
       x,
       y,
