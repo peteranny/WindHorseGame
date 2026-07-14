@@ -18,6 +18,10 @@ const Settings = () => {
   const setDevBattleShortcutsEnabled = useFlowStore(
     (state) => state.setDevBattleShortcutsEnabled
   );
+  const devReleaseEnabled = useFlowStore((state) => state.devReleaseEnabled);
+  const setDevReleaseEnabled = useFlowStore(
+    (state) => state.setDevReleaseEnabled
+  );
 
   return (
     <Screen className={styles.screen}>
@@ -36,16 +40,26 @@ const Settings = () => {
         返回遊戲
       </button>
       {stateKey === DEV_STATE_KEY && (
-        <button
-          type="button"
-          onClick={() =>
-            setDevBattleShortcutsEnabled(!devBattleShortcutsEnabled)
-          }
-        >
-          {devBattleShortcutsEnabled
-            ? "停用戰鬥捷徑（Capture／Lose）"
-            : "啟用戰鬥捷徑（Capture／Lose）"}
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={() =>
+              setDevBattleShortcutsEnabled(!devBattleShortcutsEnabled)
+            }
+          >
+            {devBattleShortcutsEnabled
+              ? "停用戰鬥捷徑（Capture／Lose）"
+              : "啟用戰鬥捷徑（Capture／Lose）"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setDevReleaseEnabled(!devReleaseEnabled)}
+          >
+            {devReleaseEnabled
+              ? "停用點擊尾隨怪獸釋放捕獲"
+              : "啟用點擊尾隨怪獸釋放捕獲"}
+          </button>
+        </>
       )}
       {__DEPLOY_DATE__ && (
         <p className={styles.advancedInfo}>Last Updated: {__DEPLOY_DATE__}</p>

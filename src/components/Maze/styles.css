@@ -126,11 +126,54 @@
   pointer-events: none;
 }
 
-.followerIcon {
+.followerWrap {
   position: absolute;
+  transform: translate(-50%, -50%);
+  transition: left 0.3s, top 0.3s;
+
+  /* Dev-only (see Settings' release toggle): lets a follower be clicked
+     to release its capture, despite .followerTrail's own pointer-events: none. */
+  &.releasable {
+    pointer-events: auto;
+    cursor: pointer;
+  }
+}
+
+.followerIcon {
+  display: block;
   width: calc(36px * var(--scale));
   height: calc(36px * var(--scale));
   object-fit: contain;
-  transform: translate(-50%, -50%) scaleX(var(--facing-scale, 1));
-  transition: left 0.3s, top 0.3s;
+  transform: scaleX(var(--facing-scale, 1));
+  transition: transform 0.15s, filter 0.15s;
+}
+
+/* Below the rules they override, so specificity stays non-descending for stylelint. */
+.followerWrap.releasable:hover .followerIcon {
+  transform: scaleX(var(--facing-scale, 1)) scale(1.2);
+  filter: drop-shadow(0 0 calc(4px * var(--scale)) red);
+}
+
+.followerReleaseBadge {
+  position: absolute;
+  top: calc(-4px * var(--scale));
+  right: calc(-4px * var(--scale));
+  width: calc(16px * var(--scale));
+  height: calc(16px * var(--scale));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: orangered;
+  color: white;
+  font-size: calc(9pt * var(--scale));
+  font-weight: bold;
+  line-height: 1;
+  pointer-events: none;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.followerWrap.releasable:hover .followerReleaseBadge {
+  background: red;
+  transform: scale(1.2);
 }

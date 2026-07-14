@@ -10,7 +10,10 @@ import {
 } from "./persistence";
 import { createRemoteSync } from "./remoteSync";
 import { Facing, PersistedGameState } from "./types";
-import { captureMonster as captureMonsterPure } from "../data/monsters/captureLogic";
+import {
+  captureMonster as captureMonsterPure,
+  releaseMonster as releaseMonsterPure,
+} from "../data/monsters/captureLogic";
 import { revealCells as revealCellsPure } from "../components/Maze/exploration";
 
 const DEFAULT_POSITION: [number, number] = [2, 1];
@@ -30,6 +33,7 @@ interface GameState {
   setPosition: (x: number, y: number) => void;
   setFacing: (facing: Facing) => void;
   captureMonster: (monsterId: number, capturedAt?: string) => void;
+  releaseMonster: (monsterId: number) => void;
   setCooldown: (key: string, availableAt: number) => void;
   revealCells: (cells: Array<[number, number]>) => void;
   hydrate: () => Promise<void>;
@@ -113,6 +117,13 @@ export const useGameStore = create<GameState>((set, get) => ({
   captureMonster: (monsterId, capturedAt = new Date().toISOString()) => {
     set((state) => ({
       captured: captureMonsterPure(state.captured, monsterId, capturedAt),
+    }));
+    scheduleSave();
+  },
+
+  releaseMonster: (monsterId) => {
+    set((state) => ({
+      captured: releaseMonsterPure(state.captured, monsterId),
     }));
     scheduleSave();
   },

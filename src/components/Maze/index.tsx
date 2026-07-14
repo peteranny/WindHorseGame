@@ -8,15 +8,21 @@ import { useFlowStore } from "../../store/flowStore";
 import MONSTERS from "../../data/monsters/monsters";
 import { CELL_TYPE, compileMap } from "./compileMap";
 import { computeMonsterIds } from "./monsterPositions";
-import { computeTraversedCells } from "./exploration";
+import {
+  cellBeforeTarget,
+  computeTraversedCells,
+  findStoppingPoint,
+} from "./exploration";
+import { findGoalCell } from "./goalPosition";
 import {
   extendTrail,
   orderByMostRecentlyCaptured,
   resamplePath,
 } from "./followerTrail";
-import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
-import { PLAYER_SPRITE_FRONT } from "../../assets/playerSpriteFront.generated";
-import { PLAYER_SPRITE_BACK } from "../../assets/playerSpriteBack.generated";
+import PLAYER_SPRITE from "../../assets/playerSprite.png";
+import PLAYER_SPRITE_FRONT from "../../assets/playerSpriteFront.png";
+import PLAYER_SPRITE_BACK from "../../assets/playerSpriteBack.png";
+import GOAL_SPRITE from "../../assets/goalSprite.png";
 
 const CELL_SIZE = 100 * SCALE;
 // How many cells of the player's own walked path to remember - only needs
@@ -35,16 +41,21 @@ interface MazeProps {
 const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const map = useMemo(() => compileMap(simpleMap), []);
   const monsterIds = useMemo(() => computeMonsterIds(map), [map]);
+  const goalCell = useMemo(() => findGoalCell(map), [map]);
   const [x, y] = useGameStore((state) => state.position);
   const facing = useGameStore((state) => state.facing);
   const setPosition = useGameStore((state) => state.setPosition);
   const setFacing = useGameStore((state) => state.setFacing);
   const revealCells = useGameStore((state) => state.revealCells);
   const captured = useGameStore((state) => state.captured);
+  const releaseMonster = useGameStore((state) => state.releaseMonster);
   const flowMode = useFlowStore((state) => state.mode);
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
+  const isGoalEncounter = useFlowStore((state) => state.isGoalEncounter);
   const talkingSpeaker = useFlowStore((state) => state.talkingSpeaker);
   const startEncounter = useFlowStore((state) => state.startEncounter);
+  const startGoalEncounter = useFlowStore((state) => state.startGoalEncounter);
+  const devReleaseEnabled = useFlowStore((state) => state.devReleaseEnabled);
 
   // Ephemeral (not persisted) history of the player's own cell, most recent
   // first - used purely to lay out the trailing captured-monster followers,
@@ -61,70 +72,54 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
     },
     [map, monsterIds, captured]
   );
-  const isReachableAt = useCallback(
-    (r: number, c: number): boolean => {
-      if (r === y) {
-        const from = Math.min(x, c);
-        const to = Math.max(x, c);
-        for (let i = from; i <= to; i++) {
-          if (i === c) continue;
-          if (!isPassable(r, i)) return false;
-        }
-      } else if (c === x) {
-        const from = Math.min(y, r);
-        const to = Math.max(y, r);
-        for (let i = from; i <= to; i++) {
-          if (i === r) continue;
-          if (!isPassable(i, c)) return false;
-        }
-      } else {
-        return false;
-      }
-      if (isPassable(r, c)) return true;
-      // An uncaptured monster blocks movement like a wall, but - like any other
-      // cell - is a valid tap target from anywhere in the same row/column as
-      // long as everything up to it is clear, not just from an adjacent cell.
-      return monsterIds[r][c] !== null;
-    },
-    [x, y, isPassable, monsterIds]
-  );
   const goto = useCallback(
     (r: number, c: number): void => {
       if (flowMode !== "map") return;
-      if (!isReachableAt(r, c)) return;
-      const monsterId = monsterIds[r][c];
-      if (monsterId !== null && captured[monsterId] === undefined) {
-        // Blocks like a wall: walk up to the adjacent cell first, same as
-        // approaching any other obstacle. Only once already there does
-        // tapping the monster start the encounter.
-        const isRow = r === y;
-        const stepR = isRow ? y : r > y ? r - 1 : r + 1;
-        const stepC = isRow ? (c > x ? c - 1 : c + 1) : x;
-        if (stepR === y && stepC === x) {
-          // Already adjacent - no move happens, so face the monster being
+      if (r !== y && c !== x) return; // not on a shared row/column
+      if (r === y && c === x) return; // tapped the player's own cell
+
+      // Walks as far toward (c, r) as the path actually allows - all the
+      // way there if it's clear, otherwise stopping just short of whatever
+      // blocks it first (a wall, an uncaptured monster, the goal, ...)
+      // rather than refusing to move at all.
+      const [stopC, stopR] = findStoppingPoint(isPassable, x, y, c, r);
+
+      if (stopC === x && stopR === y) {
+        // Couldn't move even one cell - only meaningful if the tapped cell
+        // is itself the (now-adjacent) obstacle; otherwise there's nothing
+        // to do (e.g. tapping past a wall/monster that's right next door).
+        const [beforeC, beforeR] = cellBeforeTarget(x, y, c, r);
+        if (beforeC !== x || beforeR !== y) return;
+        const monsterId = monsterIds[r][c];
+        const isGoalTile =
+          goalCell !== null && c === goalCell[0] && r === goalCell[1];
+        if (monsterId !== null && captured[monsterId] === undefined) {
+          // Already adjacent - no move happens, so face what's being
           // challenged explicitly rather than leaving the sprite's last
           // travel direction (which may point some other way entirely).
           setFacing(c > x ? "right" : c < x ? "left" : r > y ? "down" : "up");
           startEncounter(monsterId);
-        } else {
-          revealCells(computeTraversedCells(x, y, stepC, stepR));
-          setPosition(stepC, stepR);
-          setTrail((current) =>
-            extendTrail(current, stepC, stepR, PATH_HISTORY_CELLS)
-          );
+        } else if (isGoalTile) {
+          setFacing(c > x ? "right" : c < x ? "left" : r > y ? "down" : "up");
+          startGoalEncounter();
         }
         return;
       }
-      revealCells(computeTraversedCells(x, y, c, r));
-      setPosition(c, r);
-      setTrail((current) => extendTrail(current, c, r, PATH_HISTORY_CELLS));
+
+      revealCells(computeTraversedCells(x, y, stopC, stopR));
+      setPosition(stopC, stopR);
+      setTrail((current) =>
+        extendTrail(current, stopC, stopR, PATH_HISTORY_CELLS)
+      );
     },
     [
       flowMode,
-      isReachableAt,
+      isPassable,
       monsterIds,
+      goalCell,
       captured,
       startEncounter,
+      startGoalEncounter,
       setPosition,
       setFacing,
       revealCells,
@@ -174,9 +169,22 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
     behindX >= 0 &&
     behindX < map[behindY].length &&
     isPassable(behindY, behindX);
-  const fallbackFollowerPoint: [number, number] = isBehindPassable
-    ? [behindX * CELL_SIZE + CELL_SIZE / 2, behindY * CELL_SIZE + CELL_SIZE / 2]
-    : [x * CELL_SIZE + CELL_SIZE / 2, y * CELL_SIZE + CELL_SIZE / 2];
+  const playerCenter: [number, number] = [
+    x * CELL_SIZE + CELL_SIZE / 2,
+    y * CELL_SIZE + CELL_SIZE / 2,
+  ];
+  // Half a cell back, matching resamplePath's own initialGap - not the
+  // full cell (the behind cell's own center), which would visibly jump
+  // once real movement starts populating followerPoints instead.
+  const fallbackFollowerPoint: [number, number] = !isBehindPassable
+    ? playerCenter
+    : facing === "right"
+    ? [playerCenter[0] - CELL_SIZE / 2, playerCenter[1]]
+    : facing === "left"
+    ? [playerCenter[0] + CELL_SIZE / 2, playerCenter[1]]
+    : facing === "down"
+    ? [playerCenter[0], playerCenter[1] - CELL_SIZE / 2]
+    : [playerCenter[0], playerCenter[1] + CELL_SIZE / 2];
   const centerRect = {
     left: x * CELL_SIZE,
     top: y * CELL_SIZE,
@@ -203,11 +211,13 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
             const isCaptured =
               monster !== null && captured[monster.id] !== undefined;
             const isMonsterCell = monster !== null && !isCaptured;
+            const isGoalCell =
+              goalCell !== null && c === goalCell[0] && r === goalCell[1];
             const cellClass = cell === CELL_TYPE.WALL ? "wall" : "road";
             const isBeingTalkedTo =
-              isMonsterCell &&
-              monster!.id === activeMonsterId &&
-              flowMode === "conversation";
+              flowMode === "conversation" &&
+              ((isMonsterCell && monster!.id === activeMonsterId) ||
+                (isGoalCell && isGoalEncounter));
             const isTalking = isBeingTalkedTo && talkingSpeaker === "monster";
             return (
               <div
@@ -221,19 +231,19 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                 onClick={() => goto(r, c)}
               >
                 <div className={cn(styles.cellContent, styles[cellClass])}>
-                  {isMonsterCell && (
+                  {(isMonsterCell || isGoalCell) && (
                     <>
                       <div className={styles.footShadow} />
                       <img
-                        src={monster!.icon}
-                        alt={monster!.name}
+                        src={isGoalCell ? GOAL_SPRITE : monster!.icon}
+                        alt={isGoalCell ? "goal" : monster!.name}
                         className={cn(
                           styles.monsterIcon,
                           isTalking && styles.talking
                         )}
                         style={
                           {
-                            // Monster art is native left-facing - flip only
+                            // This art is native left-facing - flip only
                             // when the player is to its right, so it faces
                             // the player throughout the conversation.
                             "--facing-scale":
@@ -256,22 +266,40 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
               ? followerPoints[Math.min(i, followerPoints.length - 1)]
               : fallbackFollowerPoint;
           return (
-            <img
+            <div
               key={id}
-              src={MONSTERS[id].icon}
-              alt={MONSTERS[id].name}
-              className={styles.followerIcon}
-              style={
-                {
-                  left: px,
-                  top: py,
-                  zIndex: orderedFollowerIds.length - i,
-                  // Unlike the player's own sprite, monster icon art is
-                  // natively left-facing, so it's "right" that needs the flip.
-                  "--facing-scale": facing === "right" ? -1 : 1,
-                } as React.CSSProperties
+              className={cn(
+                styles.followerWrap,
+                devReleaseEnabled && styles.releasable
+              )}
+              style={{ left: px, top: py, zIndex: orderedFollowerIds.length - i }}
+              onClick={
+                devReleaseEnabled
+                  ? () => releaseMonster(id)
+                  : undefined
               }
-            />
+            >
+              <img
+                src={MONSTERS[id].icon}
+                alt={MONSTERS[id].name}
+                className={styles.followerIcon}
+                style={
+                  {
+                    // Unlike the player's own sprite, monster icon art is
+                    // natively left-facing, so it's "right" that needs the flip.
+                    "--facing-scale": facing === "right" ? -1 : 1,
+                  } as React.CSSProperties
+                }
+              />
+              {devReleaseEnabled && (
+                <span
+                  className={styles.followerReleaseBadge}
+                  aria-hidden="true"
+                >
+                  ✕
+                </span>
+              )}
+            </div>
           );
         })}
       </div>

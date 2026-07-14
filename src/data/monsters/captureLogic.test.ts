@@ -1,4 +1,4 @@
-import { captureMonster, isFullyCaptured } from "./captureLogic";
+import { captureMonster, isFullyCaptured, releaseMonster } from "./captureLogic";
 
 describe("captureMonster", () => {
   it("records a new capture with its timestamp", () => {
@@ -20,6 +20,21 @@ describe("captureMonster", () => {
       1: "2024-01-01T00:00:00.000Z",
       2: "2024-02-01T00:00:00.000Z",
     });
+  });
+});
+
+describe("releaseMonster", () => {
+  it("removes a captured monster", () => {
+    const captured = { 1: "2024-01-01T00:00:00.000Z", 2: "2024-02-01T00:00:00.000Z" };
+    expect(releaseMonster(captured, 1)).toEqual({
+      2: "2024-02-01T00:00:00.000Z",
+    });
+  });
+
+  it("is a no-op for a monster that isn't captured", () => {
+    const captured = { 2: "2024-02-01T00:00:00.000Z" };
+    const result = releaseMonster(captured, 1);
+    expect(result).toBe(captured);
   });
 });
 
