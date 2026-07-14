@@ -13,6 +13,10 @@ interface FlowState {
   wildHp: number;
   wildMaxHp: number;
   protagonistHp: number;
+  // Dev-only: toggled from the Settings screen (only visible under the
+  // "peteranny" save key), shows "Capture"/"Lose" buttons in Battle that
+  // instantly win or lose the fight - never persisted, resets every session.
+  devBattleShortcutsEnabled: boolean;
   startEncounter: (monsterId: number) => void;
   enterBattle: (wildMaxHp: number) => void;
   damageWild: (amount: number) => void;
@@ -21,6 +25,7 @@ interface FlowState {
   concludeBattle: (outcome: BattleOutcome) => void;
   endEncounter: () => void;
   setTalkingSpeaker: (speaker: TalkingSpeaker) => void;
+  setDevBattleShortcutsEnabled: (enabled: boolean) => void;
 }
 
 export const useFlowStore = create<FlowState>((set) => ({
@@ -31,6 +36,7 @@ export const useFlowStore = create<FlowState>((set) => ({
   wildHp: 0,
   wildMaxHp: 0,
   protagonistHp: PROTAGONIST_MAX_HP,
+  devBattleShortcutsEnabled: false,
   startEncounter: (monsterId) =>
     set({ mode: "conversation", activeMonsterId: monsterId }),
   enterBattle: (wildMaxHp) =>
@@ -63,4 +69,6 @@ export const useFlowStore = create<FlowState>((set) => ({
       talkingSpeaker: null,
     }),
   setTalkingSpeaker: (speaker) => set({ talkingSpeaker: speaker }),
+  setDevBattleShortcutsEnabled: (enabled) =>
+    set({ devBattleShortcutsEnabled: enabled }),
 }));

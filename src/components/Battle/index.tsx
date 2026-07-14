@@ -108,6 +108,9 @@ const Battle = () => {
   const damageProtagonist = useFlowStore((state) => state.damageProtagonist);
   const healProtagonist = useFlowStore((state) => state.healProtagonist);
   const concludeBattle = useFlowStore((state) => state.concludeBattle);
+  const devBattleShortcutsEnabled = useFlowStore(
+    (state) => state.devBattleShortcutsEnabled
+  );
 
   const captured = useGameStore((state) => state.captured);
   const cooldowns = useGameStore((state) => state.cooldowns);
@@ -340,6 +343,26 @@ const Battle = () => {
         >
           逃跑
         </button>
+        {devBattleShortcutsEnabled && (
+          <>
+            <button
+              type="button"
+              className={styles.devButton}
+              disabled={pendingOutcome !== null}
+              onClick={() => damageWild(wildHp)}
+            >
+              Capture
+            </button>
+            <button
+              type="button"
+              className={styles.devButton}
+              disabled={pendingOutcome !== null}
+              onClick={() => damageProtagonist(protagonistHp)}
+            >
+              Lose
+            </button>
+          </>
+        )}
       </div>
       {pendingOutcome !== null && (
         <div

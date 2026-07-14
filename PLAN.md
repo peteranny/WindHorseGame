@@ -106,6 +106,7 @@ State is serialised as JSON and saved to the connected Google Sheet, keyed by a 
 - On first launch, the app **prompts the user to enter their state key**
 - The key is used to load the matching state from the Sheet and sync to it
 - A **Settings page** allows the user to change their key at any time — this **pulls fresh from the remote immediately**: the local cache is scoped per key, so switching keys can never let a different key's stale local data outrank the new key's actual remote data
+- Settings also shows a **dev-only toggle**, visible only under the `"peteranny"` save key, for a pair of battle shortcut buttons ("Capture"/"Lose") that instantly end the current battle as a win or a loss - each just deals enough damage to zero out the wild monster's or the protagonist's own HP, going through the exact same code path a real killing blow would (so capture, the outcome fade, etc. all still happen normally). Ephemeral (flowStore), resets every session
 - Multiple users (or save slots) are supported naturally through different keys
 - If a remote save fails (e.g. offline) while the key stays the same, the write **isn't lost** — it stays pending and automatically retries once the connection is restored (or periodically, as a fallback), without any action from the player
 

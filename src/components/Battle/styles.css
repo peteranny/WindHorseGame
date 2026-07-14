@@ -419,6 +419,18 @@
   background: white;
 }
 
+/* Dev-only shortcuts (see Settings) - styled distinctly so they never read as real game buttons. */
+.devButton {
+  align-self: flex-start;
+  flex-shrink: 0;
+  font-size: inherit;
+  padding: calc(8px * var(--scale)) calc(12px * var(--scale));
+  border: 2px dashed orangered;
+  border-radius: 4px;
+  background: #fff3e0;
+  color: orangered;
+}
+
 .attackButton {
   position: relative;
   display: flex;
