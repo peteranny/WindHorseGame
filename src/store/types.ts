@@ -1,4 +1,4 @@
-export type Facing = "left" | "right";
+export type Facing = "left" | "right" | "up" | "down";
 
 export interface PersistedGameState {
   position: [number, number];

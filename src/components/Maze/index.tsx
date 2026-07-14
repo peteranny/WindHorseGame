@@ -15,6 +15,8 @@ import {
   resamplePath,
 } from "./followerTrail";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
+import { PLAYER_SPRITE_FRONT } from "../../assets/playerSpriteFront.generated";
+import { PLAYER_SPRITE_BACK } from "../../assets/playerSpriteBack.generated";
 
 const CELL_SIZE = 100 * SCALE;
 // How many cells of the player's own walked path to remember - only needs
@@ -247,7 +249,13 @@ const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
       >
         <div className={styles.footShadow} />
         <img
-          src={PLAYER_SPRITE}
+          src={
+            facing === "down"
+              ? PLAYER_SPRITE_FRONT
+              : facing === "up"
+              ? PLAYER_SPRITE_BACK
+              : PLAYER_SPRITE
+          }
           alt="player"
           className={cn(
             styles.playerSprite,
@@ -255,7 +263,8 @@ const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
           )}
           style={
             {
-              // The sprite's native art faces right, so only "left" needs a flip.
+              // The sprite's native art faces right, so only "left" needs a
+              // flip; the dedicated front/back art needs no mirroring.
               "--facing-scale": facing === "left" ? -1 : 1,
             } as React.CSSProperties
           }

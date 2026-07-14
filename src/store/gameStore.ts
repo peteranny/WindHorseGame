@@ -87,11 +87,20 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   setPosition: (x, y) => {
-    set((state) => ({
-      position: [x, y],
-      facing:
-        x > state.position[0] ? "right" : x < state.position[0] ? "left" : state.facing,
-    }));
+    set((state) => {
+      const [prevX, prevY] = state.position;
+      const facing: Facing =
+        x > prevX
+          ? "right"
+          : x < prevX
+          ? "left"
+          : y > prevY
+          ? "down"
+          : y < prevY
+          ? "up"
+          : state.facing;
+      return { position: [x, y], facing };
+    });
     scheduleSave();
   },
 

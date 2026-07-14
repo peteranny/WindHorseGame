@@ -62,7 +62,9 @@ src/
     types.ts              # PersistedGameState shape.
   assets/
     playerSprite.generated.ts  # wind-1.png (flipped to face right) embedded as a base64 data URI - the
-                               # protagonist's map/battle sprite.
+                               # protagonist's left/right map sprite, and its only battle sprite.
+    playerSpriteFront.generated.ts  # Dedicated front-facing map sprite, used while moving down.
+    playerSpriteBack.generated.ts   # Dedicated back-facing map sprite, used while moving up.
   contexts/
     MouseContext.ts       # Provides global mouse position to the tree.
   hooks/
@@ -85,7 +87,7 @@ To make the UI bigger or smaller, change only `SCALE` in `scale.ts`.
 
 ### Game state & persistence
 
-The persisted slice (`store/gameStore.ts`) holds only: player map coordinate, the sprite's last facing direction (`"left"` | `"right"`, updated automatically by `setPosition` based on which way x moved), captured monsters (id -> ISO capture date), per-attack cooldowns (monster id, or `"innate"` for the protagonist's own attack -> next-available timestamp in ms), and explored cells (see "Fog of war" below). Everything else — conversation progress, in-battle HP, which page/screen is showing — lives in the ephemeral `store/flowStore.ts` and is never persisted, so a reload mid-conversation or mid-battle just drops back to the map with no side effects (cooldowns already spent still apply).
+The persisted slice (`store/gameStore.ts`) holds only: player map coordinate, the sprite's last facing direction (`"left" | "right" | "up" | "down"`, updated automatically by `setPosition` based on whichever axis actually changed - x takes priority over y since movement is always purely horizontal or vertical, never both at once), captured monsters (id -> ISO capture date), per-attack cooldowns (monster id, or `"innate"` for the protagonist's own attack -> next-available timestamp in ms), and explored cells (see "Fog of war" below). Everything else — conversation progress, in-battle HP, which page/screen is showing — lives in the ephemeral `store/flowStore.ts` and is never persisted, so a reload mid-conversation or mid-battle just drops back to the map with no side effects (cooldowns already spent still apply).
 
 On first launch (or whenever no key is stored), `StateKeyGate` blocks rendering: in local dev it silently assigns `"local-dev"`; in the deployed GAS environment it prompts the player for a save-state key. The key is stored in `localStorage` and used to look up/save a single JSON blob (position + captured + cooldowns + a timestamp), both to `localStorage` (for instant reload) and to the Google Sheet (via `google.script.run`, guarded by `typeof google !== "undefined"` so local dev is unaffected). The local cache is itself scoped per state key (`gameState:<key>`, not a single shared slot) — critical for `/settings`: changing the key calls `hydrate()` for the *new* key, and since its local cache starts genuinely empty (or reflects only what this device has saved under that specific key before), a fresh remote snapshot is never crowded out by another key's stale local data. Within the same key, `resolveHydratedState` (`store/persistence.ts`) picks whichever of local/remote has the newer timestamp.
 
