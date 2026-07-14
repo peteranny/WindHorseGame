@@ -156,19 +156,27 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   // Before the player has taken a single step this session, the path isn't
   // long enough to resample from at all - fall back to half a cell behind
   // the player (opposite their facing), consistent with where the closest
-  // follower sits once there's an actual path to place it on.
-  const cellCenter: [number, number] = [
-    x * CELL_SIZE + CELL_SIZE / 2,
-    y * CELL_SIZE + CELL_SIZE / 2,
-  ];
-  const fallbackFollowerPoint: [number, number] =
+  // follower sits once there's an actual path to place it on. That cell
+  // might be a wall or an uncaptured monster though (nothing guarantees
+  // the player's *back* is clear), so this checks passability first and
+  // stacks the followers on the player's own cell instead when it isn't.
+  const [behindX, behindY] =
     facing === "right"
-      ? [cellCenter[0] - CELL_SIZE / 2, cellCenter[1]]
+      ? [x - 1, y]
       : facing === "left"
-      ? [cellCenter[0] + CELL_SIZE / 2, cellCenter[1]]
+      ? [x + 1, y]
       : facing === "down"
-      ? [cellCenter[0], cellCenter[1] - CELL_SIZE / 2]
-      : [cellCenter[0], cellCenter[1] + CELL_SIZE / 2];
+      ? [x, y - 1]
+      : [x, y + 1];
+  const isBehindPassable =
+    behindY >= 0 &&
+    behindY < map.length &&
+    behindX >= 0 &&
+    behindX < map[behindY].length &&
+    isPassable(behindY, behindX);
+  const fallbackFollowerPoint: [number, number] = isBehindPassable
+    ? [behindX * CELL_SIZE + CELL_SIZE / 2, behindY * CELL_SIZE + CELL_SIZE / 2]
+    : [x * CELL_SIZE + CELL_SIZE / 2, y * CELL_SIZE + CELL_SIZE / 2];
   const centerRect = {
     left: x * CELL_SIZE,
     top: y * CELL_SIZE,
