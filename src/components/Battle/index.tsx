@@ -245,7 +245,7 @@ const Battle = () => {
       <div className={styles.battlefield}>
         <div className={styles.playerSide}>
           <div className={styles.playerInfo}>
-            <div>小風 {protagonistHp}/10</div>
+            <div>小風</div>
             <HpBar hp={protagonistHp} maxHp={10} />
           </div>
           <img
