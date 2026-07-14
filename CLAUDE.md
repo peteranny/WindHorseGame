@@ -56,7 +56,8 @@ src/
     remoteSync.ts          # createRemoteSync: DI'd retry controller for not-yet-synced remote writes.
     types.ts              # PersistedGameState shape.
   assets/
-    playerSprite.generated.ts  # wind-1.png embedded as a base64 data URI (the protagonist's map/battle sprite).
+    playerSprite.generated.ts  # wind-1.png (flipped to face right) embedded as a base64 data URI - the
+                               # protagonist's map/battle sprite.
   contexts/
     MouseContext.ts       # Provides global mouse position to the tree.
   hooks/

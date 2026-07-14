@@ -57,29 +57,20 @@
   object-fit: contain;
 }
 
-.playerSprite {
-  transform: scaleX(-1);
-}
-
 /*
- * The player sprite carries a constant scaleX(-1) (it faces right, mirrored
- * from source art that faces left). Composing "scaleX(-1) translateX(20px)"
- * would apply the translate *before* the mirror, so the mirror flips the
- * translate's direction too - the sprite would visually lunge left instead
- * of right, toward the opponent. Listing the dynamic transform first and
- * scaleX(-1) last keeps the mirror as the outermost, constant transform, so
- * translateX/rotate move in real screen directions exactly like the enemy's
- * (unmirrored) equivalents - only the animation itself needs to move
- * opposite ways, never the composition order.
+ * The player sprite's native art faces right, same direction it needs to
+ * face here (player is on the left, attacking toward the enemy on the
+ * right) - no base mirror needed, so player-attack/player-hit can be plain
+ * translateX/rotate, same as the enemy's equivalents.
  */
 @keyframes player-attack {
   0%,
   100% {
-    transform: translateX(0) scaleX(-1);
+    transform: translateX(0);
   }
 
   30% {
-    transform: translateX(calc(20px * var(--scale))) scaleX(-1);
+    transform: translateX(calc(20px * var(--scale)));
   }
 }
 
@@ -96,15 +87,15 @@
 
 @keyframes player-hit {
   0% {
-    transform: translateY(0) rotate(0deg) scaleX(-1);
+    transform: translateY(0) rotate(0deg);
   }
 
   40% {
-    transform: translateY(calc(12px * var(--scale))) rotate(20deg) scaleX(-1);
+    transform: translateY(calc(12px * var(--scale))) rotate(20deg);
   }
 
   100% {
-    transform: translateY(0) rotate(0deg) scaleX(-1);
+    transform: translateY(0) rotate(0deg);
   }
 }
 

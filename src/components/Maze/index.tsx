@@ -191,7 +191,8 @@ const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
           )}
           style={
             {
-              "--facing-scale": facing === "right" ? -1 : 1,
+              // The sprite's native art faces right, so only "left" needs a flip.
+              "--facing-scale": facing === "left" ? -1 : 1,
             } as React.CSSProperties
           }
         />

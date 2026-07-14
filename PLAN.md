@@ -13,7 +13,7 @@ A maze navigation game where the player explores a map and encounters **40 pocke
 - An **uncaptured** monster cell acts like a wall — it blocks movement and must be challenged before the player can pass through
 - A **captured** monster's cell becomes a road — it is permanently passable and the monster no longer appears there
 - Tapping a monster cell from a distance (clear straight-line path) walks the player up to the adjacent cell, same as approaching any other obstacle; tapping it again once already adjacent triggers the conversation system, then the challenge
-- The player's map sprite is copied from `wind-1.png` (a facing-left illustration) — mirrored horizontally when moving right so it always faces its direction of travel
+- The player's map sprite is copied from `wind-1.png`, flipped horizontally to face right — mirrored again (back to facing left) when moving left, so it always faces its direction of travel
 - Every sprite on the map (the player, and each uncaptured monster) renders a small soft-edged ellipse shadow under its feet, for a bit of ground contact/depth
 
 ### Monster Data
