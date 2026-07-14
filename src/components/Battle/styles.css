@@ -223,6 +223,34 @@
 }
 
 /*
+ * The innate attack's water-drop spit - a straight shot rather than the
+ * captured-monsters' thrown arc, since there's nothing being "thrown" here.
+ */
+.spitDrop {
+  position: absolute;
+  top: 45%;
+  left: 10%;
+  font-size: calc(20pt * var(--scale));
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: spit-shoot 500ms ease-in forwards;
+}
+
+@keyframes spit-shoot {
+  0% {
+    left: 10%;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+
+  100% {
+    left: 85%;
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0.9;
+  }
+}
+
+/*
  * Bigger and pulled out of the normal flex flow, anchored from the *top* of
  * .battlefield (not the bottom) so it always clears .playerInfo above it
  * regardless of the battlefield's actual height - a bottom-relative offset

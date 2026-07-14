@@ -24,6 +24,7 @@ const TICK_MS = 500;
 const EFFECT_DURATION_MS = 300;
 const WILD_ATTACK_TELEGRAPH_MS = 2000;
 const THROW_DURATION_MS = 2000;
+const SPIT_DURATION_MS = 500;
 const OUTCOME_PAUSE_MS = 500;
 const OUTCOME_FADE_MS = 700;
 const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
@@ -81,6 +82,21 @@ const useThrowEffect = (): [ThrowEffect | null, (icon: string) => void] => {
   return [effect, trigger];
 };
 
+// The innate attack's water-drop spit, shot straight from the player to the
+// wild monster. Keyed by an incrementing id, same reasoning as useThrowEffect.
+const useSpitEffect = (): [number | null, () => void] => {
+  const [effect, setEffect] = useState<number | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nextIdRef = useRef(0);
+  const trigger = useCallback(() => {
+    nextIdRef.current += 1;
+    setEffect(nextIdRef.current);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setEffect(null), SPIT_DURATION_MS);
+  }, []);
+  return [effect, trigger];
+};
+
 const Battle = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
   const wildHp = useFlowStore((state) => state.wildHp);
@@ -99,6 +115,7 @@ const Battle = () => {
   const [playerEffect, triggerPlayerEffect] = useSpriteEffect();
   const [enemyEffect, triggerEnemyEffect] = useSpriteEffect();
   const [throwEffect, triggerThrow] = useThrowEffect();
+  const [spitEffect, triggerSpit] = useSpitEffect();
   const [pendingOutcome, setPendingOutcome] = useState<PendingOutcome>(null);
 
   const [, forceTick] = useReducer((n: number) => n + 1, 0);
@@ -140,7 +157,7 @@ const Battle = () => {
     const options: AttackOption[] = [
       {
         key: INNATE_KEY,
-        label: "小風的拳頭",
+        label: "小風溥儀",
         icon: PLAYER_SPRITE,
         isHealer: false,
         healAmount: 0,
@@ -171,9 +188,13 @@ const Battle = () => {
         healProtagonist(option.healAmount);
         triggerPlayerEffect("heal");
       } else if (option.key === INNATE_KEY) {
-        damageWild(ATTACK_DAMAGE);
+        // The hit only lands once the spit actually arrives.
         triggerPlayerEffect("attack");
-        triggerEnemyEffect("hit");
+        triggerSpit();
+        setTimeout(() => {
+          damageWild(ATTACK_DAMAGE);
+          triggerEnemyEffect("hit");
+        }, SPIT_DURATION_MS);
       } else {
         // The hit only lands once the thrown monster actually arrives.
         triggerPlayerEffect("attack");
@@ -194,6 +215,7 @@ const Battle = () => {
       triggerPlayerEffect,
       triggerEnemyEffect,
       triggerThrow,
+      triggerSpit,
     ]
   );
 
@@ -266,6 +288,11 @@ const Battle = () => {
             aria-hidden="true"
             className={styles.thrownIcon}
           />
+        )}
+        {spitEffect !== null && (
+          <span key={spitEffect} className={styles.spitDrop} aria-hidden="true">
+            💧
+          </span>
         )}
       </div>
       <div className={styles.actionBar}>
