@@ -46,12 +46,29 @@
   width: calc(150px * var(--scale));
 }
 
-.enemySprite,
-.playerSprite {
+.enemySprite {
   flex: 0 1 calc(100px * var(--scale));
   min-height: 0;
   width: calc(100px * var(--scale));
   max-width: 100%;
+  /* stylelint-disable-next-line property-no-unknown */
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+}
+
+/*
+ * Bigger and pulled out of the normal flex flow (anchored to the bottom-left
+ * of .battlefield, which is a sibling of .actionBar, not a descendant): the
+ * sprite intentionally hangs down far enough to spill under the action bar,
+ * which - painting later in DOM order - covers the overlapping part. That
+ * partial overlap plus the larger size reads as "closer to the camera" than
+ * the enemy, like the player's own side in a classic RPG battle screen.
+ */
+.playerSprite {
+  position: absolute;
+  left: 0;
+  bottom: calc(-24px * var(--scale));
+  width: calc(160px * var(--scale));
   /* stylelint-disable-next-line property-no-unknown */
   aspect-ratio: 1 / 1;
   object-fit: contain;
