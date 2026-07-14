@@ -57,17 +57,22 @@
 }
 
 /*
- * Bigger and pulled out of the normal flex flow (anchored to the bottom-left
- * of .battlefield, which is a sibling of .actionBar, not a descendant): the
- * sprite intentionally hangs down far enough to spill under the action bar,
- * which - painting later in DOM order - covers the overlapping part. That
- * partial overlap plus the larger size reads as "closer to the camera" than
- * the enemy, like the player's own side in a classic RPG battle screen.
+ * Bigger and pulled out of the normal flex flow, anchored from the *top* of
+ * .battlefield (not the bottom) so it always clears .playerInfo above it
+ * regardless of the battlefield's actual height - a bottom-relative offset
+ * would overlap the info box on a short/narrow viewport. Anchoring from the
+ * top instead means the sprite reliably starts below the info box and
+ * simply extends however far down that leaves it, naturally spilling under
+ * the action bar (a sibling of .battlefield, not a descendant) on most
+ * screens - which, painting later in DOM order, covers the overlapping
+ * part. That partial overlap plus the larger size reads as "closer to the
+ * camera" than the enemy, like the player's own side in a classic RPG
+ * battle screen.
  */
 .playerSprite {
   position: absolute;
   left: 0;
-  bottom: calc(-24px * var(--scale));
+  top: calc(72px * var(--scale));
   width: calc(160px * var(--scale));
   /* stylelint-disable-next-line property-no-unknown */
   aspect-ratio: 1 / 1;
