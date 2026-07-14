@@ -17,6 +17,7 @@ import {
   WILD_ATTACK_DAMAGE,
   WILD_ATTACK_INTERVAL_MS,
 } from "../../data/monsters/battleFormulas";
+import { orderByMostRecentlyCaptured } from "../Maze/followerTrail";
 import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 
 const INNATE_KEY = "innate";
@@ -168,21 +169,36 @@ const Battle = () => {
         healAmount: 0,
       },
     ];
-    Object.keys(captured)
-      .map(Number)
-      .sort((a, b) => a - b)
-      .forEach((id) => {
-        const monster = MONSTERS[id];
-        options.push({
-          key: String(id),
-          label: monster.name,
-          icon: monster.icon,
-          isHealer: monster.isHealer,
-          healAmount: monster.healAmount ?? 0,
-        });
+    orderByMostRecentlyCaptured(captured).forEach((id) => {
+      const monster = MONSTERS[id];
+      options.push({
+        key: String(id),
+        label: monster.name,
+        icon: monster.icon,
+        isHealer: monster.isHealer,
+        healAmount: monster.healAmount ?? 0,
       });
+    });
     return options;
   }, [captured]);
+
+  // Hints for the horizontally-scrolling attack grid, so players know there
+  // are more (cooling-down or not) attacks off to a side rather than
+  // assuming the visible row is the whole roster.
+  const attackGridRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const updateScrollHints = useCallback(() => {
+    const el = attackGridRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }, []);
+  useEffect(() => {
+    updateScrollHints();
+    window.addEventListener("resize", updateScrollHints);
+    return () => window.removeEventListener("resize", updateScrollHints);
+  }, [attackOptions, updateScrollHints]);
 
   const handleAttack = useCallback(
     (option: AttackOption) => {
@@ -301,39 +317,61 @@ const Battle = () => {
         )}
       </div>
       <div className={styles.actionBar}>
-        <div className={styles.attackGrid}>
-          {attackOptions.map((option) => {
-            const remainingMs = (cooldowns[option.key] ?? 0) - Date.now();
-            const ready = remainingMs <= 0;
-            const remainingPercent = Math.max(
-              0,
-              Math.min(100, (remainingMs / ATTACK_COOLDOWN_MS) * 100)
-            );
-            return (
-              <button
-                key={option.key}
-                type="button"
-                className={styles.attackButton}
-                disabled={!ready}
-                onClick={() => handleAttack(option)}
-              >
-                <img
-                  src={option.icon}
-                  alt={option.label}
-                  className={styles.attackIcon}
-                />
-                <span className={styles.attackLabel}>
-                  {option.isHealer ? `${option.label}（治療）` : option.label}
-                </span>
-                {!ready && (
-                  <div
-                    className={styles.cooldownOverlay}
-                    style={{ height: `${remainingPercent}%` }}
+        <div className={styles.attackGridWrap}>
+          <div
+            ref={attackGridRef}
+            className={styles.attackGrid}
+            onScroll={updateScrollHints}
+          >
+            {attackOptions.map((option) => {
+              const remainingMs = (cooldowns[option.key] ?? 0) - Date.now();
+              const ready = remainingMs <= 0;
+              const remainingPercent = Math.max(
+                0,
+                Math.min(100, (remainingMs / ATTACK_COOLDOWN_MS) * 100)
+              );
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  className={styles.attackButton}
+                  disabled={!ready}
+                  onClick={() => handleAttack(option)}
+                >
+                  <img
+                    src={option.icon}
+                    alt={option.label}
+                    className={styles.attackIcon}
                   />
-                )}
-              </button>
-            );
-          })}
+                  <span className={styles.attackLabel}>
+                    {option.isHealer ? `${option.label}（治療）` : option.label}
+                  </span>
+                  {!ready && (
+                    <div
+                      className={styles.cooldownOverlay}
+                      style={{ height: `${remainingPercent}%` }}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {canScrollLeft && (
+            <div
+              className={cn(styles.scrollHint, styles.scrollHintLeft)}
+              aria-hidden="true"
+            >
+              <span className={styles.scrollHintArrow}>‹</span>
+            </div>
+          )}
+          {canScrollRight && (
+            <div
+              className={cn(styles.scrollHint, styles.scrollHintRight)}
+              aria-hidden="true"
+            >
+              <span className={styles.scrollHintArrow}>›</span>
+            </div>
+          )}
         </div>
         <button
           type="button"
