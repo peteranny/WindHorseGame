@@ -23,6 +23,7 @@ const INNATE_KEY = "innate";
 const TICK_MS = 500;
 const EFFECT_DURATION_MS = 300;
 const WILD_ATTACK_TELEGRAPH_MS = 2000;
+const THROW_DURATION_MS = 500;
 
 type SpriteEffect = "attack" | "hit" | "heal" | null;
 
@@ -32,6 +33,11 @@ interface AttackOption {
   icon: string;
   isHealer: boolean;
   healAmount: number;
+}
+
+interface ThrowEffect {
+  id: number;
+  icon: string;
 }
 
 const HpBar = ({ hp, maxHp }: { hp: number; maxHp: number }) => (
@@ -54,6 +60,23 @@ const useSpriteEffect = (): [SpriteEffect, (effect: SpriteEffect) => void] => {
   return [effect, trigger];
 };
 
+// A captured monster being thrown at the wild monster (the innate fist
+// attack has nothing to throw, so it never uses this). Keyed by an
+// incrementing id so re-throwing the same icon before the previous throw
+// finishes still remounts the element and restarts its CSS animation.
+const useThrowEffect = (): [ThrowEffect | null, (icon: string) => void] => {
+  const [effect, setEffect] = useState<ThrowEffect | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nextIdRef = useRef(0);
+  const trigger = useCallback((icon: string) => {
+    nextIdRef.current += 1;
+    setEffect({ id: nextIdRef.current, icon });
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setEffect(null), THROW_DURATION_MS);
+  }, []);
+  return [effect, trigger];
+};
+
 const Battle = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
   const wildHp = useFlowStore((state) => state.wildHp);
@@ -71,6 +94,7 @@ const Battle = () => {
 
   const [playerEffect, triggerPlayerEffect] = useSpriteEffect();
   const [enemyEffect, triggerEnemyEffect] = useSpriteEffect();
+  const [throwEffect, triggerThrow] = useThrowEffect();
 
   const [, forceTick] = useReducer((n: number) => n + 1, 0);
   const nextWildAttackAtRef = useRef(Date.now() + WILD_ATTACK_INTERVAL_MS);
@@ -135,6 +159,7 @@ const Battle = () => {
         damageWild(ATTACK_DAMAGE);
         triggerPlayerEffect("attack");
         triggerEnemyEffect("hit");
+        if (option.key !== INNATE_KEY) triggerThrow(option.icon);
       }
       setCooldown(option.key, now + ATTACK_COOLDOWN_MS);
     },
@@ -145,6 +170,7 @@ const Battle = () => {
       setCooldown,
       triggerPlayerEffect,
       triggerEnemyEffect,
+      triggerThrow,
     ]
   );
 
@@ -209,6 +235,15 @@ const Battle = () => {
             <HpBar hp={wildHp} maxHp={wildMaxHp} />
           </div>
         </div>
+        {throwEffect && (
+          <img
+            key={throwEffect.id}
+            src={throwEffect.icon}
+            alt=""
+            aria-hidden="true"
+            className={styles.thrownIcon}
+          />
+        )}
       </div>
       <div className={styles.actionBar}>
         <div className={styles.attackGrid}>
