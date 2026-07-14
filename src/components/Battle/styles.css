@@ -433,10 +433,6 @@
   font-size: inherit;
   padding: calc(4px * var(--scale));
 
-  &.onCooldown {
-    opacity: 0.5;
-  }
-
   &:disabled {
     cursor: not-allowed;
   }
@@ -458,16 +454,18 @@
   text-align: center;
 }
 
-.cooldownBadge {
+/*
+ * Anchored to the bottom of the button, height set inline to the
+ * cooldown's remaining percentage - so it covers the whole button right
+ * after use and shrinks back down from the top as the cooldown runs out,
+ * rather than showing a numeric countdown.
+ */
+.cooldownOverlay {
   position: absolute;
-  top: calc(4px * var(--scale));
-  right: calc(4px * var(--scale));
-  height: calc(14px * var(--scale));
-  line-height: calc(12px * var(--scale));
-  padding: 0 calc(3px * var(--scale));
-  border: 1px solid black;
-  border-radius: calc(7px * var(--scale));
-  background: white;
-  font-size: calc(7pt * var(--scale));
-  color: #888;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  transition: height 0.2s linear;
 }

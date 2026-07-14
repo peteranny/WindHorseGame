@@ -302,11 +302,15 @@ const Battle = () => {
           {attackOptions.map((option) => {
             const remainingMs = (cooldowns[option.key] ?? 0) - Date.now();
             const ready = remainingMs <= 0;
+            const remainingPercent = Math.max(
+              0,
+              Math.min(100, (remainingMs / ATTACK_COOLDOWN_MS) * 100)
+            );
             return (
               <button
                 key={option.key}
                 type="button"
-                className={cn(styles.attackButton, !ready && styles.onCooldown)}
+                className={styles.attackButton}
                 disabled={!ready}
                 onClick={() => handleAttack(option)}
               >
@@ -319,9 +323,10 @@ const Battle = () => {
                   {option.isHealer ? `${option.label}（治療）` : option.label}
                 </span>
                 {!ready && (
-                  <span className={styles.cooldownBadge}>
-                    {Math.ceil(remainingMs / 1000)}s
-                  </span>
+                  <div
+                    className={styles.cooldownOverlay}
+                    style={{ height: `${remainingPercent}%` }}
+                  />
                 )}
               </button>
             );
