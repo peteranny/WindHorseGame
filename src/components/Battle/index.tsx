@@ -22,6 +22,7 @@ import { PLAYER_SPRITE } from "../../assets/playerSprite.generated";
 const INNATE_KEY = "innate";
 const TICK_MS = 500;
 const EFFECT_DURATION_MS = 300;
+const WILD_ATTACK_TELEGRAPH_MS = 2000;
 
 type SpriteEffect = "attack" | "hit" | "heal" | null;
 
@@ -150,6 +151,10 @@ const Battle = () => {
   if (activeMonsterId === null) return null;
   const monster = MONSTERS[activeMonsterId];
 
+  const msUntilWildAttack = nextWildAttackAtRef.current - Date.now();
+  const isWildTelegraphing =
+    msUntilWildAttack > 0 && msUntilWildAttack <= WILD_ATTACK_TELEGRAPH_MS;
+
   return (
     <div className={styles.battle}>
       <div className={styles.battlefield}>
@@ -168,14 +173,23 @@ const Battle = () => {
           />
         </div>
         <div className={styles.enemySide}>
-          <img
-            src={monster.icon}
-            alt={monster.name}
-            className={cn(
-              styles.enemySprite,
-              enemyEffect && styles[`enemy${capitalize(enemyEffect)}`]
+          <div className={styles.enemySpriteWrap}>
+            <img
+              src={monster.icon}
+              alt={monster.name}
+              className={cn(
+                styles.enemySprite,
+                enemyEffect && styles[`enemy${capitalize(enemyEffect)}`]
+              )}
+            />
+            {isWildTelegraphing && (
+              <div className={styles.telegraph} aria-hidden="true">
+                <span className={styles.telegraphMark}>？</span>
+                <span className={styles.telegraphMark}>？</span>
+                <span className={styles.telegraphMark}>？</span>
+              </div>
             )}
-          />
+          </div>
           <div className={styles.enemyInfo}>
             <div>{monster.name}</div>
             <HpBar hp={wildHp} maxHp={wildMaxHp} />
