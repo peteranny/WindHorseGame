@@ -156,7 +156,12 @@
  * monster's. `left`/`top` are percentages of .battlefield (its positioned
  * containing block) so the arc always spans the actual battlefield width
  * regardless of viewport size; `transform` layers on the drastic spin and
- * the near-to-far shrink, independent of that positioning.
+ * the near-to-far shrink, independent of that positioning. `left`/`top`
+ * are sampled at every 12.5% along an actual parabola (rather than just
+ * 0%/50%/100%) - with only 3 points the up-then-down arc is two straight
+ * lines meeting at a sharp vertex; this many points makes that seam
+ * imperceptible. rotate/scale change at a constant rate throughout, so
+ * they don't need the extra in-between points.
  */
 .thrownIcon {
   position: absolute;
@@ -174,10 +179,40 @@
     transform: translate(-50%, -50%) rotate(0deg) scale(1.3);
   }
 
+  12.5% {
+    left: 15.375%;
+    top: 45%;
+  }
+
+  25% {
+    left: 25.75%;
+    top: 30%;
+  }
+
+  37.5% {
+    left: 36.125%;
+    top: 20%;
+  }
+
   50% {
-    left: 45%;
+    left: 46.5%;
     top: 15%;
     transform: translate(-50%, -50%) rotate(180deg) scale(0.8);
+  }
+
+  62.5% {
+    left: 56.875%;
+    top: 15%;
+  }
+
+  75% {
+    left: 67.25%;
+    top: 20%;
+  }
+
+  87.5% {
+    left: 77.625%;
+    top: 30%;
   }
 
   100% {
