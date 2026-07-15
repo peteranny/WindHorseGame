@@ -27,6 +27,8 @@ import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import PLAYER_SPRITE_FRONT from "../../assets/playerSpriteFront.png";
 import PLAYER_SPRITE_BACK from "../../assets/playerSpriteBack.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
+import ROAD_TILE from "../../assets/roadTile.png";
+import WALL_TILE from "../../assets/wallTile.png";
 import HOME_SPRITE from "../../assets/home.png";
 import HOME_EMPTY_SPRITE from "../../assets/home-empty.png";
 
@@ -265,10 +267,14 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   return (
     <div
       className={cn(styles.map, styles.withOffset)}
-      style={{
-        left: offsetX,
-        top: offsetY,
-      }}
+      style={
+        {
+          left: offsetX,
+          top: offsetY,
+          "--road-tile": `url(${ROAD_TILE})`,
+          "--wall-tile": `url(${WALL_TILE})`,
+        } as React.CSSProperties
+      }
     >
       {map.map((cells, r) => (
         <div key={r} className={styles.row}>

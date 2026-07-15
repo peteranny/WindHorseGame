@@ -22,12 +22,18 @@
   justify-content: center;
   align-items: center;
 
+  /* --road-tile/--wall-tile (set inline on .map, see Maze/index.tsx) are
+     tiling assets meant to scale to exactly one cell - same formula as
+     CELL_SIZE (100px * SCALE) so a tile's own size always matches the
+     cell it's filling, regardless of the global scale. */
   &.road {
-    background: greenyellow;
+    background-image: var(--road-tile);
+    background-size: calc(100px * var(--scale)) calc(100px * var(--scale));
   }
 
   &.wall {
-    /* Apply the screen background */
+    background-image: var(--wall-tile);
+    background-size: calc(100px * var(--scale)) calc(100px * var(--scale));
   }
 }
 
