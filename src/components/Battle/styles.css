@@ -79,11 +79,14 @@
 .enemyInfo,
 .playerInfo {
   position: absolute;
+  box-sizing: border-box;
   background: white;
   border: 2px solid black;
   border-radius: 4px;
   padding: calc(8px * var(--scale));
-  width: calc(150px * var(--scale));
+
+  /* Same formula as .miniMap's width (see MiniMap/styles.css) - same box, same size. */
+  width: min(calc(150px * var(--scale)), 45vw);
 }
 
 .playerInfo {
