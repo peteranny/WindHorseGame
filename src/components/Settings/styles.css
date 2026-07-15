@@ -1,19 +1,122 @@
 .screen {
-  padding: calc(24px * var(--scale));
+  overflow-y: auto;
+  padding: calc(20px * var(--scale));
   color: white;
+}
 
-  input {
-    font-size: inherit;
-    margin-right: calc(8px * var(--scale));
-  }
+.content {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
 
-  button {
-    font-size: inherit;
-  }
+.title {
+  margin: 0 0 calc(16px * var(--scale));
+  font-size: calc(18pt * var(--scale));
+}
+
+.card {
+  box-sizing: border-box;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: calc(8px * var(--scale));
+  padding: calc(16px * var(--scale));
+  margin-bottom: calc(16px * var(--scale));
+}
+
+.currentKey {
+  margin: 0 0 calc(12px * var(--scale));
+  font-size: calc(11pt * var(--scale));
+  word-break: break-all;
+}
+
+.keyForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(8px * var(--scale));
+}
+
+.keyInput {
+  flex: 1 1 calc(160px * var(--scale));
+  min-width: 0;
+  box-sizing: border-box;
+  font-size: inherit;
+  padding: calc(8px * var(--scale)) calc(10px * var(--scale));
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: calc(4px * var(--scale));
+  background: white;
+  color: black;
+}
+
+.primaryButton,
+.secondaryButton,
+.devButton {
+  box-sizing: border-box;
+  font-size: inherit;
+  padding: calc(8px * var(--scale)) calc(14px * var(--scale));
+  border-radius: calc(4px * var(--scale));
+  cursor: pointer;
+}
+
+.primaryButton {
+  flex: 1 1 calc(100px * var(--scale));
+  border: none;
+  background: #4a90d9;
+  color: white;
+  font-weight: bold;
+}
+
+.secondaryButton {
+  width: 100%;
+  margin-bottom: calc(16px * var(--scale));
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: transparent;
+  color: white;
+}
+
+.devSection {
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: calc(8px * var(--scale));
+  border: 1px dashed orangered;
+  border-radius: calc(8px * var(--scale));
+  padding: calc(12px * var(--scale));
+  margin-bottom: calc(16px * var(--scale));
+}
+
+.devLabel {
+  margin: 0;
+  font-size: calc(9pt * var(--scale));
+  color: orangered;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.devButton {
+  width: 100%;
+  border: 1px dashed orangered;
+  background: rgba(255, 69, 0, 0.1);
+  color: orangered;
 }
 
 .advancedInfo {
   margin-top: calc(24px * var(--scale));
   opacity: 0.5;
   font-size: calc(9pt * var(--scale));
+}
+
+/*
+ * Below ~480px (the content column's own max-width) there's no room to
+ * spare, so the key input and its button drop to their own full-width
+ * rows instead of trying to share one.
+ */
+@media (max-width: 480px) {
+  .keyInput,
+  .primaryButton {
+    flex-basis: 100%;
+  }
 }

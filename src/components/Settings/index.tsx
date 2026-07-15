@@ -25,45 +25,73 @@ const Settings = () => {
 
   return (
     <Screen className={styles.screen}>
-      <h1>設定</h1>
-      <p>目前的存檔金鑰：{stateKey ?? "（尚未設定）"}</p>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (input.trim()) setStateKey(input.trim());
-        }}
-      >
-        <input value={input} onChange={(e) => setInput(e.target.value)} />
-        <button type="submit">更換金鑰</button>
-      </form>
-      <button type="button" onClick={() => history.push("/")}>
-        返回遊戲
-      </button>
-      {stateKey === DEV_STATE_KEY && (
-        <>
-          <button
-            type="button"
-            onClick={() =>
-              setDevBattleShortcutsEnabled(!devBattleShortcutsEnabled)
-            }
+      <div className={styles.content}>
+        <h1 className={styles.title}>設定</h1>
+
+        <section className={styles.card}>
+          <p className={styles.currentKey}>
+            目前的存檔金鑰：
+            <strong>{stateKey ?? "（尚未設定）"}</strong>
+          </p>
+          <form
+            className={styles.keyForm}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (input.trim()) setStateKey(input.trim());
+            }}
           >
-            {devBattleShortcutsEnabled
-              ? "停用戰鬥捷徑（Capture／Lose）"
-              : "啟用戰鬥捷徑（Capture／Lose）"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setDevReleaseEnabled(!devReleaseEnabled)}
-          >
-            {devReleaseEnabled
-              ? "停用點擊尾隨怪獸釋放捕獲"
-              : "啟用點擊尾隨怪獸釋放捕獲"}
-          </button>
-        </>
-      )}
-      {__DEPLOY_DATE__ && (
-        <p className={styles.advancedInfo}>Last Updated: {__DEPLOY_DATE__}</p>
-      )}
+            <input
+              className={styles.keyInput}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="輸入新的存檔金鑰"
+            />
+            <button type="submit" className={styles.primaryButton}>
+              更換金鑰
+            </button>
+          </form>
+        </section>
+
+        <button
+          type="button"
+          className={styles.secondaryButton}
+          onClick={() => history.push("/")}
+        >
+          返回遊戲
+        </button>
+
+        {stateKey === DEV_STATE_KEY && (
+          <section className={styles.devSection}>
+            <p className={styles.devLabel}>開發者選項</p>
+            <button
+              type="button"
+              className={styles.devButton}
+              onClick={() =>
+                setDevBattleShortcutsEnabled(!devBattleShortcutsEnabled)
+              }
+            >
+              {devBattleShortcutsEnabled
+                ? "停用戰鬥捷徑（Capture／Lose）"
+                : "啟用戰鬥捷徑（Capture／Lose）"}
+            </button>
+            <button
+              type="button"
+              className={styles.devButton}
+              onClick={() => setDevReleaseEnabled(!devReleaseEnabled)}
+            >
+              {devReleaseEnabled
+                ? "停用點擊尾隨怪獸釋放捕獲"
+                : "啟用點擊尾隨怪獸釋放捕獲"}
+            </button>
+          </section>
+        )}
+
+        {__DEPLOY_DATE__ && (
+          <p className={styles.advancedInfo}>
+            Last Updated: {__DEPLOY_DATE__}
+          </p>
+        )}
+      </div>
     </Screen>
   );
 };
