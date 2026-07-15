@@ -4,6 +4,7 @@ import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
 import MONSTERS from "../../data/monsters/monsters";
 import CONVERSATIONS, {
+  GOAL_CHALLENGE_CONVERSATION,
   GOAL_FINAL_CONVERSATION,
   GOAL_HINT_CONVERSATION,
 } from "../../data/conversations";
@@ -15,13 +16,13 @@ import {
 } from "../../data/conversations/engine";
 import { computeWildMaxHp } from "../../data/monsters/battleFormulas";
 import { isFullyCaptured } from "../../data/monsters/captureLogic";
+import { GOAL_NAME } from "../../data/goalEncounter";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
 import { paginateText } from "./paginateText";
 import { useTypewriter } from "./useTypewriter";
 
 const MAX_LINES_PER_PAGE = 2;
-const GOAL_NAME = "大風大馬";
 
 const ConversationView = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
@@ -42,8 +43,12 @@ const ConversationView = () => {
   }, [activeMonsterId, isGoalEncounter, battleOutcome]);
 
   const pages = isGoalEncounter
-    ? isFullyCaptured(captured, MONSTERS.length)
-      ? GOAL_FINAL_CONVERSATION
+    ? battleOutcome !== null
+      ? battleOutcome === "win"
+        ? GOAL_FINAL_CONVERSATION
+        : buildOutcomeConversation(GOAL_NAME, battleOutcome)
+      : isFullyCaptured(captured, MONSTERS.length)
+      ? GOAL_CHALLENGE_CONVERSATION
       : GOAL_HINT_CONVERSATION
     : activeMonsterId === null
     ? []

@@ -571,6 +571,22 @@
   color: orangered;
 }
 
+/* A real (non-dev) shortcut - only shown once the goal battle has been beaten once, so replaying it isn't mandatory every time. */
+.skipButton {
+  flex-shrink: 0;
+  font-size: inherit;
+  padding: calc(8px * var(--scale)) calc(12px * var(--scale));
+  border: 2px solid black;
+  border-radius: 4px;
+  background: #e0f0ff;
+}
+
+.goalWinDate {
+  flex-shrink: 0;
+  font-size: calc(9pt * var(--scale));
+  color: #777;
+}
+
 .attackButton {
   position: relative;
   display: flex;

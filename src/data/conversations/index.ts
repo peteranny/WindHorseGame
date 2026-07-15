@@ -2,6 +2,7 @@ import { Conversation } from "./types";
 import { parseConversation } from "./engine";
 
 import goalHint from "./goalHint.json";
+import goalChallenge from "./goalChallenge.json";
 import goalFinal from "./goalFinal.json";
 
 import c0 from "./0.json";
@@ -87,7 +88,15 @@ const CONVERSATIONS: Record<number, Conversation> = {
 };
 
 export const GOAL_HINT_CONVERSATION: Conversation = parseConversation(goalHint);
-export const GOAL_FINAL_CONVERSATION: Conversation =
-  parseConversation(goalFinal);
+// Shown once every monster is captured but the goal battle hasn't been beaten
+// yet - its terminal page's "enter_challenge" action starts that battle.
+export const GOAL_CHALLENGE_CONVERSATION: Conversation = parseConversation(
+  goalChallenge
+);
+// Shown after winning the goal battle, replacing the generic capture-outcome
+// text (see ConversationView) since there's no monster being captured here.
+export const GOAL_FINAL_CONVERSATION: Conversation = parseConversation(
+  goalFinal
+);
 
 export default CONVERSATIONS;

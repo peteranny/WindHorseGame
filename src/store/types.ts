@@ -6,5 +6,6 @@ export interface PersistedGameState {
   captured: Record<number, string>;
   cooldowns: Record<string, number>;
   exploredCells: Record<string, true>;
+  goalDefeatedAt: string | null;
   timestamp: number;
 }

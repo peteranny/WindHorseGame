@@ -1,4 +1,8 @@
-import { getLocalSnapshot, resolveHydratedState, setLocalSnapshot } from "./persistence";
+import {
+  getLocalSnapshot,
+  resolveHydratedState,
+  setLocalSnapshot,
+} from "./persistence";
 import { PersistedGameState } from "./types";
 
 // This project's test environment is plain Node (no jsdom), so localStorage
@@ -27,6 +31,7 @@ const state = (timestamp: number): PersistedGameState => ({
   captured: {},
   cooldowns: {},
   exploredCells: {},
+  goalDefeatedAt: null,
   timestamp,
 });
 
@@ -65,7 +70,7 @@ describe("resolveHydratedState", () => {
 });
 
 describe("getLocalSnapshot / setLocalSnapshot", () => {
-  const globalWithStorage = globalThis as unknown as {
+  const globalWithStorage = (globalThis as unknown) as {
     localStorage: MemoryStorage;
   };
 

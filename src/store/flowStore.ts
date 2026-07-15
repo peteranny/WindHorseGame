@@ -9,7 +9,8 @@ interface FlowState {
   mode: Mode;
   activeMonsterId: number | null;
   // The map's one-off 'F' goal tile - a separate encounter from any
-  // monster's (activeMonsterId stays null for it), never leads into battle.
+  // monster's (activeMonsterId stays null for it). Its conversation can
+  // still lead into battle, same as a monster's (see Battle/ConversationView).
   isGoalEncounter: boolean;
   battleOutcome: BattleOutcome | null;
   talkingSpeaker: TalkingSpeaker;
@@ -64,10 +65,7 @@ export const useFlowStore = create<FlowState>((set) => ({
     })),
   healProtagonist: (amount) =>
     set((state) => ({
-      protagonistHp: Math.min(
-        PROTAGONIST_MAX_HP,
-        state.protagonistHp + amount
-      ),
+      protagonistHp: Math.min(PROTAGONIST_MAX_HP, state.protagonistHp + amount),
     })),
   concludeBattle: (outcome) =>
     set({ mode: "conversation", battleOutcome: outcome }),

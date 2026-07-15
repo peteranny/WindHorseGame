@@ -5,13 +5,19 @@ describe("PersistedGameState JSON round-trip", () => {
     const state: PersistedGameState = {
       position: [4, 7],
       facing: "right",
-      captured: { 0: "2024-01-01T00:00:00.000Z", 12: "2024-03-05T00:00:00.000Z" },
+      captured: {
+        0: "2024-01-01T00:00:00.000Z",
+        12: "2024-03-05T00:00:00.000Z",
+      },
       cooldowns: { innate: 1700000000000, 12: 1700000060000 },
       exploredCells: { "4,7": true, "3,7": true },
+      goalDefeatedAt: "2024-05-01T00:00:00.000Z",
       timestamp: 1700000000000,
     };
 
-    const roundTripped = JSON.parse(JSON.stringify(state)) as PersistedGameState;
+    const roundTripped = JSON.parse(
+      JSON.stringify(state)
+    ) as PersistedGameState;
 
     expect(roundTripped).toEqual(state);
     expect(roundTripped.captured[12]).toBe("2024-03-05T00:00:00.000Z");

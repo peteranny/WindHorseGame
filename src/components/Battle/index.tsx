@@ -18,7 +18,9 @@ import {
   WILD_ATTACK_INTERVAL_MS,
 } from "../../data/monsters/battleFormulas";
 import { orderByMostRecentlyCaptured } from "../Maze/followerTrail";
+import { GOAL_NAME } from "../../data/goalEncounter";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
+import GOAL_SPRITE from "../../assets/goalSprite.png";
 
 const INNATE_KEY = "innate";
 const TICK_MS = 500;
@@ -88,8 +90,7 @@ const percentIn = (
 const angleBetween = (
   from: { x: number; y: number },
   to: { x: number; y: number }
-): number =>
-  (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI - 90;
+): number => (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI - 90;
 
 const pointStyle = (from: Point, to: Point): React.CSSProperties =>
   ({
@@ -167,6 +168,7 @@ const useSpitEffect = (): [
 
 const Battle = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
+  const isGoalEncounter = useFlowStore((state) => state.isGoalEncounter);
   const wildHp = useFlowStore((state) => state.wildHp);
   const wildMaxHp = useFlowStore((state) => state.wildMaxHp);
   const protagonistHp = useFlowStore((state) => state.protagonistHp);
@@ -182,6 +184,8 @@ const Battle = () => {
   const cooldowns = useGameStore((state) => state.cooldowns);
   const setCooldown = useGameStore((state) => state.setCooldown);
   const captureMonster = useGameStore((state) => state.captureMonster);
+  const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
+  const recordGoalWin = useGameStore((state) => state.recordGoalWin);
 
   const [playerEffect, triggerPlayerEffect] = useSpriteEffect();
   const [enemyEffect, triggerEnemyEffect] = useSpriteEffect();
@@ -196,9 +200,11 @@ const Battle = () => {
   // the throw/spit trajectories stay pinned to their true centers - and the
   // spit's rotation to their true angle - no matter how either sprite ends
   // up positioned/sized.
-  const getTrajectory = useCallback(():
-    | { from: Point; to: Point; angleDeg: number }
-    | null => {
+  const getTrajectory = useCallback((): {
+    from: Point;
+    to: Point;
+    angleDeg: number;
+  } | null => {
     const battlefield = battlefieldRef.current;
     const playerSprite = playerSpriteRef.current;
     const enemySprite = enemySpriteRef.current;
@@ -218,7 +224,10 @@ const Battle = () => {
 
   useEffect(() => {
     const id = setInterval(() => {
-      if (pendingOutcome === null && Date.now() >= nextWildAttackAtRef.current) {
+      if (
+        pendingOutcome === null &&
+        Date.now() >= nextWildAttackAtRef.current
+      ) {
         damageProtagonist(WILD_ATTACK_DAMAGE);
         triggerEnemyEffect("attack");
         triggerPlayerEffect("hit");
@@ -227,33 +236,50 @@ const Battle = () => {
       forceTick();
     }, TICK_MS);
     return () => clearInterval(id);
-  }, [pendingOutcome, damageProtagonist, triggerEnemyEffect, triggerPlayerEffect]);
+  }, [
+    pendingOutcome,
+    damageProtagonist,
+    triggerEnemyEffect,
+    triggerPlayerEffect,
+  ]);
 
   // Defeat pauses on the battlefield with a fade overlay before actually
   // leaving - concludeBattle (which swaps this whole screen out) only
   // fires once that fade has had time to play.
   useEffect(() => {
-    if (activeMonsterId === null || pendingOutcome !== null) return;
+    if (
+      (activeMonsterId === null && !isGoalEncounter) ||
+      pendingOutcome !== null
+    )
+      return;
     if (wildHp <= 0) {
       setPendingOutcome("win");
     } else if (protagonistHp <= 0) {
       setPendingOutcome("lose");
     }
-  }, [activeMonsterId, wildHp, protagonistHp, pendingOutcome]);
+  }, [activeMonsterId, isGoalEncounter, wildHp, protagonistHp, pendingOutcome]);
 
   useEffect(() => {
     if (pendingOutcome === null) return;
     const id = setTimeout(() => {
-      // Only actually captured once the fade finishes and we're leaving
-      // this screen - otherwise the defeated monster would show up in the
-      // attack grid below while its own defeat is still being shown above.
-      if (pendingOutcome === "win" && activeMonsterId !== null) {
-        captureMonster(activeMonsterId);
+      // Only actually captured/recorded once the fade finishes and we're
+      // leaving this screen - otherwise the defeated monster would show up
+      // in the attack grid below while its own defeat is still playing out.
+      if (pendingOutcome === "win") {
+        if (activeMonsterId !== null) captureMonster(activeMonsterId);
+        else if (isGoalEncounter) recordGoalWin();
       }
       concludeBattle(pendingOutcome);
     }, OUTCOME_TOTAL_MS);
     return () => clearTimeout(id);
-  }, [pendingOutcome, activeMonsterId, captureMonster, concludeBattle]);
+  }, [
+    pendingOutcome,
+    activeMonsterId,
+    isGoalEncounter,
+    captureMonster,
+    recordGoalWin,
+    concludeBattle,
+  ]);
 
   const attackOptions: AttackOption[] = useMemo(() => {
     const options: AttackOption[] = [
@@ -343,8 +369,13 @@ const Battle = () => {
     ]
   );
 
-  if (activeMonsterId === null) return null;
-  const monster = MONSTERS[activeMonsterId];
+  if (activeMonsterId === null && !isGoalEncounter) return null;
+  const enemyName = isGoalEncounter
+    ? GOAL_NAME
+    : MONSTERS[activeMonsterId!].name;
+  const enemyIcon = isGoalEncounter
+    ? GOAL_SPRITE
+    : MONSTERS[activeMonsterId!].icon;
 
   const msUntilWildAttack = nextWildAttackAtRef.current - Date.now();
   const isWildTelegraphing =
@@ -380,8 +411,8 @@ const Battle = () => {
           <div className={styles.enemySpriteWrap}>
             <img
               ref={enemySpriteRef}
-              src={monster.icon}
-              alt={monster.name}
+              src={enemyIcon}
+              alt={enemyName}
               className={cn(
                 styles.enemySprite,
                 enemyEffect && styles[`enemy${capitalize(enemyEffect)}`]
@@ -399,7 +430,7 @@ const Battle = () => {
           </div>
         </div>
         <div className={styles.enemyInfo}>
-          <div>{monster.name}</div>
+          <div>{enemyName}</div>
           <HpBar hp={wildHp} maxHp={wildMaxHp} />
         </div>
         <div className={styles.playerInfo}>
@@ -437,6 +468,16 @@ const Battle = () => {
           >
             逃跑
           </button>
+          {isGoalEncounter && goalDefeatedAt !== null && (
+            <button
+              type="button"
+              className={styles.skipButton}
+              disabled={pendingOutcome !== null}
+              onClick={() => damageWild(wildHp)}
+            >
+              跳過戰鬥
+            </button>
+          )}
           {devBattleShortcutsEnabled && (
             <>
               <button
@@ -458,6 +499,11 @@ const Battle = () => {
             </>
           )}
         </div>
+        {isGoalEncounter && goalDefeatedAt !== null && (
+          <div className={styles.goalWinDate}>
+            首次通關：{new Date(goalDefeatedAt).toLocaleDateString()}
+          </div>
+        )}
         <div className={styles.attackGridWrap}>
           <div
             ref={attackGridRef}
