@@ -191,7 +191,12 @@ const Battle = () => {
   const [enemyEffect, triggerEnemyEffect] = useSpriteEffect();
   const [throwEffects, triggerThrow] = useThrowEffect();
   const [spitEffect, triggerSpit] = useSpitEffect();
+  const [enemySpitEffect, triggerEnemySpit] = useSpitEffect();
   const [pendingOutcome, setPendingOutcome] = useState<PendingOutcome>(null);
+  // Becomes true once the battle is decided AND every in-flight throw/spit
+  // has actually landed - only then does the loser's sprite sink and the
+  // white/black fade begin, so a still-flying attack never gets cut short.
+  const [isSinking, setIsSinking] = useState(false);
 
   const battlefieldRef = useRef<HTMLDivElement>(null);
   const playerSpriteRef = useRef<HTMLImageElement>(null);
@@ -200,7 +205,7 @@ const Battle = () => {
   // the throw/spit trajectories stay pinned to their true centers - and the
   // spit's rotation to their true angle - no matter how either sprite ends
   // up positioned/sized.
-  const getTrajectory = useCallback((): {
+  const getTrajectory = useCallback((reverse = false): {
     from: Point;
     to: Point;
     angleDeg: number;
@@ -212,10 +217,13 @@ const Battle = () => {
     const battlefieldRect = battlefield.getBoundingClientRect();
     const playerCenter = rectCenter(playerSprite.getBoundingClientRect());
     const enemyCenter = rectCenter(enemySprite.getBoundingClientRect());
+    const [fromCenter, toCenter] = reverse
+      ? [enemyCenter, playerCenter]
+      : [playerCenter, enemyCenter];
     return {
-      from: percentIn(playerCenter, battlefieldRect),
-      to: percentIn(enemyCenter, battlefieldRect),
-      angleDeg: angleBetween(playerCenter, enemyCenter),
+      from: percentIn(fromCenter, battlefieldRect),
+      to: percentIn(toCenter, battlefieldRect),
+      angleDeg: angleBetween(fromCenter, toCenter),
     };
   }, []);
 
@@ -228,9 +236,17 @@ const Battle = () => {
         pendingOutcome === null &&
         Date.now() >= nextWildAttackAtRef.current
       ) {
-        damageProtagonist(WILD_ATTACK_DAMAGE);
+        // Mirrors the innate attack: the enemy spits at the player, and the
+        // hit only lands once that spit actually arrives.
         triggerEnemyEffect("attack");
-        triggerPlayerEffect("hit");
+        const trajectory = getTrajectory(true);
+        if (trajectory) {
+          triggerEnemySpit(trajectory.from, trajectory.to, trajectory.angleDeg);
+        }
+        setTimeout(() => {
+          damageProtagonist(WILD_ATTACK_DAMAGE);
+          triggerPlayerEffect("hit");
+        }, SPIT_DURATION_MS);
         nextWildAttackAtRef.current += WILD_ATTACK_INTERVAL_MS;
       }
       forceTick();
@@ -238,9 +254,11 @@ const Battle = () => {
     return () => clearInterval(id);
   }, [
     pendingOutcome,
+    getTrajectory,
     damageProtagonist,
     triggerEnemyEffect,
     triggerPlayerEffect,
+    triggerEnemySpit,
   ]);
 
   // Defeat pauses on the battlefield with a fade overlay before actually
@@ -259,8 +277,22 @@ const Battle = () => {
     }
   }, [activeMonsterId, isGoalEncounter, wildHp, protagonistHp, pendingOutcome]);
 
+  // Holds off the sink/fade sequence until every already-thrown attack has
+  // actually landed, so a slow throw never gets visually cut off mid-flight
+  // by the losing sprite sinking or the screen fading out under it.
   useEffect(() => {
-    if (pendingOutcome === null) return;
+    if (pendingOutcome === null || isSinking) return;
+    if (
+      throwEffects.length > 0 ||
+      spitEffect !== null ||
+      enemySpitEffect !== null
+    )
+      return;
+    setIsSinking(true);
+  }, [pendingOutcome, isSinking, throwEffects, spitEffect, enemySpitEffect]);
+
+  useEffect(() => {
+    if (!isSinking || pendingOutcome === null) return;
     const id = setTimeout(() => {
       // Only actually captured/recorded once the fade finishes and we're
       // leaving this screen - otherwise the defeated monster would show up
@@ -273,6 +305,7 @@ const Battle = () => {
     }, OUTCOME_TOTAL_MS);
     return () => clearTimeout(id);
   }, [
+    isSinking,
     pendingOutcome,
     activeMonsterId,
     isGoalEncounter,
@@ -393,6 +426,9 @@ const Battle = () => {
       )
     : 0;
 
+  const isPlayerSinking = isSinking && pendingOutcome === "lose";
+  const isEnemySinking = isSinking && pendingOutcome === "win";
+
   return (
     <div className={styles.battle}>
       <div className={styles.battlefield} ref={battlefieldRef}>
@@ -403,7 +439,9 @@ const Battle = () => {
             alt="小風"
             className={cn(
               styles.playerSprite,
-              playerEffect && styles[`player${capitalize(playerEffect)}`]
+              isPlayerSinking
+                ? styles.playerSink
+                : playerEffect && styles[`player${capitalize(playerEffect)}`]
             )}
           />
         </div>
@@ -415,7 +453,9 @@ const Battle = () => {
               alt={enemyName}
               className={cn(
                 styles.enemySprite,
-                enemyEffect && styles[`enemy${capitalize(enemyEffect)}`]
+                isEnemySinking
+                  ? styles.enemySink
+                  : enemyEffect && styles[`enemy${capitalize(enemyEffect)}`]
               )}
             />
             {telegraphMarkCount > 0 && (
@@ -453,6 +493,16 @@ const Battle = () => {
             className={styles.spitDrop}
             aria-hidden="true"
             style={spitStyle(spitEffect)}
+          >
+            💧
+          </span>
+        )}
+        {enemySpitEffect !== null && (
+          <span
+            key={enemySpitEffect.id}
+            className={styles.spitDrop}
+            aria-hidden="true"
+            style={spitStyle(enemySpitEffect)}
           >
             💧
           </span>
@@ -522,7 +572,7 @@ const Battle = () => {
                   key={option.key}
                   type="button"
                   className={styles.attackButton}
-                  disabled={!ready}
+                  disabled={!ready || pendingOutcome !== null}
                   onClick={() => handleAttack(option)}
                 >
                   <img
@@ -561,7 +611,7 @@ const Battle = () => {
           )}
         </div>
       </div>
-      {pendingOutcome !== null && (
+      {isSinking && pendingOutcome !== null && (
         <div
           className={cn(
             styles.outcomeFade,

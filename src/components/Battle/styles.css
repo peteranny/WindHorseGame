@@ -428,6 +428,45 @@
   animation: player-heal 300ms ease;
 }
 
+/*
+ * Plays once the battle's decided and every in-flight throw/spit has
+ * landed (see Battle/index.tsx's isSinking) - the loser sinks and fades out
+ * over the same window as .outcomeFade's initial opacity-0 pause, so it's
+ * fully finished by the time the white/black fade actually starts covering
+ * the screen. `forwards` holds the sunk pose rather than snapping back.
+ */
+@keyframes player-sink {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(calc(40px * var(--scale))) rotate(-15deg);
+    opacity: 0;
+  }
+}
+
+@keyframes enemy-sink {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(calc(40px * var(--scale))) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+.playerSink {
+  animation: player-sink 500ms ease-in forwards;
+}
+
+.enemySink {
+  animation: enemy-sink 500ms ease-in forwards;
+}
+
 .hpBarOuter {
   height: calc(8px * var(--scale));
   background: #ccc;
