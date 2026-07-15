@@ -456,13 +456,26 @@
   border-top: 4px solid black;
   padding: calc(12px * var(--scale));
   display: flex;
-  gap: calc(12px * var(--scale));
+  flex-direction: column;
+  gap: calc(8px * var(--scale));
+}
+
+/*
+ * 逃跑 (and the dev shortcuts, when shown) sit in one horizontal row above
+ * the captured-monster list, rather than off to its side, so the list below
+ * gets the action bar's full width instead of losing a column to them.
+ */
+.buttonRow {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  gap: calc(8px * var(--scale));
 }
 
 .attackGridWrap {
   position: relative;
   flex: 1;
-  min-width: 0;
+  min-height: 0;
   display: flex;
 }
 
@@ -540,7 +553,6 @@
 }
 
 .escapeButton {
-  align-self: flex-start;
   flex-shrink: 0;
   font-size: inherit;
   padding: calc(8px * var(--scale)) calc(12px * var(--scale));
@@ -549,9 +561,7 @@
   background: white;
 }
 
-/* Dev-only shortcuts (see Settings) - styled distinctly so they never read as real game buttons. */
 .devButton {
-  align-self: flex-start;
   flex-shrink: 0;
   font-size: inherit;
   padding: calc(8px * var(--scale)) calc(12px * var(--scale));

@@ -428,6 +428,36 @@ const Battle = () => {
         )}
       </div>
       <div className={styles.actionBar}>
+        <div className={styles.buttonRow}>
+          <button
+            type="button"
+            className={styles.escapeButton}
+            disabled={pendingOutcome !== null}
+            onClick={() => concludeBattle("escape")}
+          >
+            逃跑
+          </button>
+          {devBattleShortcutsEnabled && (
+            <>
+              <button
+                type="button"
+                className={styles.devButton}
+                disabled={pendingOutcome !== null}
+                onClick={() => damageWild(wildHp)}
+              >
+                Capture
+              </button>
+              <button
+                type="button"
+                className={styles.devButton}
+                disabled={pendingOutcome !== null}
+                onClick={() => damageProtagonist(protagonistHp)}
+              >
+                Lose
+              </button>
+            </>
+          )}
+        </div>
         <div className={styles.attackGridWrap}>
           <div
             ref={attackGridRef}
@@ -484,34 +514,6 @@ const Battle = () => {
             </div>
           )}
         </div>
-        <button
-          type="button"
-          className={styles.escapeButton}
-          disabled={pendingOutcome !== null}
-          onClick={() => concludeBattle("escape")}
-        >
-          逃跑
-        </button>
-        {devBattleShortcutsEnabled && (
-          <>
-            <button
-              type="button"
-              className={styles.devButton}
-              disabled={pendingOutcome !== null}
-              onClick={() => damageWild(wildHp)}
-            >
-              Capture
-            </button>
-            <button
-              type="button"
-              className={styles.devButton}
-              disabled={pendingOutcome !== null}
-              onClick={() => damageProtagonist(protagonistHp)}
-            >
-              Lose
-            </button>
-          </>
-        )}
       </div>
       {pendingOutcome !== null && (
         <div
