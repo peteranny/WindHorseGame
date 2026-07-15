@@ -39,26 +39,27 @@
 }
 
 /*
- * Both taller than a single cell (the roof/hearts overhang beyond it, same
- * idea as .playerSprite's overlap in Battle/styles.css) and anchored to the
- * cell's own center, growing outward evenly in every direction regardless of
- * how much of it pokes out.
- *
- * z-index sits above .followerTrail's followers (whose own z-index tops out
- * at the captured count, well under this) so the duckling train always
- * passes behind the house, but below .pin's 1000 - though .pin is hidden
- * outright whenever the house is occupied anyway (see MazeContainer).
+ * Both taller than a single cell (the roof/hearts overhang into the row
+ * above, same idea as .playerSprite's overlap in Battle/styles.css). Both
+ * source images' own house art already touches their canvas's bottom edge
+ * with no margin, so anchoring flush to the cell's bottom (like a first cut
+ * of this did) or centering the whole tall canvas on the cell (like a second
+ * cut did) both left the house sitting lower than every other sprite here -
+ * `bottom: 28%` instead lines it up just above the *top* of .footShadow's
+ * own ellipse (bottom: 6% + height: 16% = 22%, plus a small gap above that)
+ * - roughly where a sprite's feet actually meet its shadow, rather than the
+ * cell's literal floor.
  */
 .homeSprite,
 .homeEmptySprite {
   position: absolute;
   z-index: 500;
-  top: 50%;
+  bottom: 28%;
   left: 50%;
   width: 120%;
   height: 120%;
   object-fit: contain;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   pointer-events: none;
 }
 
