@@ -93,12 +93,16 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
 
   // Entering the house (see ConversationView's own setPosition call) moves
   // the player's cell without ever going through goto/extendTrail, since
-  // it's a teleport rather than a walked step - without this, the trailing
-  // followers' path would never learn about it and the whole train would
-  // silently desync from the player's actual cell. Extending the trail here
-  // the same way a real step would have keeps the closest follower sitting
-  // its usual half-cell behind the player, which in practice means right at
-  // the doorway rather than inside the house with them.
+  // it's a teleport rather than a walked step. Rather than extending the
+  // existing trail, this resets it to just the house's own cell - collapsing
+  // the whole duckling train onto that single point (resamplePath needs at
+  // least 2 cells to place anyone individually, so every follower falls back
+  // to the same shared point below) rather than spreading it out along the
+  // old path. Leaving is then an entirely ordinary goto/extendTrail walk
+  // starting fresh from that single-cell trail, so only as many followers as
+  // the walked-so-far path can fit get their own point - the rest stay
+  // clamped to the last one (still right at the house) until the player's
+  // put enough distance between them for the whole train to have "emerged".
   const previousHouseStateRef = useRef(houseState);
   useEffect(() => {
     if (
@@ -106,9 +110,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
       houseState === "occupied" &&
       goalCell !== null
     ) {
-      setTrail((current) =>
-        extendTrail(current, goalCell[0], goalCell[1], PATH_HISTORY_CELLS)
-      );
+      setTrail([[goalCell[0], goalCell[1]]]);
     }
     previousHouseStateRef.current = houseState;
   }, [houseState, goalCell]);
