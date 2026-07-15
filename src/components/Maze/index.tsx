@@ -191,24 +191,19 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   // first - one per follower, however many that turns out to be, rather
   // than grouping several into shared per-cell slots. The closest follower
   // sits half a cell from the player; every one after that is the tighter
-  // FOLLOWER_SPACING further along, keeping the line itself compact.
-  //
-  // While occupied, trail[0] is the goal cell itself (see the entering
-  // effect above) - resampling from it would place the closest follower
-  // half a cell in from there, i.e. straddling into the house's own cell.
-  // Dropping that head entry resamples from the doorway cell instead, so
-  // the train visibly waits outside rather than "entering" alongside the
-  // player.
+  // FOLLOWER_SPACING further along, keeping the line itself compact. While
+  // occupied, trail[0] is the goal cell itself (see the entering effect
+  // above), so the train follows the player onto it same as any other cell.
   const followerPoints = useMemo(
     () =>
       resamplePath(
-        houseState === "occupied" ? trail.slice(1) : trail,
+        trail,
         CELL_SIZE,
         FOLLOWER_SPACING,
         orderedFollowerIds.length,
         CELL_SIZE / 2
       ),
-    [trail, houseState, orderedFollowerIds.length]
+    [trail, orderedFollowerIds.length]
   );
   // Before the player has taken a single step this session, the path isn't
   // long enough to resample from at all - fall back to half a cell behind
