@@ -33,7 +33,7 @@ module.exports = {
   <head>
     <style>
       html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; overscroll-behavior: none; }
-      * { touch-action: manipulation; }
+      * { touch-action: manipulation; -webkit-user-select: none; user-select: none; }
     </style>
   </head>
   <body>
