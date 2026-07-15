@@ -1,0 +1,28 @@
+/*
+ * Compact dev-only toggle icons living beside the ⚙ settings link (only
+ * visible under the "peteranny" save key, same gate Settings used to apply
+ * to these before they lived there as full-width labeled buttons) - same
+ * orangered-dashed visual language as every other dev-only affordance in
+ * this app (Settings/styles.css's own .devButton, Battle/styles.css's).
+ */
+.devToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(28px * var(--scale));
+  height: calc(28px * var(--scale));
+  padding: 0;
+  border: 2px dashed orangered;
+  border-radius: 50%;
+  background: rgba(255, 69, 0, 0.1);
+  font-size: calc(14pt * var(--scale));
+  line-height: 1;
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.devToggleActive {
+  border-style: solid;
+  background: orangered;
+  opacity: 1;
+}

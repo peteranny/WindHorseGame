@@ -86,33 +86,6 @@
   font-weight: bold;
 }
 
-.devSection {
-  box-sizing: border-box;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: calc(8px * var(--scale));
-  border: 1px dashed orangered;
-  border-radius: calc(8px * var(--scale));
-  padding: calc(12px * var(--scale));
-  margin-bottom: calc(16px * var(--scale));
-}
-
-.devLabel {
-  margin: 0;
-  font-size: calc(9pt * var(--scale));
-  color: orangered;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.devButton {
-  width: 100%;
-  border: 1px dashed orangered;
-  background: rgba(255, 69, 0, 0.1);
-  color: orangered;
-}
-
 .advancedInfo {
   margin-top: calc(24px * var(--scale));
   opacity: 0.5;

@@ -1,6 +1,7 @@
 import React from "react";
 import { useMeasure } from "react-use";
 import { Link } from "react-router-dom";
+import cn from "classnames";
 import useMouse from "../../hooks/useMouse";
 import MouseContext from "../../contexts/MouseContext";
 import Screen from "../Screen";
@@ -14,13 +15,29 @@ import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
 import { CELL_SIZE } from "../Maze/cellSize";
 import WALL_TILE from "../../assets/wallTile.png";
+import styles from "./styles.css";
+
+// Same dev-only save key Settings used to gate these toggles behind before
+// they moved here, next to the ⚙ link, as compact icon buttons.
+const DEV_STATE_KEY = "peteranny";
 
 const Game = () => {
   const [mouse, handleMouseClick] = useMouse();
   const [ref, { width, height }] = useMeasure<HTMLDivElement>();
   const center: [number, number] = [width / 2, height / 2];
   const [playerX, playerY] = useGameStore((state) => state.position);
+  const stateKey = useGameStore((state) => state.stateKey);
   const mode = useFlowStore((state) => state.mode);
+  const devBattleShortcutsEnabled = useFlowStore(
+    (state) => state.devBattleShortcutsEnabled
+  );
+  const setDevBattleShortcutsEnabled = useFlowStore(
+    (state) => state.setDevBattleShortcutsEnabled
+  );
+  const devReleaseEnabled = useFlowStore((state) => state.devReleaseEnabled);
+  const setDevReleaseEnabled = useFlowStore(
+    (state) => state.setDevReleaseEnabled
+  );
   const screenKey = mode === "battle" ? "battle" : "game";
   // Same offsetX/offsetY formula Maze itself uses to keep the player's own
   // cell centered on screen - applied here as the infinite wall backdrop's
@@ -70,24 +87,72 @@ const Game = () => {
                     {width > 0 && height > 0 && <Maze center={center} />}
                   </div>
                   <MiniMap />
-                  <Link
-                    to="/settings"
-                    aria-label="設定"
+                  <div
                     style={{
                       position: "absolute",
                       top: "calc(2px * var(--scale))",
                       right: "calc(2px * var(--scale))",
-                      fontSize: "calc(18pt * var(--scale))",
-                      lineHeight: 1,
-                      padding: "calc(4px * var(--scale))",
-                      background: "transparent",
-                      color: "black",
-                      opacity: 0.4,
-                      textDecoration: "none",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "calc(4px * var(--scale))",
                     }}
                   >
-                    ⚙
-                  </Link>
+                    {stateKey === DEV_STATE_KEY && (
+                      <>
+                        <button
+                          type="button"
+                          aria-label={
+                            devBattleShortcutsEnabled
+                              ? "停用戰鬥捷徑（Capture／Lose）"
+                              : "啟用戰鬥捷徑（Capture／Lose）"
+                          }
+                          className={cn(
+                            styles.devToggle,
+                            devBattleShortcutsEnabled && styles.devToggleActive
+                          )}
+                          onClick={() =>
+                            setDevBattleShortcutsEnabled(
+                              !devBattleShortcutsEnabled
+                            )
+                          }
+                        >
+                          ⚔️
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={
+                            devReleaseEnabled
+                              ? "停用點擊尾隨怪獸釋放捕獲"
+                              : "啟用點擊尾隨怪獸釋放捕獲"
+                          }
+                          className={cn(
+                            styles.devToggle,
+                            devReleaseEnabled && styles.devToggleActive
+                          )}
+                          onClick={() =>
+                            setDevReleaseEnabled(!devReleaseEnabled)
+                          }
+                        >
+                          🔓
+                        </button>
+                      </>
+                    )}
+                    <Link
+                      to="/settings"
+                      aria-label="設定"
+                      style={{
+                        fontSize: "calc(18pt * var(--scale))",
+                        lineHeight: 1,
+                        padding: "calc(4px * var(--scale))",
+                        background: "transparent",
+                        color: "black",
+                        opacity: 0.4,
+                        textDecoration: "none",
+                      }}
+                    >
+                      ⚙
+                    </Link>
+                  </div>
                 </div>
                 <Dialog />
               </>

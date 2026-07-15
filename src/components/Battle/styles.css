@@ -721,6 +721,18 @@
 
 .attackButton {
   position: relative;
+
+  /*
+   * An explicit z-index (rather than leaving it auto) turns this into its
+   * own stacking context - without it, .familyDot's own z-index below
+   * would escape all the way up past every ancestor here that's
+   * position:relative/absolute with no explicit z-index of its own
+   * (.attackGroup, .actionBar, .battle...) and could end up competing
+   * directly with unrelated overlays elsewhere on the page (ScreenTransition's
+   * crossfade layers, .outcomeFade) instead of staying contained to this
+   * one button.
+   */
+  z-index: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
