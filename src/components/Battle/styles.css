@@ -479,11 +479,14 @@
 @keyframes player-heal {
   0%,
   100% {
-    filter: none;
+    filter: brightness(1) drop-shadow(0 0 0 transparent);
   }
 
   50% {
-    filter: drop-shadow(0 0 calc(8px * var(--scale)) limegreen);
+    /* Amplified beyond a plain glow - flashes toward near-white at its
+       peak, same beat the drop-shadow already pulses on, before settling
+       straight back to normal. */
+    filter: brightness(3) drop-shadow(0 0 calc(12px * var(--scale)) limegreen);
   }
 }
 
