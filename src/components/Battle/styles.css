@@ -92,13 +92,13 @@
 }
 
 .playerInfo {
-  right: 0;
-  bottom: 0;
+  right: calc(16px * var(--scale));
+  bottom: calc(16px * var(--scale));
 }
 
 .enemyInfo {
-  top: 0;
-  left: 0;
+  top: calc(16px * var(--scale));
+  left: calc(16px * var(--scale));
 }
 
 /* The caret: a borderless CSS triangle nub pointing from the block toward
