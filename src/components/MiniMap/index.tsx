@@ -28,11 +28,15 @@ const MiniMap = () => {
             const isGoal =
               goalCell !== null && c === goalCell[0] && r === goalCell[1];
             const isExplored = isPlayer || !!exploredCells[cellKey(c, r)];
-            // The cell's own terrain (wall/road) always renders as the
-            // backdrop, explored or not, so a translucent fog overlay can sit
-            // on top and let it show through faintly instead of hiding it
-            // outright.
-            const baseClass = cell === CELL_TYPE.WALL ? "wall" : "road";
+            // Unexplored cells all render as the same fog, regardless of the
+            // real terrain underneath - a wall and a road must look
+            // identical while unrevealed, or the fog would leak the maze's
+            // layout before the player has actually explored it.
+            const baseClass = !isExplored
+              ? "fog"
+              : cell === CELL_TYPE.WALL
+              ? "wall"
+              : "road";
             const markerClass = isPlayer
               ? "player"
               : isUncapturedMonster
@@ -46,7 +50,6 @@ const MiniMap = () => {
                 className={cn(
                   styles.cell,
                   styles[baseClass],
-                  !isExplored && styles.fog,
                   markerClass && styles[markerClass]
                 )}
               />

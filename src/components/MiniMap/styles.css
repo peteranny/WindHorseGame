@@ -30,16 +30,11 @@
   }
 
   /*
-   * Fog is a translucent veil layered above the cell's own wall/road
-   * backdrop (via ::after, so it stays above that terrain but below the
-   * marker ::before), letting the real terrain show through dimly rather
-   * than hiding it under solid black.
+   * Unexplored cells never render their real wall/road backdrop (see
+   * index.tsx) - fog is a translucent, uniform veil standing in for it, so
+   * a wall and a road look identical until actually explored.
    */
-  &.fog::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
+  &.fog {
     background: rgba(0, 0, 0, 0.4);
   }
 
@@ -49,14 +44,12 @@
    * background outright - that backdrop is what still shows through the
    * square's corners the circle doesn't cover, so it keeps matching the
    * surrounding mist/terrain instead of leaving a lighter patch behind it.
-   * z-index keeps them punching visibly above the fog's ::after veil.
    */
   &.monster::before,
   &.goal::before {
     content: "";
     position: absolute;
     inset: 0;
-    z-index: 1;
     background: #ff4d4d;
     border-radius: 50%;
   }
