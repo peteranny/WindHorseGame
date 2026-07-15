@@ -69,14 +69,55 @@
   align-items: flex-end;
 }
 
+/*
+ * Positioned absolutely within .battlefield rather than alongside their own
+ * sprite - each block sits in the corner diagonally opposite its own sprite
+ * (player's block lower-right, monster's upper-left; a classic crossed-HUD
+ * layout), so the caret below is what actually ties a block back to the
+ * sprite it belongs to.
+ */
 .enemyInfo,
 .playerInfo {
-  flex-shrink: 0;
+  position: absolute;
   background: white;
   border: 2px solid black;
   border-radius: 4px;
   padding: calc(8px * var(--scale));
   width: calc(150px * var(--scale));
+}
+
+.playerInfo {
+  right: 0;
+  bottom: 0;
+}
+
+.enemyInfo {
+  top: 0;
+  left: 0;
+}
+
+/* The caret: a borderless CSS triangle nub pointing from the block toward
+   its own sprite, which now sits on the opposite side of the screen. */
+.playerInfo::after,
+.enemyInfo::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform: translateY(-50%);
+  border-top: calc(8px * var(--scale)) solid transparent;
+  border-bottom: calc(8px * var(--scale)) solid transparent;
+}
+
+.playerInfo::after {
+  left: calc(-8px * var(--scale));
+  border-right: calc(8px * var(--scale)) solid black;
+}
+
+.enemyInfo::after {
+  right: calc(-8px * var(--scale));
+  border-left: calc(8px * var(--scale)) solid black;
 }
 
 .enemySpriteWrap {
@@ -258,23 +299,23 @@
 }
 
 /*
- * Bigger and pulled out of the normal flex flow, anchored from the *top* of
- * .battlefield (not the bottom) so it always clears .playerInfo above it
- * regardless of the battlefield's actual height - a bottom-relative offset
- * would overlap the info box on a short/narrow viewport. Anchoring from the
- * top instead means the sprite reliably starts below the info box and
- * simply extends however far down that leaves it, naturally spilling under
- * the action bar (a sibling of .battlefield, not a descendant) on most
- * screens - which covers the overlapping part (see .actionBar's `position`,
- * needed so it actually paints above this absolutely-positioned sprite
- * instead of losing to it by default stacking rules). That partial overlap
- * plus the larger size reads as "closer to the camera" than the enemy, like
- * the player's own side in a classic RPG battle screen.
+ * Bigger and pulled out of the normal flex flow, anchored from the *bottom*
+ * of .battlefield rather than the top - a bottom offset of exactly half the
+ * sprite's own height means it always straddles .battlefield's bottom edge
+ * by the same fixed amount regardless of the battlefield's actual height,
+ * guaranteeing the bottom half is always covered by .actionBar (a sibling of
+ * .battlefield, not a descendant, sitting right below it - see .actionBar's
+ * `position`, needed so it actually paints above this absolutely-positioned
+ * sprite instead of losing to it by default stacking rules). A top-relative
+ * offset couldn't guarantee this, since how much of the sprite reaches the
+ * bottom would then depend on the battlefield's height. That partial
+ * overlap plus the larger size reads as "closer to the camera" than the
+ * enemy, like the player's own side in a classic RPG battle screen.
  */
 .playerSprite {
   position: absolute;
   left: 0;
-  top: calc(72px * var(--scale));
+  bottom: calc(-80px * var(--scale));
   width: calc(160px * var(--scale));
   /* stylelint-disable-next-line property-no-unknown */
   aspect-ratio: 1 / 1;

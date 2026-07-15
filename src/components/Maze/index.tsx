@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 import SCALE from "../../scale";
+import { CELL_SIZE } from "./cellSize";
 import simpleMap from "./map.txt";
 import { useGameStore } from "../../store/gameStore";
 import { useFlowStore } from "../../store/flowStore";
@@ -24,7 +25,6 @@ import PLAYER_SPRITE_FRONT from "../../assets/playerSpriteFront.png";
 import PLAYER_SPRITE_BACK from "../../assets/playerSpriteBack.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
 
-const CELL_SIZE = 100 * SCALE;
 // How many cells of the player's own walked path to remember - only needs
 // to be long enough to resample every captured monster's follower point
 // from (see FOLLOWER_SPACING below), with generous headroom.

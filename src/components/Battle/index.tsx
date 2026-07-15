@@ -270,10 +270,6 @@ const Battle = () => {
     <div className={styles.battle}>
       <div className={styles.battlefield}>
         <div className={styles.playerSide}>
-          <div className={styles.playerInfo}>
-            <div>小風</div>
-            <HpBar hp={protagonistHp} maxHp={10} />
-          </div>
           <img
             src={PLAYER_SPRITE}
             alt="小風"
@@ -303,10 +299,14 @@ const Battle = () => {
               </div>
             )}
           </div>
-          <div className={styles.enemyInfo}>
-            <div>{monster.name}</div>
-            <HpBar hp={wildHp} maxHp={wildMaxHp} />
-          </div>
+        </div>
+        <div className={styles.enemyInfo}>
+          <div>{monster.name}</div>
+          <HpBar hp={wildHp} maxHp={wildMaxHp} />
+        </div>
+        <div className={styles.playerInfo}>
+          <div>小風</div>
+          <HpBar hp={protagonistHp} maxHp={10} />
         </div>
         {throwEffects.map((effect) => (
           <img
