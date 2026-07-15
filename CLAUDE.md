@@ -1,6 +1,8 @@
 # WindHorseGame
 
 > **For AI:** Keep this file up to date as the codebase evolves. After any task that changes the architecture, adds a new concept, or modifies how a key system works, update the relevant section here before committing.
+>
+> **Always commit after every request.** Create a git commit as soon as a distinct user request is done and verified (typecheck/lint/tests clean) — don't let completed work pile up uncommitted across multiple turns.
 
 A browser-based maze/monster-capture game built with React, TypeScript, and webpack. Full design rationale and decisions live in `PLAN.md`.
 
