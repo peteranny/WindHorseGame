@@ -193,6 +193,32 @@ const useSpitEffect = (): [
   return [effect, trigger];
 };
 
+// The "X 系列攻擊，效果卓越" banner shown whenever a family group actually
+// throws together - stays up for exactly as long as that throw's own
+// animation takes (durationMs, the same span handleAttack uses to time the
+// combined damage landing), keyed by an incrementing id (same reasoning as
+// useThrowEffect) so a second group throw before the first banner fades
+// restarts its timer rather than being silently swallowed.
+const useFamilyToast = (): [
+  { id: number; family: string; durationMs: number } | null,
+  (family: string, durationMs: number) => void
+] => {
+  const [toast, setToast] = useState<{
+    id: number;
+    family: string;
+    durationMs: number;
+  } | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nextIdRef = useRef(0);
+  const trigger = useCallback((family: string, durationMs: number) => {
+    nextIdRef.current += 1;
+    setToast({ id: nextIdRef.current, family, durationMs });
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setToast(null), durationMs);
+  }, []);
+  return [toast, trigger];
+};
+
 const Battle = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
   const isGoalEncounter = useFlowStore((state) => state.isGoalEncounter);
@@ -220,6 +246,7 @@ const Battle = () => {
   const [throwEffects, triggerThrow] = useThrowEffect();
   const [spitEffect, triggerSpit] = useSpitEffect();
   const [enemySpitEffect, triggerEnemySpit] = useSpitEffect();
+  const [familyToast, triggerFamilyToast] = useFamilyToast();
   const [pendingOutcome, setPendingOutcome] = useState<PendingOutcome>(null);
   // Becomes true once the battle is decided AND every in-flight throw/spit
   // has actually landed - only then does the loser's sprite sink and the
@@ -482,6 +509,12 @@ const Battle = () => {
         const landMs = isInnateOnly ? SPIT_DURATION_MS : THROW_DURATION_MS;
         const totalLandMs =
           (throwers.length - 1) * GROUP_THROW_STAGGER_MS + landMs;
+        // Only a real multi-member family throw earns the callout - a lone
+        // attack (innate or otherwise) never shows one - and it stays up
+        // for exactly as long as this whole throw takes to land.
+        if (group.length > 1 && group[0].family) {
+          triggerFamilyToast(group[0].family, totalLandMs);
+        }
         setTimeout(() => {
           damageWild(totalDamage);
           triggerEnemyEffect("hit");
@@ -550,6 +583,7 @@ const Battle = () => {
       triggerEnemyEffect,
       triggerThrow,
       triggerSpit,
+      triggerFamilyToast,
     ]
   );
 
@@ -658,6 +692,19 @@ const Battle = () => {
             💧
           </span>
         )}
+        {familyToast !== null && (
+          <div
+            key={familyToast.id}
+            className={styles.familyToast}
+            style={
+              {
+                "--toast-duration": `${familyToast.durationMs}ms`,
+              } as React.CSSProperties
+            }
+          >
+            {familyToast.family} 系列攻擊，效果卓越
+          </div>
+        )}
       </div>
       <div className={styles.actionBar}>
         <div className={styles.buttonRow}>
@@ -724,7 +771,7 @@ const Battle = () => {
                   className={styles.attackGroup}
                   style={groupStyle}
                 >
-                  {group.map((option, index) => {
+                  {group.map((option) => {
                     const remainingMs =
                       (cooldowns[option.key] ?? 0) - Date.now();
                     const ready = remainingMs <= 0;
@@ -732,7 +779,6 @@ const Battle = () => {
                       0,
                       Math.min(100, (remainingMs / ATTACK_COOLDOWN_MS) * 100)
                     );
-                    const multiplier = groupMultiplierAt(option.step, index);
                     return (
                       <button
                         key={option.key}
@@ -758,11 +804,6 @@ const Battle = () => {
                             ? `${option.label}（治療）`
                             : option.label}
                         </span>
-                        {isLinked && (
-                          <span className={styles.attackMultiplier}>
-                            ×{multiplier}
-                          </span>
-                        )}
                         {!ready && (
                           <div
                             className={styles.cooldownOverlay}

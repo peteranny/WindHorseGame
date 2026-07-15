@@ -7,10 +7,10 @@ const DEFAULT_STEP = 0.5;
 const ANIMAL_STEP = 0.2;
 
 export const MOM_FAMILY = "小X媽";
-export const PAIR_FAMILY = "小X小Y";
-export const PLANT_FAMILY = "plant";
-export const ANIMAL_FAMILY = "animal";
-export const FRUIT_FAMILY = "fruit";
+export const PAIR_FAMILY = "風馬";
+export const PLANT_FAMILY = "植物";
+export const ANIMAL_FAMILY = "動物";
+export const FRUIT_FAMILY = "水果";
 
 // Exact full-name exceptions - these don't fit the generic "strip the 小風/
 //小馬 suffix" rule below (媽 isn't a suffix of that pattern, and the two

@@ -141,6 +141,50 @@
   display: block;
 }
 
+/*
+ * The "X 系列攻擊，效果卓越" callout for a real (2+ member) family throw -
+ * sits in the upper half of .battlefield, clear of both HUD blocks
+ * (.enemyInfo/.playerInfo sit at the very top/bottom corners) and the
+ * sprites themselves, so it never covers anything a player actually needs
+ * to read mid-fight.
+ */
+.familyToast {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  font-weight: bold;
+  font-size: calc(12pt * var(--scale));
+  padding: calc(6px * var(--scale)) calc(14px * var(--scale));
+  border-radius: calc(999px * var(--scale));
+  white-space: nowrap;
+  pointer-events: none;
+
+  /* --toast-duration (set inline) matches how long this throw actually
+     takes to land, see Battle/index.tsx's totalLandMs. */
+  animation: family-toast-fade var(--toast-duration, 1800ms) ease-in-out;
+}
+
+@keyframes family-toast-fade {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(calc(-8px * var(--scale)));
+  }
+
+  15%,
+  75% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(calc(-8px * var(--scale)));
+  }
+}
+
 .telegraph {
   position: absolute;
   top: calc(-14px * var(--scale));
@@ -760,20 +804,6 @@
       inset 0 0 calc(6px * var(--scale)) 2px
       hsla(var(--family-hue), 75%, 55%, 0.9);
   }
-}
-
-/* The combined-attack multiplier (e.g. "×1.5") a linked button contributes - only shown inside .attackGroupLinked, never on a lone attack. */
-.attackMultiplier {
-  position: absolute;
-  right: calc(2px * var(--scale));
-  bottom: calc(2px * var(--scale));
-  font-size: calc(8pt * var(--scale));
-  font-weight: bold;
-  color: hsl(var(--family-hue), 75%, 32%);
-  background: white;
-  border-radius: 3px;
-  padding: 0 calc(2px * var(--scale));
-  pointer-events: none;
 }
 
 /*

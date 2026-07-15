@@ -6,7 +6,7 @@
     "description": "不管親親到了哪裡，小風都會找到小馬的，小馬也會等到小風的。",
     "family": "wind",
     "isHealer": false,
-    "attackFamily": "小X小Y",
+    "attackFamily": "風馬",
     "attackStep": 0.5
   },
   {
@@ -16,7 +16,7 @@
     "description": "小風看到小風企鵝？才有的靈感而誕生的企鵝小風。",
     "family": "wind",
     "isHealer": false,
-    "attackFamily": "plant",
+    "attackFamily": "植物",
     "attackStep": 0.5
   },
   {
@@ -26,7 +26,7 @@
     "description": "牽小馬牛的項鍊的花。",
     "family": "horse",
     "isHealer": false,
-    "attackFamily": "plant",
+    "attackFamily": "植物",
     "attackStep": 0.5
   },
   {
@@ -36,7 +36,7 @@
     "description": "鳥巢上誕生了一隻很可愛，結果被小風抱起來就不哭的小馬，哈！就是有你、我、和一個家的概念。他們都戴著月見花。",
     "family": "horse",
     "isHealer": false,
-    "attackFamily": "plant",
+    "attackFamily": "植物",
     "attackStep": 0.5
   },
   {
@@ -46,7 +46,7 @@
     "description": "被小馬看到真正的木木小風時，小馬就要對小風負責。",
     "family": "wind",
     "isHealer": false,
-    "attackFamily": "animal",
+    "attackFamily": "動物",
     "attackStep": 0.2
   },
   {
@@ -56,7 +56,7 @@
     "description": "螺子很可愛，但小馬比較可愛，所以委屈小馬扮演騾子小馬。沒想到小馬的鼻孔印到背面，所以請小風來扮演愛愛小風，就跟小風和小馬一樣，喜歡做相親相愛的事情。",
     "family": "horse",
     "isHealer": false,
-    "attackFamily": "animal",
+    "attackFamily": "動物",
     "attackStep": 0.2
   },
   {
@@ -67,7 +67,7 @@
     "family": "wind",
     "isHealer": true,
     "healAmount": 1,
-    "attackFamily": "animal",
+    "attackFamily": "動物",
     "attackStep": 0.2
   },
   {
@@ -77,7 +77,7 @@
     "description": "當原本顏色黑白相間的山斑馬吃到小小風兒跟小小馬兒灌溉的野草，就不小心變成山班小馬，而改變成綠藍相間的體色。",
     "family": "horse",
     "isHealer": false,
-    "attackFamily": "animal",
+    "attackFamily": "動物",
     "attackStep": 0.2
   },
   {
@@ -87,7 +87,7 @@
     "description": "產地：瑞典。當小風感到寂寞的時候（因為小馬去上班）忽然一群銀喉園尾山雀圍著小風，因而產生。",
     "family": "wind",
     "isHealer": false,
-    "attackFamily": "animal",
+    "attackFamily": "動物",
     "attackStep": 0.2
   },
   {
@@ -97,7 +97,7 @@
     "description": "由於小馬是綠色的，兩隻小風看不出來草地跟小馬的分別，因此誤以為小馬是草地，就直接在小馬身上睡著了，因此駱駝小馬就這樣出現了。",
     "family": "horse",
     "isHealer": false,
-    "attackFamily": "animal",
+    "attackFamily": "動物",
     "attackStep": 0.2
   },
   {
@@ -107,7 +107,7 @@
     "description": "在小風上班不開心的時候，會鼓勵小風開心起來的小鷹小風。",
     "family": "wind",
     "isHealer": false,
-    "attackFamily": "animal",
+    "attackFamily": "動物",
     "attackStep": 0.2
   },
   {
@@ -117,7 +117,7 @@
     "description": "因為小馬沒有脖子，因此小馬以為身體長長的就是長頸鹿，結果小馬很努力的讓自己的身體慢慢變長，因此成為獨特的長頸鹿小馬了。小風看到很高興， 因為可以有整群的小風停在長頸鹿小馬上，從此以後就過著幸福快樂的日子。",
     "family": "horse",
     "isHealer": false,
-    "attackFamily": "animal",
+    "attackFamily": "動物",
     "attackStep": 0.2
   },
   {
@@ -127,7 +127,7 @@
     "description": "是最簡單畫的小風， 上網一下子就可以很多的可愛企鵝小風圖。",
     "family": "wind",
     "isHealer": false,
-    "attackFamily": "animal",
+    "attackFamily": "動物",
     "attackStep": 0.2
   },
   {
@@ -148,7 +148,7 @@
     "description": "這是一直愛吃芭樂的葡萄小馬，因為太愛吃，總是把芭樂吃完，為了等待下一次可以吃芭樂，於是葡萄小馬就穿著芭樂裝，等待圓圓的葡萄尾巴，從粉紅色的變成成熟的紫色且自動掉落，這樣葡萄小馬又可以繼續吃芭樂。",
     "family": "horse",
     "isHealer": false,
-    "attackFamily": "fruit",
+    "attackFamily": "水果",
     "attackStep": 0.5
   },
   {
@@ -158,7 +158,7 @@
     "description": "小風只要臉紅得跟蕃茄一樣就會變成蕃茄小風，所以小風媽喜歡讓其他小風吃東西很開心，就會讓其他小風臉紅紅的，之後尾巴變成小蕃茄，然後小風媽就可以煮菜了。",
     "family": "wind",
     "isHealer": false,
-    "attackFamily": "fruit",
+    "attackFamily": "水果",
     "attackStep": 0.5
   },
   {
