@@ -34,6 +34,15 @@ const PATH_HISTORY_CELLS = 200;
 // trail along the actual walked path, not one clump per grid cell.
 const FOLLOWER_SPACING = 20 * SCALE;
 
+// Staggered so the hearts drift up one after another rather than all in
+// lockstep - each's own left offset and start delay (see .loveSmoke's
+// animation in styles.css).
+const LOVE_SMOKE_HEARTS = [
+  { leftPercent: 35, delayMs: 0 },
+  { leftPercent: 50, delayMs: 800 },
+  { leftPercent: 65, delayMs: 1600 },
+];
+
 interface MazeProps {
   center: [number, number];
 }
@@ -50,6 +59,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const revealCells = useGameStore((state) => state.revealCells);
   const captured = useGameStore((state) => state.captured);
   const releaseMonster = useGameStore((state) => state.releaseMonster);
+  const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
   const flowMode = useFlowStore((state) => state.mode);
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
   const isGoalEncounter = useFlowStore((state) => state.isGoalEncounter);
@@ -105,8 +115,12 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
           // travel direction (which may point some other way entirely).
           setFacing(c > x ? "right" : c < x ? "left" : r > y ? "down" : "up");
           startEncounter(monsterId);
-        } else if (isGoalTile) {
-          setFacing(c > x ? "right" : c < x ? "left" : r > y ? "down" : "up");
+        } else if (isGoalTile && r === y && c > x) {
+          // Unlike a monster, the goal's own art is fixed facing left, so
+          // it can only ever "look at" a player standing to its left -
+          // approaching from the right, above, or below still blocks
+          // movement like a wall, but doesn't start its conversation.
+          setFacing("right");
           startGoalEncounter();
         }
         return;
@@ -262,6 +276,27 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                           } as React.CSSProperties
                         }
                       />
+                      {isGoalCell && goalDefeatedAt !== null && (
+                        <div
+                          className={styles.loveSmokeWrap}
+                          aria-hidden="true"
+                        >
+                          {LOVE_SMOKE_HEARTS.map(
+                            ({ leftPercent, delayMs }, i) => (
+                              <span
+                                key={i}
+                                className={styles.loveSmoke}
+                                style={{
+                                  left: `${leftPercent}%`,
+                                  animationDelay: `${delayMs}ms`,
+                                }}
+                              >
+                                💕
+                              </span>
+                            )
+                          )}
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
