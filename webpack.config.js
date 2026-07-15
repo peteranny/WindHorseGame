@@ -50,7 +50,7 @@ module.exports = {
         // Always inlined as a base64 data URI, regardless of size - the
         // deployed app is a single HTML file (see gas/Code.js's doGet),
         // so there's no separate host to serve image files from.
-        test: /\.(png|svg)$/,
+        test: /\.(png|svg|jpe?g)$/,
         use: {
           loader: "url-loader",
           options: { limit: Number.MAX_SAFE_INTEGER },

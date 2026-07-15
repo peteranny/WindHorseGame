@@ -6,7 +6,6 @@
   bottom: 0;
   display: flex;
   flex-direction: column;
-  background: skyblue;
 }
 
 /*
@@ -51,6 +50,12 @@
   display: flex;
   justify-content: space-between;
   padding: calc(16px * var(--scale));
+
+  /* backgroundImage set inline (Battle/index.tsx) - same road tile the
+     map itself uses, at the same one-cell tile size for a consistent
+     texture density throughout the game. */
+  background-repeat: repeat;
+  background-size: calc(100px * var(--scale)) calc(100px * var(--scale));
 }
 
 .playerSide {
@@ -143,16 +148,15 @@
 
 /*
  * The "X 系列攻擊，效果卓越" callout for a real (2+ member) family throw -
- * sits in the upper half of .battlefield, clear of both HUD blocks
- * (.enemyInfo/.playerInfo sit at the very top/bottom corners) and the
- * sprites themselves, so it never covers anything a player actually needs
- * to read mid-fight.
+ * centered within .battlefield itself (the fight area above the action
+ * bar/attack grid), not the screen as a whole, so it never covers the
+ * buttons a player is about to tap next.
  */
 .familyToast {
   position: absolute;
-  top: 20%;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   background: rgba(0, 0, 0, 0.75);
   color: white;
   font-weight: bold;
@@ -170,18 +174,18 @@
 @keyframes family-toast-fade {
   0% {
     opacity: 0;
-    transform: translateX(-50%) translateY(calc(-8px * var(--scale)));
+    transform: translate(-50%, -50%) translateY(calc(-8px * var(--scale)));
   }
 
   15%,
   75% {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translate(-50%, -50%);
   }
 
   100% {
     opacity: 0;
-    transform: translateX(-50%) translateY(calc(-8px * var(--scale)));
+    transform: translate(-50%, -50%) translateY(calc(-8px * var(--scale)));
   }
 }
 
@@ -696,10 +700,23 @@
   background: #e0f0ff;
 }
 
+/*
+ * Absolutely positioned (against .actionBar's own position: relative)
+ * rather than a normal flex-flow sibling, floating just above the action
+ * bar's top edge - so it never pushes .buttonRow (or anything else in the
+ * column below it) down when it appears/disappears.
+ */
 .goalWinDate {
-  flex-shrink: 0;
+  position: absolute;
+  right: calc(12px * var(--scale));
+  bottom: 100%;
   font-size: calc(9pt * var(--scale));
   color: #777;
+  background: white;
+  padding: calc(2px * var(--scale)) calc(6px * var(--scale));
+  border: 2px solid black;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
 }
 
 .attackButton {
@@ -765,6 +782,30 @@
   background: rgba(0, 0, 0, 0.55);
   pointer-events: none;
   transition: height 0.2s linear;
+}
+
+/*
+ * A small corner marker on every captured-monster attack (not the innate
+ * attack, which has no family) showing which attack family it belongs to -
+ * same hue as .attackButtonLinked's own glow (hueForFamily), so a player
+ * can tell which neighbors *would* combine even before they're actually
+ * adjacent/ready and glowing.
+ */
+.familyDot {
+  position: absolute;
+  right: calc(3px * var(--scale));
+  bottom: calc(3px * var(--scale));
+  width: calc(8px * var(--scale));
+  height: calc(8px * var(--scale));
+  border-radius: 50%;
+  background: hsl(var(--family-hue), 75%, 55%);
+  border: 1px solid white;
+  pointer-events: none;
+
+  /* Above .cooldownOverlay (comes later in the DOM but auto z-index),
+     since the dot must read as "always visible" during cooldown - the
+     whole point is planning adjacency while attacks are still cooling. */
+  z-index: 1;
 }
 
 /*

@@ -1,7 +1,6 @@
 import React, {
   useCallback,
   useEffect,
-  useMemo,
   useReducer,
   useRef,
   useState,
@@ -28,6 +27,7 @@ import {
 import { GOAL_NAME } from "../../data/goalEncounter";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
+import ROAD_TILE from "../../assets/roadTile.jpg";
 
 const INNATE_KEY = "innate";
 const LEAVE_DURATION_MS = 250;
@@ -373,12 +373,7 @@ const Battle = () => {
     concludeBattle,
   ]);
 
-  // The attack line's order - the innate attack always fixed first, then
-  // gameStore.monsterOrder (shared with, and reorderable from, the map's own
-  // duckling trail - see store/types.ts). Tapping a monster (or a whole
-  // adjacent-family group, see handleAttack) persists a new order via
-  // reorderMonsters, so it carries over to the next battle too.
-  const line: AttackOption[] = useMemo(() => {
+  const buildLine = useCallback((order: number[]): AttackOption[] => {
     const options: AttackOption[] = [
       {
         key: INNATE_KEY,
@@ -390,7 +385,7 @@ const Battle = () => {
         step: 0,
       },
     ];
-    monsterOrder.forEach((id) => {
+    order.forEach((id) => {
       const monster = MONSTERS[id];
       options.push({
         key: String(id),
@@ -403,7 +398,19 @@ const Battle = () => {
       });
     });
     return options;
-  }, [monsterOrder]);
+  }, []);
+
+  // The attack line's order - starts as the innate attack first, then
+  // gameStore.monsterOrder (shared with, and reorderable from, the map's own
+  // duckling trail - see store/types.ts), but from here on the innate
+  // attack is just as reorderable as any captured monster (tapping it sends
+  // it to the back/front of the line same as anything else). Its own
+  // position is never persisted, though - a fresh battle always starts it
+  // back at the front, so this is local state, only the captured-monster
+  // portion syncs out to reorderMonsters on every reorder.
+  const [line, setLine] = useState<AttackOption[]>(() =>
+    buildLine(monsterOrder)
+  );
 
   // Attack buttons currently mid-reorder animation - leaving their old spot
   // (narrowing to nothing) before `line` actually reorders them, then
@@ -427,6 +434,11 @@ const Battle = () => {
     (now: number) =>
       line.map((option) => ({
         ...option,
+        // trueFamily survives regardless of cooldown - the family dot (see
+        // render below) always shows it so a player can plan adjacency
+        // even while an attack is still cooling down; only `family` itself
+        // (what actually drives grouping/glow) gets neutralized.
+        trueFamily: option.family,
         family: (cooldowns[option.key] ?? 0) <= now ? option.family : null,
       })),
     [line, cooldowns]
@@ -525,48 +537,53 @@ const Battle = () => {
         setCooldown(member.key, now + ATTACK_COOLDOWN_MS)
       );
 
-      // The innate attack never joins the reorder cycle - it has no family
-      // (so it's always its own group) and always stays in its fixed first
-      // slot; only the captured-monster portion of the line (line[0] is
-      // always the innate entry) actually reorders and persists.
-      if (!isInnateOnly) {
-        // A multi-member family throw scatters across both ends rather
-        // than moving as one block - each member takes the next spot in
-        // the same back/front/back/... cycle, so a repeated group throw
-        // doesn't just glue the group back together at one end every time.
-        const placements: Array<"back" | "front"> = [];
-        let placement = nextPlacement;
-        group.forEach(() => {
-          placements.push(placement);
-          placement = placement === "back" ? "front" : "back";
+      // The innate attack is just as much a part of the queue as any
+      // captured monster - tapping it sends it to the back/front the same
+      // way. Only its OWN position is never persisted (a fresh battle
+      // always starts it at the front); the captured-monster portion syncs
+      // out to gameStore.reorderMonsters on every reorder, innate included.
+      //
+      // A multi-member family throw scatters across both ends rather than
+      // moving as one block - each member takes the next spot in the same
+      // back/front/back/... cycle, so a repeated group throw doesn't just
+      // glue the group back together at one end every time.
+      const placements: Array<"back" | "front"> = [];
+      let placement = nextPlacement;
+      group.forEach(() => {
+        placements.push(placement);
+        placement = placement === "back" ? "front" : "back";
+      });
+      setNextPlacement(placement);
+      const groupKeys = new Set(group.map((member) => member.key));
+      setLeavingKeys((current) => new Set([...current, ...groupKeys]));
+      setTimeout(() => {
+        let workingLine = line;
+        group.forEach((member, index) => {
+          workingLine =
+            placements[index] === "back"
+              ? moveGroupToBack(workingLine, [member])
+              : moveGroupToFront(workingLine, [member]);
         });
-        setNextPlacement(placement);
-        const groupKeys = new Set(group.map((member) => member.key));
-        setLeavingKeys((current) => new Set([...current, ...groupKeys]));
+        setLine(workingLine);
+        reorderMonsters(
+          workingLine
+            .filter((member) => member.key !== INNATE_KEY)
+            .map((member) => Number(member.key))
+        );
+        setLeavingKeys((current) => {
+          const next = new Set(current);
+          groupKeys.forEach((key) => next.delete(key));
+          return next;
+        });
+        setEnteringKeys((current) => new Set([...current, ...groupKeys]));
         setTimeout(() => {
-          let workingLine = line.slice(1);
-          group.forEach((member, index) => {
-            workingLine =
-              placements[index] === "back"
-                ? moveGroupToBack(workingLine, [member])
-                : moveGroupToFront(workingLine, [member]);
-          });
-          reorderMonsters(workingLine.map((member) => Number(member.key)));
-          setLeavingKeys((current) => {
+          setEnteringKeys((current) => {
             const next = new Set(current);
             groupKeys.forEach((key) => next.delete(key));
             return next;
           });
-          setEnteringKeys((current) => new Set([...current, ...groupKeys]));
-          setTimeout(() => {
-            setEnteringKeys((current) => {
-              const next = new Set(current);
-              groupKeys.forEach((key) => next.delete(key));
-              return next;
-            });
-          }, ENTER_DURATION_MS);
-        }, LEAVE_DURATION_MS);
-      }
+        }, ENTER_DURATION_MS);
+      }, LEAVE_DURATION_MS);
     },
     [
       pendingOutcome,
@@ -616,7 +633,11 @@ const Battle = () => {
 
   return (
     <div className={styles.battle}>
-      <div className={styles.battlefield} ref={battlefieldRef}>
+      <div
+        className={styles.battlefield}
+        ref={battlefieldRef}
+        style={{ backgroundImage: `url(${ROAD_TILE})` } as React.CSSProperties}
+      >
         <div className={styles.playerSide}>
           <img
             ref={playerSpriteRef}
@@ -800,6 +821,19 @@ const Battle = () => {
                           disabled={!ready || pendingOutcome !== null}
                           onClick={() => handleAttack(option)}
                         >
+                          {option.trueFamily !== null && (
+                            <span
+                              className={styles.familyDot}
+                              aria-hidden="true"
+                              style={
+                                {
+                                  "--family-hue": hueForFamily(
+                                    option.trueFamily
+                                  ),
+                                } as React.CSSProperties
+                              }
+                            />
+                          )}
                           <img
                             src={option.icon}
                             alt={option.label}
