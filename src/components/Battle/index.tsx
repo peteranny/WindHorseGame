@@ -771,7 +771,7 @@ const Battle = () => {
                   className={styles.attackGroup}
                   style={groupStyle}
                 >
-                  {group.map((option) => {
+                  {group.map((option, index) => {
                     const remainingMs =
                       (cooldowns[option.key] ?? 0) - Date.now();
                     const ready = remainingMs <= 0;
@@ -780,37 +780,44 @@ const Battle = () => {
                       Math.min(100, (remainingMs / ATTACK_COOLDOWN_MS) * 100)
                     );
                     return (
-                      <button
-                        key={option.key}
-                        type="button"
-                        className={cn(
-                          styles.attackButton,
-                          isLinked && styles.attackButtonLinked,
-                          leavingKeys.has(option.key) &&
-                            styles.attackButtonLeaving,
-                          enteringKeys.has(option.key) &&
-                            styles.attackButtonEntering
-                        )}
-                        disabled={!ready || pendingOutcome !== null}
-                        onClick={() => handleAttack(option)}
-                      >
-                        <img
-                          src={option.icon}
-                          alt={option.label}
-                          className={styles.attackIcon}
-                        />
-                        <span className={styles.attackLabel}>
-                          {option.isHealer
-                            ? `${option.label}（治療）`
-                            : option.label}
-                        </span>
-                        {!ready && (
-                          <div
-                            className={styles.cooldownOverlay}
-                            style={{ height: `${remainingPercent}%` }}
+                      <React.Fragment key={option.key}>
+                        {index > 0 && (
+                          <span
+                            className={styles.attackWire}
+                            aria-hidden="true"
                           />
                         )}
-                      </button>
+                        <button
+                          type="button"
+                          className={cn(
+                            styles.attackButton,
+                            isLinked && styles.attackButtonLinked,
+                            leavingKeys.has(option.key) &&
+                              styles.attackButtonLeaving,
+                            enteringKeys.has(option.key) &&
+                              styles.attackButtonEntering
+                          )}
+                          disabled={!ready || pendingOutcome !== null}
+                          onClick={() => handleAttack(option)}
+                        >
+                          <img
+                            src={option.icon}
+                            alt={option.label}
+                            className={styles.attackIcon}
+                          />
+                          <span className={styles.attackLabel}>
+                            {option.isHealer
+                              ? `${option.label}（治療）`
+                              : option.label}
+                          </span>
+                          {!ready && (
+                            <div
+                              className={styles.cooldownOverlay}
+                              style={{ height: `${remainingPercent}%` }}
+                            />
+                          )}
+                        </button>
+                      </React.Fragment>
                     );
                   })}
                 </div>

@@ -793,6 +793,50 @@
   animation: family-group-glow 1.4s ease-in-out infinite;
 }
 
+/*
+ * The connecting "wire" between two linked buttons - inserted as a zero-
+ * width flex item between them (see Battle/index.tsx), with negative
+ * margins pulling equally from the gap on each side so its own presence
+ * never changes the row's total width: .attackGrid's gap (G) applies on
+ * both sides of this item, so `G + marginLeft + 0 + marginRight + G` has
+ * to still equal the original single gap G, i.e. marginLeft+marginRight
+ * must equal -G. Its own zero-width box then sits exactly where the
+ * original gap's center was, and ::before paints the actual visible line
+ * outward from there to bridge that same span - normally invisible
+ * (transparent), it only actually shows while this pair is linked.
+ */
+.attackWire {
+  position: relative;
+  align-self: center;
+  flex-shrink: 0;
+  width: 0;
+  height: 0;
+  margin: 0 calc(-4px * var(--scale));
+}
+
+.attackWire::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: calc(-4px * var(--scale));
+  width: calc(8px * var(--scale));
+  height: calc(2px * var(--scale));
+  transform: translateY(-50%);
+  background: hsl(var(--family-hue), 75%, 55%);
+  animation: family-group-glow-wire 1.4s ease-in-out infinite;
+}
+
+@keyframes family-group-glow-wire {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
 @keyframes family-group-glow {
   0%,
   100% {
