@@ -22,8 +22,14 @@
  */
 .advanceCaret {
   position: absolute;
-  right: calc(12px * var(--scale));
-  bottom: calc(4px * var(--scale));
+
+  /*
+   * Pushed past .conversation's own box into .inner's padding gutter
+   * (rather than sitting flush inside it), so it never overlaps the
+   * speaker text above it.
+   */
+  right: calc(-8px * var(--scale));
+  bottom: calc(-10px * var(--scale));
   font-size: calc(12pt * var(--scale));
   color: #333;
   animation: advance-caret-bounce 800ms ease-in-out infinite;
