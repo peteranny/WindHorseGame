@@ -490,7 +490,7 @@ const Battle = () => {
         {spitEffect !== null && (
           <span
             key={spitEffect.id}
-            className={styles.spitDrop}
+            className={cn(styles.spitDrop, styles.spitDropForward)}
             aria-hidden="true"
             style={spitStyle(spitEffect)}
           >
@@ -500,7 +500,7 @@ const Battle = () => {
         {enemySpitEffect !== null && (
           <span
             key={enemySpitEffect.id}
-            className={styles.spitDrop}
+            className={cn(styles.spitDrop, styles.spitDropReverse)}
             aria-hidden="true"
             style={spitStyle(enemySpitEffect)}
           >

@@ -298,10 +298,23 @@
   font-size: calc(20pt * var(--scale));
   transform: translate(-50%, -50%) rotate(var(--angle));
   pointer-events: none;
-  animation: spit-shoot 500ms ease-in forwards;
 }
 
-@keyframes spit-shoot {
+/*
+ * The player is the larger, "closer to the camera" sprite (see
+ * .playerSprite), so their spit starts big and shrinks into the distance as
+ * it nears the smaller, further-away enemy.
+ */
+.spitDropForward {
+  animation: spit-shoot-forward 500ms ease-in forwards;
+}
+
+/* The enemy's spit is the reverse: it starts small/distant and grows as it approaches the closer player. */
+.spitDropReverse {
+  animation: spit-shoot-reverse 500ms ease-in forwards;
+}
+
+@keyframes spit-shoot-forward {
   0% {
     left: var(--start-x);
     top: var(--start-y);
@@ -314,6 +327,22 @@
     top: var(--end-y);
     transform: translate(-50%, -50%) rotate(var(--angle)) scale(0.6);
     opacity: 0.9;
+  }
+}
+
+@keyframes spit-shoot-reverse {
+  0% {
+    left: var(--start-x);
+    top: var(--start-y);
+    transform: translate(-50%, -50%) rotate(var(--angle)) scale(0.6);
+    opacity: 0.9;
+  }
+
+  100% {
+    left: var(--end-x);
+    top: var(--end-y);
+    transform: translate(-50%, -50%) rotate(var(--angle)) scale(1);
+    opacity: 1;
   }
 }
 
