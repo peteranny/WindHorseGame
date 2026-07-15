@@ -29,6 +29,15 @@ import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
 import ROAD_TILE from "../../assets/roadTile.jpg";
 
+// Every distinct attack family that actually exists, in a stable
+// (alphabetical) order - hueForFamily spaces hues evenly across this list
+// so any two families are always maximally, visibly distinct, rather than
+// relying on a hash that could put two unrelated families' colors close
+// together by chance.
+const ALL_FAMILIES = Array.from(
+  new Set(MONSTERS.map((monster) => monster.attackFamily))
+).sort();
+
 const INNATE_KEY = "innate";
 const LEAVE_DURATION_MS = 250;
 const ENTER_DURATION_MS = 250;
@@ -36,6 +45,10 @@ const ENTER_DURATION_MS = 250;
 // thrown together, so the group's throws read as a distinguishable volley
 // rather than one indistinct simultaneous blob.
 const GROUP_THROW_STAGGER_MS = 300;
+// A heal's own glow builds, holds, and releases over this much longer span
+// (rather than EFFECT_DURATION_MS's quick attack/hit flash) - the protagonist's
+// HP only actually recovers once this whole animation finishes.
+const HEAL_ANIMATION_MS = 3000;
 const TICK_MS = 500;
 const EFFECT_DURATION_MS = 300;
 const WILD_ATTACK_TELEGRAPH_MS = 2000;
@@ -142,14 +155,20 @@ const HpBar = ({ hp, maxHp }: { hp: number; maxHp: number }) => (
   </div>
 );
 
-const useSpriteEffect = (): [SpriteEffect, (effect: SpriteEffect) => void] => {
+const useSpriteEffect = (): [
+  SpriteEffect,
+  (effect: SpriteEffect, durationMs?: number) => void
+] => {
   const [effect, setEffect] = useState<SpriteEffect>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const trigger = useCallback((next: SpriteEffect) => {
-    setEffect(next);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => setEffect(null), EFFECT_DURATION_MS);
-  }, []);
+  const trigger = useCallback(
+    (next: SpriteEffect, durationMs: number = EFFECT_DURATION_MS) => {
+      setEffect(next);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => setEffect(null), durationMs);
+    },
+    []
+  );
   return [effect, trigger];
 };
 
@@ -193,26 +212,26 @@ const useSpitEffect = (): [
   return [effect, trigger];
 };
 
-// The "X 系列攻擊，效果卓越" banner shown whenever a family group actually
-// throws together - stays up for exactly as long as that throw's own
-// animation takes (durationMs, the same span handleAttack uses to time the
-// combined damage landing), keyed by an incrementing id (same reasoning as
-// useThrowEffect) so a second group throw before the first banner fades
-// restarts its timer rather than being silently swallowed.
+// The battlefield callout banner - "X 系列攻擊，效果卓越" for a real family
+// group throw, or a healing-specific message whenever a healer (solo or
+// grouped) is tapped - stays up for exactly as long as the triggering
+// action's own animation takes (durationMs), keyed by an incrementing id
+// (same reasoning as useThrowEffect) so a second trigger before the first
+// banner fades restarts its timer rather than being silently swallowed.
 const useFamilyToast = (): [
-  { id: number; family: string; durationMs: number } | null,
-  (family: string, durationMs: number) => void
+  { id: number; text: string; durationMs: number } | null,
+  (text: string, durationMs: number) => void
 ] => {
   const [toast, setToast] = useState<{
     id: number;
-    family: string;
+    text: string;
     durationMs: number;
   } | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nextIdRef = useRef(0);
-  const trigger = useCallback((family: string, durationMs: number) => {
+  const trigger = useCallback((text: string, durationMs: number) => {
     nextIdRef.current += 1;
-    setToast({ id: nextIdRef.current, family, durationMs });
+    setToast({ id: nextIdRef.current, text, durationMs });
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => setToast(null), durationMs);
   }, []);
@@ -497,8 +516,17 @@ const Battle = () => {
       });
 
       if (totalHeal > 0) {
-        healProtagonist(totalHeal);
-        triggerPlayerEffect("heal");
+        // The glow builds/holds/releases over HEAL_ANIMATION_MS - HP only
+        // actually recovers once that whole animation finishes, not instantly.
+        triggerPlayerEffect("heal", HEAL_ANIMATION_MS);
+        const healToastText =
+          group.length > 1 && group[0].family
+            ? `${group[0].family} 系列治療，效果卓越！`
+            : `${option.label} 進行治療！`;
+        triggerFamilyToast(healToastText, HEAL_ANIMATION_MS);
+        setTimeout(() => {
+          healProtagonist(totalHeal);
+        }, HEAL_ANIMATION_MS);
       }
       if (throwers.length > 0) {
         if (!totalHeal) triggerPlayerEffect("attack");
@@ -525,7 +553,10 @@ const Battle = () => {
         // attack (innate or otherwise) never shows one - and it stays up
         // for exactly as long as this whole throw takes to land.
         if (group.length > 1 && group[0].family) {
-          triggerFamilyToast(group[0].family, totalLandMs);
+          triggerFamilyToast(
+            `${group[0].family} 系列攻擊，效果卓越`,
+            totalLandMs
+          );
         }
         setTimeout(() => {
           damageWild(totalDamage);
@@ -723,7 +754,7 @@ const Battle = () => {
               } as React.CSSProperties
             }
           >
-            {familyToast.family} 系列攻擊，效果卓越
+            {familyToast.text}
           </div>
         )}
       </div>
@@ -783,7 +814,10 @@ const Battle = () => {
               const isLinked = group.length > 1;
               const groupStyle = isLinked
                 ? ({
-                    "--family-hue": hueForFamily(group[0].family!),
+                    "--family-hue": hueForFamily(
+                      group[0].family!,
+                      ALL_FAMILIES
+                    ),
                   } as React.CSSProperties)
                 : undefined;
               return (
@@ -828,7 +862,8 @@ const Battle = () => {
                               style={
                                 {
                                   "--family-hue": hueForFamily(
-                                    option.trueFamily
+                                    option.trueFamily,
+                                    ALL_FAMILIES
                                   ),
                                 } as React.CSSProperties
                               }

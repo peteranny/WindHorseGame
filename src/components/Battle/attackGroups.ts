@@ -73,13 +73,19 @@ export const moveGroupToFront = <T extends AttackLineMember>(
   return [...moved, ...remaining];
 };
 
-// A stable, deterministic hue (0-359) for a family name, so the grouping
-// indicator's glow color is consistent for a given family across renders and
-// sessions without maintaining an explicit color table per family.
-export const hueForFamily = (family: string): number => {
-  let hash = 0;
-  for (let i = 0; i < family.length; i += 1) {
-    hash = (hash * 31 + family.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash) % 360;
+// A hue (0-359) for a family name, evenly spaced around the color wheel by
+// its position in `orderedFamilies` - a stable, deduplicated list of every
+// family that actually exists (the caller's responsibility to build once,
+// e.g. from every monster's attackFamily). Hashing the name directly (an
+// earlier version of this function did) can't guarantee separation between
+// two arbitrary families - two names can hash close together by chance,
+// reading as near-identical colors. Evenly spacing by index guarantees the
+// maximum possible separation for however many families there are.
+export const hueForFamily = (
+  family: string,
+  orderedFamilies: string[]
+): number => {
+  const index = orderedFamilies.indexOf(family);
+  if (index === -1 || orderedFamilies.length === 0) return 0;
+  return Math.round((index * 360) / orderedFamilies.length);
 };

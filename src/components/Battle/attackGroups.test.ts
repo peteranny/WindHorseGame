@@ -148,33 +148,51 @@ describe("moveGroupToFront", () => {
 });
 
 describe("hueForFamily", () => {
-  it("is deterministic for the same family name", () => {
-    expect(hueForFamily("plant")).toBe(hueForFamily("plant"));
-  });
+  const families = [
+    "plant",
+    "animal",
+    "fruit",
+    "小X媽",
+    "小X小Y",
+    "電電",
+    "草草",
+    "水水",
+    "火火",
+  ];
 
-  it("stays within the 0-359 hue range", () => {
-    ["plant", "animal", "fruit", "小X媽", "小X小Y", "電電"].forEach(
-      (family) => {
-        const hue = hueForFamily(family);
-        expect(hue).toBeGreaterThanOrEqual(0);
-        expect(hue).toBeLessThan(360);
-      }
+  it("is deterministic for the same family name", () => {
+    expect(hueForFamily("plant", families)).toBe(
+      hueForFamily("plant", families)
     );
   });
 
-  it("differs for different family names (no collisions among this pack's families)", () => {
-    const families = [
-      "plant",
-      "animal",
-      "fruit",
-      "小X媽",
-      "小X小Y",
-      "電電",
-      "草草",
-      "水水",
-      "火火",
-    ];
-    const hues = new Set(families.map(hueForFamily));
-    expect(hues.size).toBe(families.length);
+  it("stays within the 0-359 hue range", () => {
+    families.forEach((family) => {
+      const hue = hueForFamily(family, families);
+      expect(hue).toBeGreaterThanOrEqual(0);
+      expect(hue).toBeLessThan(360);
+    });
+  });
+
+  it("differs for every family, evenly spaced by position in the list", () => {
+    const hues = families.map((family) => hueForFamily(family, families));
+    expect(new Set(hues).size).toBe(families.length);
+    // Evenly spaced around the wheel - every gap between consecutive
+    // families is the same size, guaranteeing maximum separation.
+    const step = 360 / families.length;
+    hues.forEach((hue, index) => {
+      expect(hue).toBeCloseTo(index * step, 0);
+    });
+  });
+
+  it("is stable regardless of where the family sits in a differently-ordered list", () => {
+    const reversed = [...families].reverse();
+    expect(hueForFamily("電電", reversed)).toBe(
+      Math.round((reversed.indexOf("電電") * 360) / reversed.length)
+    );
+  });
+
+  it("returns 0 for a family missing from the list, rather than throwing", () => {
+    expect(hueForFamily("不存在", families)).toBe(0);
   });
 });

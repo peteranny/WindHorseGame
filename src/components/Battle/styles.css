@@ -476,16 +476,20 @@
   }
 }
 
+/*
+ * Builds quickly to a near-white flash, holds through most of the 3s
+ * animation (see Battle/index.tsx's HEAL_ANIMATION_MS), then releases back
+ * to normal right as the protagonist's HP actually recovers - rather than
+ * a quick in-and-out flash, this reads as a sustained healing aura.
+ */
 @keyframes player-heal {
   0%,
   100% {
     filter: brightness(1) drop-shadow(0 0 0 transparent);
   }
 
-  50% {
-    /* Amplified beyond a plain glow - flashes toward near-white at its
-       peak, same beat the drop-shadow already pulses on, before settling
-       straight back to normal. */
+  15%,
+  80% {
     filter: brightness(3) drop-shadow(0 0 calc(12px * var(--scale)) limegreen);
   }
 }
@@ -507,7 +511,7 @@
 }
 
 .playerHeal {
-  animation: player-heal 300ms ease;
+  animation: player-heal 3000ms ease;
 }
 
 /*
