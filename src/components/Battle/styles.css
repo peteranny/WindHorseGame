@@ -286,16 +286,17 @@
  * captured-monsters' thrown arc, since there's nothing being "thrown" here.
  * Same --start-x/--start-y/--end-x/--end-y custom properties as
  * .thrownIcon above (measured live off the actual sprites), just blended
- * linearly with no arc. rotate(-90deg) turns the glyph's naturally-pointed
- * top away from the direction of travel, so its rounded bottom leads
- * toward the wild monster instead.
+ * linearly with no arc. rotate(var(--angle)) turns the glyph's naturally
+ * downward-facing round end (see angleBetween in Battle/index.tsx) to
+ * actually point along the real start-to-end line, rather than always
+ * assuming a horizontal shot.
  */
 .spitDrop {
   position: absolute;
   top: var(--start-y);
   left: var(--start-x);
   font-size: calc(20pt * var(--scale));
-  transform: translate(-50%, -50%) rotate(-90deg);
+  transform: translate(-50%, -50%) rotate(var(--angle));
   pointer-events: none;
   animation: spit-shoot 500ms ease-in forwards;
 }
@@ -304,14 +305,14 @@
   0% {
     left: var(--start-x);
     top: var(--start-y);
-    transform: translate(-50%, -50%) rotate(-90deg) scale(1);
+    transform: translate(-50%, -50%) rotate(var(--angle)) scale(1);
     opacity: 1;
   }
 
   100% {
     left: var(--end-x);
     top: var(--end-y);
-    transform: translate(-50%, -50%) rotate(-90deg) scale(0.6);
+    transform: translate(-50%, -50%) rotate(var(--angle)) scale(0.6);
     opacity: 0.9;
   }
 }
