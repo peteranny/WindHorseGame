@@ -28,18 +28,11 @@ const MiniMap = () => {
             const isGoal =
               goalCell !== null && c === goalCell[0] && r === goalCell[1];
             const isExplored = isPlayer || !!exploredCells[cellKey(c, r)];
-            // Every cell always renders its own backdrop first - the dark
-            // mist if unexplored, or its real terrain once revealed - so a
-            // monster/goal marker punching through the fog still sits on a
-            // mist-colored square instead of leaving a lighter patch behind
-            // it (border-radius clips the marker to a circle, exposing the
-            // square's corners). The marker is then layered on top as a
-            // second class, never by replacing this backdrop.
-            const baseClass = !isExplored
-              ? "fog"
-              : cell === CELL_TYPE.WALL
-              ? "wall"
-              : "road";
+            // The cell's own terrain (wall/road) always renders as the
+            // backdrop, explored or not, so a translucent fog overlay can sit
+            // on top and let it show through faintly instead of hiding it
+            // outright.
+            const baseClass = cell === CELL_TYPE.WALL ? "wall" : "road";
             const markerClass = isPlayer
               ? "player"
               : isUncapturedMonster
@@ -53,6 +46,7 @@ const MiniMap = () => {
                 className={cn(
                   styles.cell,
                   styles[baseClass],
+                  !isExplored && styles.fog,
                   markerClass && styles[markerClass]
                 )}
               />
