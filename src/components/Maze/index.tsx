@@ -282,13 +282,19 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                       )}
                       {(isMonsterCell || isGoalCell) && (
                         <>
-                          <div className={styles.footShadow} />
+                          <div
+                            className={cn(
+                              styles.footShadow,
+                              isGoalCell && styles.aboveHouse
+                            )}
+                          />
                           <img
                             src={isGoalCell ? GOAL_SPRITE : monster!.icon}
                             alt={isGoalCell ? "goal" : monster!.name}
                             className={cn(
                               styles.monsterIcon,
-                              isTalking && styles.talking
+                              isTalking && styles.talking,
+                              isGoalCell && styles.aboveHouse
                             )}
                             style={
                               {
@@ -305,7 +311,10 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                     </>
                   )}
                   {isGoalCell && goalDefeatedAt !== null && (
-                    <div className={styles.loveSmokeWrap} aria-hidden="true">
+                    <div
+                      className={cn(styles.loveSmokeWrap, styles.aboveHouse)}
+                      aria-hidden="true"
+                    >
                       {LOVE_SMOKE_HEARTS.map(({ leftPercent, delayMs }, i) => (
                         <span
                           key={i}
