@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 import SCALE from "../../scale";
@@ -84,6 +90,28 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const [trail, setTrail] = useState<Array<[number, number]>>(() =>
     previousPosition ? [[x, y], previousPosition] : [[x, y]]
   );
+
+  // Entering the house (see ConversationView's own setPosition call) moves
+  // the player's cell without ever going through goto/extendTrail, since
+  // it's a teleport rather than a walked step - without this, the trailing
+  // followers' path would never learn about it and the whole train would
+  // silently desync from the player's actual cell. Extending the trail here
+  // the same way a real step would have keeps the closest follower sitting
+  // its usual half-cell behind the player, which in practice means right at
+  // the doorway rather than inside the house with them.
+  const previousHouseStateRef = useRef(houseState);
+  useEffect(() => {
+    if (
+      previousHouseStateRef.current !== "occupied" &&
+      houseState === "occupied" &&
+      goalCell !== null
+    ) {
+      setTrail((current) =>
+        extendTrail(current, goalCell[0], goalCell[1], PATH_HISTORY_CELLS)
+      );
+    }
+    previousHouseStateRef.current = houseState;
+  }, [houseState, goalCell]);
 
   const isPassable = useCallback(
     (r: number, c: number): boolean => {

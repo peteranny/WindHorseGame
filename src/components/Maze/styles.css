@@ -39,10 +39,10 @@
 }
 
 /*
- * Both taller than a single cell (the roof/hearts overhang upward into the
- * row above, same idea as .playerSprite's overlap in Battle/styles.css) and
- * anchored to the cell's own bottom/center, since the house always sits on
- * the goal's cell regardless of how much of it pokes out above.
+ * Both taller than a single cell (the roof/hearts overhang beyond it, same
+ * idea as .playerSprite's overlap in Battle/styles.css) and anchored to the
+ * cell's own center, growing outward evenly in every direction regardless of
+ * how much of it pokes out.
  *
  * z-index sits above .followerTrail's followers (whose own z-index tops out
  * at the captured count, well under this) so the duckling train always
@@ -53,12 +53,12 @@
 .homeEmptySprite {
   position: absolute;
   z-index: 500;
-  bottom: 0;
+  top: 50%;
   left: 50%;
-  width: 140%;
-  height: 140%;
+  width: 120%;
+  height: 120%;
   object-fit: contain;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   pointer-events: none;
 }
 
