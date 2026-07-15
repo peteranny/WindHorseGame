@@ -4,6 +4,7 @@
   left: 8px;
   display: flex;
   flex-direction: column;
+  width: min(calc(150px * var(--scale)), 45vw);
   background: rgba(0, 0, 0, 0.5);
   padding: 4px;
   border-radius: 4px;
@@ -15,8 +16,10 @@
 }
 
 .cell {
-  width: 4px;
-  height: 4px;
+  position: relative;
+  flex: 1 1 0;
+  /* stylelint-disable-next-line property-no-unknown */
+  aspect-ratio: 1;
 
   &.wall {
     background: transparent;
@@ -26,18 +29,37 @@
     background: rgba(255, 255, 255, 0.35);
   }
 
-  &.monster,
-  &.goal {
+  &.fog {
+    background: rgba(0, 0, 0, 0.85);
+  }
+
+  /*
+   * Markers are drawn as a ::before circle layered on top of the cell's own
+   * backdrop above (fog/road/wall), rather than by replacing the cell's own
+   * background outright - that backdrop is what still shows through the
+   * square's corners the circle doesn't cover, so it keeps matching the
+   * surrounding mist/terrain instead of leaving a lighter patch behind it.
+   */
+  &.monster::before,
+  &.goal::before {
+    content: "";
+    position: absolute;
+    inset: 0;
     background: #ff4d4d;
     border-radius: 50%;
   }
 
   &.player {
-    position: relative;
-    background: #adc7dc;
-    border-radius: 50%;
-    box-shadow: 0 0 3px 1px rgba(173, 199, 220, 0.9);
     z-index: 1;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: #adc7dc;
+      border-radius: 50%;
+      box-shadow: 0 0 3px 1px rgba(173, 199, 220, 0.9);
+    }
 
     &::after {
       content: "";
@@ -47,10 +69,6 @@
       border-radius: 50%;
       animation: radar-ping 1.2s ease-out infinite;
     }
-  }
-
-  &.fog {
-    background: rgba(0, 0, 0, 0.85);
   }
 }
 

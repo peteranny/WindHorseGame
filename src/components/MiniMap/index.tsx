@@ -27,29 +27,35 @@ const MiniMap = () => {
               monsterId !== null && captured[monsterId] === undefined;
             const isGoal =
               goalCell !== null && c === goalCell[0] && r === goalCell[1];
-            // Monster/goal markers act as beacons that punch through the
-            // fog - finding your way there on foot is still the point, so
-            // everything else about the cell (and its surroundings) stays
-            // hidden until actually walked past.
-            if (
-              !isPlayer &&
-              !isUncapturedMonster &&
-              !isGoal &&
-              !exploredCells[cellKey(c, r)]
-            ) {
-              return <div key={c} className={cn(styles.cell, styles.fog)} />;
-            }
-            const dotClass = isPlayer
+            const isExplored = isPlayer || !!exploredCells[cellKey(c, r)];
+            // Every cell always renders its own backdrop first - the dark
+            // mist if unexplored, or its real terrain once revealed - so a
+            // monster/goal marker punching through the fog still sits on a
+            // mist-colored square instead of leaving a lighter patch behind
+            // it (border-radius clips the marker to a circle, exposing the
+            // square's corners). The marker is then layered on top as a
+            // second class, never by replacing this backdrop.
+            const baseClass = !isExplored
+              ? "fog"
+              : cell === CELL_TYPE.WALL
+              ? "wall"
+              : "road";
+            const markerClass = isPlayer
               ? "player"
               : isUncapturedMonster
               ? "monster"
               : isGoal
               ? "goal"
-              : cell === CELL_TYPE.WALL
-              ? "wall"
-              : "road";
+              : null;
             return (
-              <div key={c} className={cn(styles.cell, styles[dotClass])} />
+              <div
+                key={c}
+                className={cn(
+                  styles.cell,
+                  styles[baseClass],
+                  markerClass && styles[markerClass]
+                )}
+              />
             );
           })}
         </div>
