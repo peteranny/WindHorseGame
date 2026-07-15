@@ -41,10 +41,52 @@ interface AttackOption {
   healAmount: number;
 }
 
+// A point expressed as a percentage of .battlefield's own box, so throw/spit
+// trajectories stay correct no matter the viewport size or how the sprites
+// themselves are positioned/anchored within it.
+interface Point {
+  xPercent: number;
+  yPercent: number;
+}
+
 interface ThrowEffect {
   id: number;
   icon: string;
+  from: Point;
+  to: Point;
 }
+
+interface SpitEffect {
+  id: number;
+  from: Point;
+  to: Point;
+}
+
+// The actual on-screen center of `target`, as a percentage of `container`'s
+// box - measured live rather than hardcoded, so it's always right regardless
+// of how either element is currently positioned/sized.
+const centerPercentOf = (target: HTMLElement, container: HTMLElement): Point => {
+  const targetRect = target.getBoundingClientRect();
+  const containerRect = container.getBoundingClientRect();
+  return {
+    xPercent:
+      ((targetRect.left + targetRect.width / 2 - containerRect.left) /
+        containerRect.width) *
+      100,
+    yPercent:
+      ((targetRect.top + targetRect.height / 2 - containerRect.top) /
+        containerRect.height) *
+      100,
+  };
+};
+
+const pointStyle = (from: Point, to: Point): React.CSSProperties =>
+  ({
+    "--start-x": `${from.xPercent}%`,
+    "--start-y": `${from.yPercent}%`,
+    "--end-x": `${to.xPercent}%`,
+    "--end-y": `${to.yPercent}%`,
+  } as React.CSSProperties);
 
 const HpBar = ({ hp, maxHp }: { hp: number; maxHp: number }) => (
   <div className={styles.hpBarOuter}>
@@ -71,13 +113,16 @@ const useSpriteEffect = (): [SpriteEffect, (effect: SpriteEffect) => void] => {
 // throw gets its own id and its own timeout that removes only itself, so
 // throwing a second monster before the first one lands doesn't cut the
 // first one's animation short - they each run to completion independently.
-const useThrowEffect = (): [ThrowEffect[], (icon: string) => void] => {
+const useThrowEffect = (): [
+  ThrowEffect[],
+  (icon: string, from: Point, to: Point) => void
+] => {
   const [effects, setEffects] = useState<ThrowEffect[]>([]);
   const nextIdRef = useRef(0);
-  const trigger = useCallback((icon: string) => {
+  const trigger = useCallback((icon: string, from: Point, to: Point) => {
     nextIdRef.current += 1;
     const id = nextIdRef.current;
-    setEffects((current) => [...current, { id, icon }]);
+    setEffects((current) => [...current, { id, icon, from, to }]);
     setTimeout(() => {
       setEffects((current) => current.filter((effect) => effect.id !== id));
     }, THROW_DURATION_MS);
@@ -87,13 +132,13 @@ const useThrowEffect = (): [ThrowEffect[], (icon: string) => void] => {
 
 // The innate attack's water-drop spit, shot straight from the player to the
 // wild monster. Keyed by an incrementing id, same reasoning as useThrowEffect.
-const useSpitEffect = (): [number | null, () => void] => {
-  const [effect, setEffect] = useState<number | null>(null);
+const useSpitEffect = (): [SpitEffect | null, (from: Point, to: Point) => void] => {
+  const [effect, setEffect] = useState<SpitEffect | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nextIdRef = useRef(0);
-  const trigger = useCallback(() => {
+  const trigger = useCallback((from: Point, to: Point) => {
     nextIdRef.current += 1;
-    setEffect(nextIdRef.current);
+    setEffect({ id: nextIdRef.current, from, to });
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => setEffect(null), SPIT_DURATION_MS);
   }, []);
@@ -123,6 +168,25 @@ const Battle = () => {
   const [throwEffects, triggerThrow] = useThrowEffect();
   const [spitEffect, triggerSpit] = useSpitEffect();
   const [pendingOutcome, setPendingOutcome] = useState<PendingOutcome>(null);
+
+  const battlefieldRef = useRef<HTMLDivElement>(null);
+  const playerSpriteRef = useRef<HTMLImageElement>(null);
+  const enemySpriteRef = useRef<HTMLImageElement>(null);
+  // Measured live off the actual rendered sprites rather than hardcoded, so
+  // the throw/spit trajectories stay pinned to their true centers no matter
+  // how either sprite ends up positioned/sized.
+  const getTrajectory = useCallback(():
+    | { from: Point; to: Point }
+    | null => {
+    const battlefield = battlefieldRef.current;
+    const playerSprite = playerSpriteRef.current;
+    const enemySprite = enemySpriteRef.current;
+    if (!battlefield || !playerSprite || !enemySprite) return null;
+    return {
+      from: centerPercentOf(playerSprite, battlefield),
+      to: centerPercentOf(enemySprite, battlefield),
+    };
+  }, []);
 
   const [, forceTick] = useReducer((n: number) => n + 1, 0);
   const nextWildAttackAtRef = useRef(Date.now() + WILD_ATTACK_INTERVAL_MS);
@@ -218,7 +282,8 @@ const Battle = () => {
       } else if (option.key === INNATE_KEY) {
         // The hit only lands once the spit actually arrives.
         triggerPlayerEffect("attack");
-        triggerSpit();
+        const trajectory = getTrajectory();
+        if (trajectory) triggerSpit(trajectory.from, trajectory.to);
         setTimeout(() => {
           damageWild(ATTACK_DAMAGE);
           triggerEnemyEffect("hit");
@@ -226,7 +291,10 @@ const Battle = () => {
       } else {
         // The hit only lands once the thrown monster actually arrives.
         triggerPlayerEffect("attack");
-        triggerThrow(option.icon);
+        const trajectory = getTrajectory();
+        if (trajectory) {
+          triggerThrow(option.icon, trajectory.from, trajectory.to);
+        }
         setTimeout(() => {
           damageWild(ATTACK_DAMAGE);
           triggerEnemyEffect("hit");
@@ -237,6 +305,7 @@ const Battle = () => {
     [
       pendingOutcome,
       cooldowns,
+      getTrajectory,
       healProtagonist,
       damageWild,
       setCooldown,
@@ -268,9 +337,10 @@ const Battle = () => {
 
   return (
     <div className={styles.battle}>
-      <div className={styles.battlefield}>
+      <div className={styles.battlefield} ref={battlefieldRef}>
         <div className={styles.playerSide}>
           <img
+            ref={playerSpriteRef}
             src={PLAYER_SPRITE}
             alt="小風"
             className={cn(
@@ -282,6 +352,7 @@ const Battle = () => {
         <div className={styles.enemySide}>
           <div className={styles.enemySpriteWrap}>
             <img
+              ref={enemySpriteRef}
               src={monster.icon}
               alt={monster.name}
               className={cn(
@@ -315,10 +386,16 @@ const Battle = () => {
             alt=""
             aria-hidden="true"
             className={styles.thrownIcon}
+            style={pointStyle(effect.from, effect.to)}
           />
         ))}
         {spitEffect !== null && (
-          <span key={spitEffect} className={styles.spitDrop} aria-hidden="true">
+          <span
+            key={spitEffect.id}
+            className={styles.spitDrop}
+            aria-hidden="true"
+            style={pointStyle(spitEffect.from, spitEffect.to)}
+          >
             💧
           </span>
         )}
