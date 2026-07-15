@@ -250,6 +250,13 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
     lastPassableFollowerPointRef.current = behindFollowerPoint;
   }
   const fallbackFollowerPoint = lastPassableFollowerPointRef.current;
+  // While occupied, the whole train collapses onto this same fallback
+  // point (see the trail-reset effect above) - dead center of the house's
+  // own cell reads better there than fallbackFollowerPoint's usual
+  // half-cell-behind offset, which would otherwise leave the train hugging
+  // the doorway edge instead of sitting inside with the player.
+  const noPathFollowerPoint =
+    houseState === "occupied" ? playerCenter : fallbackFollowerPoint;
   const centerRect = {
     left: x * CELL_SIZE,
     top: y * CELL_SIZE,
@@ -372,7 +379,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
           const [px, py] =
             followerPoints.length > 0
               ? followerPoints[Math.min(i, followerPoints.length - 1)]
-              : fallbackFollowerPoint;
+              : noPathFollowerPoint;
           return (
             <div
               key={id}
