@@ -65,8 +65,7 @@
     "name": "鴿子小風",
     "description": "產地：當小風要送小馬的時候，不小心撞到正在飛的鴿子，就會產生鴿子小風。個性：愛好和平，當小風跟小馬為了誰要先吃小X兒吵架的時候，鴿子小風都會飛過來調解。",
     "family": "wind",
-    "isHealer": true,
-    "healAmount": 1,
+    "isHealer": false,
     "attackFamily": "動物",
     "attackStep": 0.2
   },
@@ -167,7 +166,8 @@
     "name": "小馬媽",
     "description": "小馬的媽媽。",
     "family": "horse",
-    "isHealer": false,
+    "isHealer": true,
+    "healAmount": 2,
     "attackFamily": "小X媽",
     "attackStep": 0.5
   },
