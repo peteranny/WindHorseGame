@@ -43,14 +43,20 @@
  * row above, same idea as .playerSprite's overlap in Battle/styles.css) and
  * anchored to the cell's own bottom/center, since the house always sits on
  * the goal's cell regardless of how much of it pokes out above.
+ *
+ * z-index sits above .followerTrail's followers (whose own z-index tops out
+ * at the captured count, well under this) so the duckling train always
+ * passes behind the house, but below .pin's 1000 - though .pin is hidden
+ * outright whenever the house is occupied anyway (see MazeContainer).
  */
 .homeSprite,
 .homeEmptySprite {
   position: absolute;
+  z-index: 500;
   bottom: 0;
   left: 50%;
-  width: 160%;
-  height: 160%;
+  width: 140%;
+  height: 140%;
   object-fit: contain;
   transform: translateX(-50%);
   pointer-events: none;

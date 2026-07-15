@@ -1,8 +1,17 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
 import MONSTERS from "../../data/monsters/monsters";
+import simpleMap from "../Maze/map.txt";
+import { compileMap } from "../Maze/compileMap";
+import { findGoalCell } from "../Maze/goalPosition";
 import CONVERSATIONS, {
   GOAL_CHALLENGE_CONVERSATION,
   GOAL_FINAL_CONVERSATION,
@@ -32,7 +41,13 @@ const ConversationView = () => {
   const endEncounter = useFlowStore((state) => state.endEncounter);
   const setTalkingSpeaker = useFlowStore((state) => state.setTalkingSpeaker);
   const captured = useGameStore((state) => state.captured);
+  const setPosition = useGameStore((state) => state.setPosition);
   const capturedCount = Object.keys(captured).length;
+  // Static for the whole game (there's only ever one goal tile) - computed
+  // here purely so the finale conversation's own end can walk the player
+  // onto it (see the "enter the house" branch in advance() below), same
+  // map/goalPosition helpers Maze/Battle already use to find it.
+  const goalCell = useMemo(() => findGoalCell(compileMap(simpleMap)), []);
   const [pageIndex, setPageIndex] = useState(0);
   const [subPageIndex, setSubPageIndex] = useState(0);
   const [textChunks, setTextChunks] = useState<string[]>([""]);
@@ -106,6 +121,14 @@ const ConversationView = () => {
       if (terminalAction(pages, pageIndex) === "enter_challenge") {
         enterBattle(computeWildMaxHp(capturedCount));
       } else {
+        // Only once the finale conversation itself has been read all the
+        // way through does the player actually "enter" the house - their
+        // cell becomes the goal's own (see Maze/houseState.ts). This is the
+        // only terminal page reachable with isGoalEncounter && "win", so no
+        // extra guard is needed beyond that combination.
+        if (isGoalEncounter && battleOutcome === "win" && goalCell !== null) {
+          setPosition(goalCell[0], goalCell[1]);
+        }
         endEncounter();
       }
       return;
