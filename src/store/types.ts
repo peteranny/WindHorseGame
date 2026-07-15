@@ -2,6 +2,7 @@ export type Facing = "left" | "right" | "up" | "down";
 
 export interface PersistedGameState {
   position: [number, number];
+  previousPosition: [number, number] | null;
   facing: Facing;
   captured: Record<number, string>;
   cooldowns: Record<string, number>;

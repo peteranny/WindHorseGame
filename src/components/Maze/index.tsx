@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 import SCALE from "../../scale";
@@ -43,6 +43,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const monsterIds = useMemo(() => computeMonsterIds(map), [map]);
   const goalCell = useMemo(() => findGoalCell(map), [map]);
   const [x, y] = useGameStore((state) => state.position);
+  const previousPosition = useGameStore((state) => state.previousPosition);
   const facing = useGameStore((state) => state.facing);
   const setPosition = useGameStore((state) => state.setPosition);
   const setFacing = useGameStore((state) => state.setFacing);
@@ -57,10 +58,15 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const startGoalEncounter = useFlowStore((state) => state.startGoalEncounter);
   const devReleaseEnabled = useFlowStore((state) => state.devReleaseEnabled);
 
-  // Ephemeral (not persisted) history of the player's own cell, most recent
-  // first - used purely to lay out the trailing captured-monster followers,
-  // which reset every session same as any other transient UI state.
-  const [trail, setTrail] = useState<Array<[number, number]>>(() => [[x, y]]);
+  // History of the player's own cell, most recent first - used purely to
+  // lay out the trailing captured-monster followers. Only ever seeded (from
+  // gameStore.previousPosition) with the one cell the player last moved
+  // from, not persisted itself - real movement this session extends it same
+  // as before. Without that seed, every follower would stack on the single
+  // fallbackFollowerPoint below until the player took their first step.
+  const [trail, setTrail] = useState<Array<[number, number]>>(() =>
+    previousPosition ? [[x, y], previousPosition] : [[x, y]]
+  );
 
   const isPassable = useCallback(
     (r: number, c: number): boolean => {
@@ -151,10 +157,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   // Before the player has taken a single step this session, the path isn't
   // long enough to resample from at all - fall back to half a cell behind
   // the player (opposite their facing), consistent with where the closest
-  // follower sits once there's an actual path to place it on. That cell
-  // might be a wall or an uncaptured monster though (nothing guarantees
-  // the player's *back* is clear), so this checks passability first and
-  // stacks the followers on the player's own cell instead when it isn't.
+  // follower sits once there's an actual path to place it on.
   const [behindX, behindY] =
     facing === "right"
       ? [x - 1, y]
@@ -176,15 +179,24 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   // Half a cell back, matching resamplePath's own initialGap - not the
   // full cell (the behind cell's own center), which would visibly jump
   // once real movement starts populating followerPoints instead.
-  const fallbackFollowerPoint: [number, number] = !isBehindPassable
-    ? playerCenter
-    : facing === "right"
-    ? [playerCenter[0] - CELL_SIZE / 2, playerCenter[1]]
-    : facing === "left"
-    ? [playerCenter[0] + CELL_SIZE / 2, playerCenter[1]]
-    : facing === "down"
-    ? [playerCenter[0], playerCenter[1] - CELL_SIZE / 2]
-    : [playerCenter[0], playerCenter[1] + CELL_SIZE / 2];
+  const behindFollowerPoint: [number, number] =
+    facing === "right"
+      ? [playerCenter[0] - CELL_SIZE / 2, playerCenter[1]]
+      : facing === "left"
+      ? [playerCenter[0] + CELL_SIZE / 2, playerCenter[1]]
+      : facing === "down"
+      ? [playerCenter[0], playerCenter[1] - CELL_SIZE / 2]
+      : [playerCenter[0], playerCenter[1] + CELL_SIZE / 2];
+  // That behind cell might be a wall or an uncaptured monster though
+  // (nothing guarantees the player's *back* is clear) - rather than
+  // snapping the train onto the player's own cell whenever that happens
+  // (most noticeably when only turning to face something, with no actual
+  // move), it holds at wherever it last had a clear cell to sit in.
+  const lastPassableFollowerPointRef = useRef(behindFollowerPoint);
+  if (isBehindPassable) {
+    lastPassableFollowerPointRef.current = behindFollowerPoint;
+  }
+  const fallbackFollowerPoint = lastPassableFollowerPointRef.current;
   const centerRect = {
     left: x * CELL_SIZE,
     top: y * CELL_SIZE,
@@ -246,8 +258,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                             // This art is native left-facing - flip only
                             // when the player is to its right, so it faces
                             // the player throughout the conversation.
-                            "--facing-scale":
-                              isBeingTalkedTo && x > c ? -1 : 1,
+                            "--facing-scale": isBeingTalkedTo && x > c ? -1 : 1,
                           } as React.CSSProperties
                         }
                       />
@@ -272,12 +283,12 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                 styles.followerWrap,
                 devReleaseEnabled && styles.releasable
               )}
-              style={{ left: px, top: py, zIndex: orderedFollowerIds.length - i }}
-              onClick={
-                devReleaseEnabled
-                  ? () => releaseMonster(id)
-                  : undefined
-              }
+              style={{
+                left: px,
+                top: py,
+                zIndex: orderedFollowerIds.length - i,
+              }}
+              onClick={devReleaseEnabled ? () => releaseMonster(id) : undefined}
             >
               <img
                 src={MONSTERS[id].icon}

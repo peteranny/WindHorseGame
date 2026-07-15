@@ -27,6 +27,7 @@ class MemoryStorage {
 
 const state = (timestamp: number): PersistedGameState => ({
   position: [1, 1],
+  previousPosition: null,
   facing: "left",
   captured: {},
   cooldowns: {},

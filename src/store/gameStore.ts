@@ -26,6 +26,12 @@ interface GameState {
   hydrated: boolean;
   stateKey: string | null;
   position: [number, number];
+  // The cell the player moved from to reach `position` - persisted purely so
+  // the duckling trail (see Maze/followerTrail.ts) has a real one-cell
+  // segment to seed itself from on load, instead of every follower stacking
+  // on a single fallback point until the player takes their first step this
+  // session. Null only when the player has never moved yet.
+  previousPosition: [number, number] | null;
   facing: Facing;
   captured: Record<number, string>;
   cooldowns: Record<string, number>;
@@ -44,6 +50,7 @@ interface GameState {
 
 const toPersisted = (state: GameState): PersistedGameState => ({
   position: state.position,
+  previousPosition: state.previousPosition,
   facing: state.facing,
   captured: state.captured,
   cooldowns: state.cooldowns,
@@ -81,6 +88,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   hydrated: false,
   stateKey: getStoredStateKey(),
   position: DEFAULT_POSITION,
+  previousPosition: null,
   facing: DEFAULT_FACING,
   captured: {},
   cooldowns: {},
@@ -109,7 +117,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           : y < prevY
           ? "up"
           : state.facing;
-      return { position: [x, y], facing };
+      return { position: [x, y], previousPosition: state.position, facing };
     });
     scheduleSave();
   },
@@ -163,6 +171,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         const position = winner?.position ?? DEFAULT_POSITION;
         set({
           position,
+          previousPosition: winner?.previousPosition ?? null,
           facing: winner?.facing ?? DEFAULT_FACING,
           captured: winner?.captured ?? {},
           cooldowns: winner?.cooldowns ?? {},

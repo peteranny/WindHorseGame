@@ -3,6 +3,7 @@ import { PersistedGameState } from "./types";
 
 const state = (timestamp: number): PersistedGameState => ({
   position: [0, 0],
+  previousPosition: null,
   facing: "left",
   captured: {},
   cooldowns: {},

@@ -4,6 +4,7 @@ describe("PersistedGameState JSON round-trip", () => {
   it("serialises and deserialises without losing data", () => {
     const state: PersistedGameState = {
       position: [4, 7],
+      previousPosition: [3, 7],
       facing: "right",
       captured: {
         0: "2024-01-01T00:00:00.000Z",

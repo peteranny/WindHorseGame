@@ -31,9 +31,15 @@ src/
                           # of war, cellBeforeTarget (the cell just before an obstacle) and findStoppingPoint (walks
                           # a tapped straight-line move as far as it actually can, stopping short of whatever
                           # blocks it first instead of refusing the whole move).
-                          # followerTrail.ts: pure helpers behind the trailing captured-monster followers - an
-                          # ephemeral (non-persisted) cell-by-cell history of the player's own path, and
+                          # followerTrail.ts: pure helpers behind the trailing captured-monster followers - a
+                          # cell-by-cell history of the player's own path, itself not persisted but seeded on
+                          # load from gameStore.previousPosition (see "Game state & persistence"), and
                           # resamplePath, which turns that into fine, evenly-spaced pixel points to render at.
+                          # Maze/index.tsx's fallbackFollowerPoint covers the rare case where that history is
+                          # still too short to resample at all (a brand new save's very first move) - it holds
+                          # at the last cell behind the player that was actually clear, rather than snapping
+                          # the whole train onto the player's own cell the moment a facing change points it at
+                          # a wall or monster.
     Dialog/               # Bottom panel; renders ConversationView while a conversation is active.
                           # paginateText.ts splits a page's full text into <=2-line, DOM-measured
                           # chunks (joined with "..."); useTypewriter.ts types out the current chunk.
@@ -103,7 +109,7 @@ To make the UI bigger or smaller, change only `SCALE` in `scale.ts`.
 
 ### Game state & persistence
 
-The persisted slice (`store/gameStore.ts`) holds only: player map coordinate, the sprite's last facing direction (`"left" | "right" | "up" | "down"`, updated automatically by `setPosition` based on whichever axis actually changed - x takes priority over y since movement is always purely horizontal or vertical, never both at once), captured monsters (id -> ISO capture date), per-attack cooldowns (monster id, or `"innate"` for the protagonist's own attack -> next-available timestamp in ms), explored cells (see "Fog of war" below), and `goalDefeatedAt` (ISO date of the player's first win of the goal battle, or `null` - see "Conversation -> Battle flow"). Everything else — conversation progress, in-battle HP, which page/screen is showing — lives in the ephemeral `store/flowStore.ts` and is never persisted, so a reload mid-conversation or mid-battle just drops back to the map with no side effects (cooldowns already spent still apply).
+The persisted slice (`store/gameStore.ts`) holds only: player map coordinate, the single cell the player last moved from (`previousPosition`, `null` until the first move ever - seeds the duckling trail below on load, `setPosition` overwrites it with the pre-move `position` on every move), the sprite's last facing direction (`"left" | "right" | "up" | "down"`, updated automatically by `setPosition` based on whichever axis actually changed - x takes priority over y since movement is always purely horizontal or vertical, never both at once), captured monsters (id -> ISO capture date), per-attack cooldowns (monster id, or `"innate"` for the protagonist's own attack -> next-available timestamp in ms), explored cells (see "Fog of war" below), and `goalDefeatedAt` (ISO date of the player's first win of the goal battle, or `null` - see "Conversation -> Battle flow"). Everything else — conversation progress, in-battle HP, which page/screen is showing — lives in the ephemeral `store/flowStore.ts` and is never persisted, so a reload mid-conversation or mid-battle just drops back to the map with no side effects (cooldowns already spent still apply).
 
 On first launch (or whenever no key is stored), `StateKeyGate` blocks rendering: in local dev it silently assigns `"local-dev"`; in the deployed GAS environment it prompts the player for a save-state key. The key is stored in `localStorage` and used to look up/save a single JSON blob (position + captured + cooldowns + a timestamp), both to `localStorage` (for instant reload) and to the Google Sheet (via `google.script.run`, guarded by `typeof google !== "undefined"` so local dev is unaffected). The local cache is itself scoped per state key (`gameState:<key>`, not a single shared slot) — critical for `/settings`: changing the key calls `hydrate()` for the *new* key, and since its local cache starts genuinely empty (or reflects only what this device has saved under that specific key before), a fresh remote snapshot is never crowded out by another key's stale local data. Within the same key, `resolveHydratedState` (`store/persistence.ts`) picks whichever of local/remote has the newer timestamp.
 
