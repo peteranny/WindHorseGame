@@ -28,7 +28,17 @@ const EFFECT_DURATION_MS = 300;
 const WILD_ATTACK_TELEGRAPH_MS = 2000;
 const THROW_DURATION_MS = 2000;
 const SPIT_DURATION_MS = 500;
-const OUTCOME_PAUSE_MS = 500;
+// A beat before the loser starts sinking (once every in-flight throw/spit
+// has actually landed), then the sink itself, then a further beat holding
+// the sunk pose before the white/black fade begins covering it - all three
+// must match .playerSink/.enemySink's own animation-delay/-duration in
+// styles.css, since that's what actually plays the sink visually.
+const SINK_LEAD_MS = 300;
+const SINK_DURATION_MS = 500;
+const SINK_HOLD_MS = 400;
+// Must match outcome-fade-out's opacity-0 percentage in styles.css - the
+// fade only starts becoming visible once the whole sink sequence is done.
+const OUTCOME_PAUSE_MS = SINK_LEAD_MS + SINK_DURATION_MS + SINK_HOLD_MS;
 const OUTCOME_FADE_MS = 700;
 const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 

@@ -10,17 +10,19 @@
 }
 
 /*
- * Sits on top of the whole battle screen once the fight is decided - a
- * brief pause at 0 opacity lets the defeated state actually be seen before
- * the fade to white (win) or black (lose) covers it, right before
- * concludeBattle swaps this screen out (see Battle/index.tsx's timing).
+ * Sits on top of the whole battle screen once the fight is decided - stays
+ * at 0 opacity for the whole sink sequence (lead-in beat, the sink itself,
+ * then a hold on the sunk pose - see Battle/index.tsx's SINK_LEAD_MS/
+ * SINK_DURATION_MS/SINK_HOLD_MS) so that's fully seen before the fade to
+ * white (win) or black (lose) covers it, right before concludeBattle swaps
+ * this screen out.
  */
 .outcomeFade {
   position: absolute;
   inset: 0;
   opacity: 0;
   pointer-events: none;
-  animation: outcome-fade-out 1200ms ease-in forwards;
+  animation: outcome-fade-out 1900ms ease-in forwards;
 }
 
 .outcomeFadeWin {
@@ -33,7 +35,7 @@
 
 @keyframes outcome-fade-out {
   0%,
-  42% {
+  63% {
     opacity: 0;
   }
 
@@ -459,10 +461,11 @@
 
 /*
  * Plays once the battle's decided and every in-flight throw/spit has
- * landed (see Battle/index.tsx's isSinking) - the loser sinks and fades out
- * over the same window as .outcomeFade's initial opacity-0 pause, so it's
- * fully finished by the time the white/black fade actually starts covering
- * the screen. `forwards` holds the sunk pose rather than snapping back.
+ * landed (see Battle/index.tsx's isSinking) - a delay first (SINK_LEAD_MS,
+ * a beat before the loser actually starts sinking), then the sink itself.
+ * `forwards` holds the sunk pose afterward rather than snapping back, for
+ * SINK_HOLD_MS before .outcomeFade's opacity-0 pause ends and the
+ * white/black fade actually starts covering the screen.
  */
 @keyframes player-sink {
   0% {
@@ -489,11 +492,11 @@
 }
 
 .playerSink {
-  animation: player-sink 500ms ease-in forwards;
+  animation: player-sink 500ms ease-in 300ms forwards;
 }
 
 .enemySink {
-  animation: enemy-sink 500ms ease-in forwards;
+  animation: enemy-sink 500ms ease-in 300ms forwards;
 }
 
 .hpBarOuter {
