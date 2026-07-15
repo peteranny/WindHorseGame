@@ -130,6 +130,11 @@ const ConversationView = () => {
           {displayedText}
         </div>
       </div>
+      {isTypingDone && (
+        <span className={styles.advanceCaret} aria-hidden="true">
+          ▼
+        </span>
+      )}
     </div>
   );
 };
