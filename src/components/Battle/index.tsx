@@ -18,11 +18,20 @@ import {
   WILD_ATTACK_INTERVAL_MS,
 } from "../../data/monsters/battleFormulas";
 import { orderByMostRecentlyCaptured } from "../Maze/followerTrail";
+import {
+  findGroupContaining,
+  groupByAdjacentFamily,
+  groupMultiplierAt,
+  hueForFamily,
+  moveGroupToBack,
+} from "./attackGroups";
 import { GOAL_NAME } from "../../data/goalEncounter";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
 
 const INNATE_KEY = "innate";
+const LEAVE_DURATION_MS = 250;
+const ENTER_DURATION_MS = 250;
 const TICK_MS = 500;
 const EFFECT_DURATION_MS = 300;
 const WILD_ATTACK_TELEGRAPH_MS = 2000;
@@ -51,6 +60,10 @@ interface AttackOption {
   icon: string;
   isHealer: boolean;
   healAmount: number;
+  // The battle-adjacency family/step (see data/monsters/attackFamily.ts) -
+  // null family for the innate attack, which never groups with a neighbor.
+  family: string | null;
+  step: number;
 }
 
 // A point expressed as a percentage of .battlefield's own box, so throw/spit
@@ -328,7 +341,13 @@ const Battle = () => {
     concludeBattle,
   ]);
 
-  const attackOptions: AttackOption[] = useMemo(() => {
+  // The attack line's order - starts as most-recently-captured-first (same
+  // as before), but from then on is purely a function of use: tapping a
+  // monster (or a whole adjacent-family group, see handleAttack) sends every
+  // member thrown to the back, same as if it were freshly re-queued. This is
+  // local, unpersisted state (matching flowStore's own ephemeral battle
+  // state) - a fresh battle always restarts from capture order.
+  const [line, setLine] = useState<AttackOption[]>(() => {
     const options: AttackOption[] = [
       {
         key: INNATE_KEY,
@@ -336,6 +355,8 @@ const Battle = () => {
         icon: PLAYER_SPRITE,
         isHealer: false,
         healAmount: 0,
+        family: null,
+        step: 0,
       },
     ];
     orderByMostRecentlyCaptured(captured).forEach((id) => {
@@ -346,10 +367,22 @@ const Battle = () => {
         icon: monster.icon,
         isHealer: monster.isHealer,
         healAmount: monster.healAmount ?? 0,
+        family: monster.attackFamily,
+        step: monster.attackStep,
       });
     });
     return options;
-  }, [captured]);
+  });
+
+  // Attack buttons currently mid-"send to back of line" animation - leaving
+  // its old spot (narrowing to nothing) before `line` reorders it, then
+  // entering its new spot at the back once it has.
+  const [leavingKeys, setLeavingKeys] = useState<Set<string>>(new Set());
+  const [enteringKeys, setEnteringKeys] = useState<Set<string>>(new Set());
+
+  // The line split into maximal adjacent-same-family runs - each run is one
+  // visual grouping box, and what tapping any of its members throws together.
+  const attackGroups = useMemo(() => groupByAdjacentFamily(line), [line]);
 
   // Hints for the horizontally-scrolling attack grid, so players know there
   // are more (cooling-down or not) attacks off to a side rather than
@@ -367,44 +400,86 @@ const Battle = () => {
     updateScrollHints();
     window.addEventListener("resize", updateScrollHints);
     return () => window.removeEventListener("resize", updateScrollHints);
-  }, [attackOptions, updateScrollHints]);
+  }, [line, updateScrollHints]);
 
   const handleAttack = useCallback(
     (option: AttackOption) => {
       if (pendingOutcome !== null) return;
       const now = Date.now();
       if ((cooldowns[option.key] ?? 0) > now) return;
-      if (option.isHealer) {
-        healProtagonist(option.healAmount);
+
+      // Tapping any member of an adjacent-same-family run throws the whole
+      // run together - a lone innate attack (or a captured monster with no
+      // same-family neighbor) is just a run of one, same as before.
+      const group = findGroupContaining(line, option.key);
+
+      let totalHeal = 0;
+      let totalDamage = 0;
+      let willThrow = false;
+      const isInnateOnly = group.length === 1 && group[0].key === INNATE_KEY;
+
+      group.forEach((member, index) => {
+        const multiplier = groupMultiplierAt(member.step, index);
+        if (member.isHealer) {
+          totalHeal += member.healAmount * multiplier;
+          return;
+        }
+        willThrow = true;
+        const trajectory = getTrajectory();
+        if (member.key === INNATE_KEY) {
+          if (trajectory) {
+            triggerSpit(trajectory.from, trajectory.to, trajectory.angleDeg);
+          }
+        } else if (trajectory) {
+          triggerThrow(member.icon, trajectory.from, trajectory.to);
+        }
+        totalDamage += ATTACK_DAMAGE * multiplier;
+      });
+
+      if (totalHeal > 0) {
+        healProtagonist(totalHeal);
         triggerPlayerEffect("heal");
-      } else if (option.key === INNATE_KEY) {
-        // The hit only lands once the spit actually arrives.
-        triggerPlayerEffect("attack");
-        const trajectory = getTrajectory();
-        if (trajectory) {
-          triggerSpit(trajectory.from, trajectory.to, trajectory.angleDeg);
-        }
-        setTimeout(() => {
-          damageWild(ATTACK_DAMAGE);
-          triggerEnemyEffect("hit");
-        }, SPIT_DURATION_MS);
-      } else {
-        // The hit only lands once the thrown monster actually arrives.
-        triggerPlayerEffect("attack");
-        const trajectory = getTrajectory();
-        if (trajectory) {
-          triggerThrow(option.icon, trajectory.from, trajectory.to);
-        }
-        setTimeout(() => {
-          damageWild(ATTACK_DAMAGE);
-          triggerEnemyEffect("hit");
-        }, THROW_DURATION_MS);
       }
-      setCooldown(option.key, now + ATTACK_COOLDOWN_MS);
+      if (willThrow) {
+        // A mixed innate + captured-monster group can't happen (the innate
+        // attack has no family, so it never joins a group), so every member
+        // here shares one landing time: the spit's if this is the lone
+        // innate attack, the longer thrown-arc otherwise.
+        if (!totalHeal) triggerPlayerEffect("attack");
+        const landMs = isInnateOnly ? SPIT_DURATION_MS : THROW_DURATION_MS;
+        setTimeout(() => {
+          damageWild(totalDamage);
+          triggerEnemyEffect("hit");
+        }, landMs);
+      }
+
+      group.forEach((member) =>
+        setCooldown(member.key, now + ATTACK_COOLDOWN_MS)
+      );
+
+      const groupKeys = new Set(group.map((member) => member.key));
+      setLeavingKeys((current) => new Set([...current, ...groupKeys]));
+      setTimeout(() => {
+        setLine((current) => moveGroupToBack(current, group));
+        setLeavingKeys((current) => {
+          const next = new Set(current);
+          groupKeys.forEach((key) => next.delete(key));
+          return next;
+        });
+        setEnteringKeys((current) => new Set([...current, ...groupKeys]));
+        setTimeout(() => {
+          setEnteringKeys((current) => {
+            const next = new Set(current);
+            groupKeys.forEach((key) => next.delete(key));
+            return next;
+          });
+        }, ENTER_DURATION_MS);
+      }, LEAVE_DURATION_MS);
     },
     [
       pendingOutcome,
       cooldowns,
+      line,
       getTrajectory,
       healProtagonist,
       damageWild,
@@ -574,36 +649,70 @@ const Battle = () => {
             className={styles.attackGrid}
             onScroll={updateScrollHints}
           >
-            {attackOptions.map((option) => {
-              const remainingMs = (cooldowns[option.key] ?? 0) - Date.now();
-              const ready = remainingMs <= 0;
-              const remainingPercent = Math.max(
-                0,
-                Math.min(100, (remainingMs / ATTACK_COOLDOWN_MS) * 100)
-              );
+            {attackGroups.map((group) => {
+              const isLinked = group.length > 1;
+              const groupStyle = isLinked
+                ? ({
+                    "--family-hue": hueForFamily(group[0].family!),
+                  } as React.CSSProperties)
+                : undefined;
               return (
-                <button
-                  key={option.key}
-                  type="button"
-                  className={styles.attackButton}
-                  disabled={!ready || pendingOutcome !== null}
-                  onClick={() => handleAttack(option)}
-                >
-                  <img
-                    src={option.icon}
-                    alt={option.label}
-                    className={styles.attackIcon}
-                  />
-                  <span className={styles.attackLabel}>
-                    {option.isHealer ? `${option.label}（治療）` : option.label}
-                  </span>
-                  {!ready && (
-                    <div
-                      className={styles.cooldownOverlay}
-                      style={{ height: `${remainingPercent}%` }}
-                    />
+                <div
+                  key={group[0].key}
+                  className={cn(
+                    styles.attackGroup,
+                    isLinked && styles.attackGroupLinked
                   )}
-                </button>
+                  style={groupStyle}
+                >
+                  {group.map((option, index) => {
+                    const remainingMs =
+                      (cooldowns[option.key] ?? 0) - Date.now();
+                    const ready = remainingMs <= 0;
+                    const remainingPercent = Math.max(
+                      0,
+                      Math.min(100, (remainingMs / ATTACK_COOLDOWN_MS) * 100)
+                    );
+                    const multiplier = groupMultiplierAt(option.step, index);
+                    return (
+                      <button
+                        key={option.key}
+                        type="button"
+                        className={cn(
+                          styles.attackButton,
+                          leavingKeys.has(option.key) &&
+                            styles.attackButtonLeaving,
+                          enteringKeys.has(option.key) &&
+                            styles.attackButtonEntering
+                        )}
+                        disabled={!ready || pendingOutcome !== null}
+                        onClick={() => handleAttack(option)}
+                      >
+                        <img
+                          src={option.icon}
+                          alt={option.label}
+                          className={styles.attackIcon}
+                        />
+                        <span className={styles.attackLabel}>
+                          {option.isHealer
+                            ? `${option.label}（治療）`
+                            : option.label}
+                        </span>
+                        {isLinked && (
+                          <span className={styles.attackMultiplier}>
+                            ×{multiplier}
+                          </span>
+                        )}
+                        {!ready && (
+                          <div
+                            className={styles.cooldownOverlay}
+                            style={{ height: `${remainingPercent}%` }}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               );
             })}
           </div>

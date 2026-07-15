@@ -710,3 +710,91 @@
   pointer-events: none;
   transition: height 0.2s linear;
 }
+
+/*
+ * One maximal adjacent-same-family run in the attack line (see
+ * Battle/attackGroups.ts) - a plain wrapper when it's a run of one (the
+ * common case), or a highlighted "linked" box once 2+ members are actually
+ * adjacent and would throw together. `--family-hue` (set inline from
+ * hueForFamily) drives every color below, so each family reads as its own
+ * consistent color without a hardcoded per-family table.
+ */
+.attackGroup {
+  display: flex;
+  flex-shrink: 0;
+  gap: calc(2px * var(--scale));
+}
+
+.attackGroupLinked {
+  padding: calc(4px * var(--scale));
+  border-radius: calc(8px * var(--scale));
+  background: hsla(var(--family-hue), 75%, 55%, 0.15);
+  box-shadow: 0 0 0 2px hsla(var(--family-hue), 75%, 45%, 0.8);
+  animation: family-group-glow 1.4s ease-in-out infinite;
+}
+
+@keyframes family-group-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px hsla(var(--family-hue), 75%, 45%, 0.8);
+  }
+
+  50% {
+    box-shadow:
+      0 0 calc(6px * var(--scale)) 2px
+      hsla(var(--family-hue), 75%, 55%, 0.9);
+  }
+}
+
+/* The combined-attack multiplier (e.g. "×1.5") a linked button contributes - only shown inside .attackGroupLinked, never on a lone attack. */
+.attackMultiplier {
+  position: absolute;
+  right: calc(2px * var(--scale));
+  bottom: calc(2px * var(--scale));
+  font-size: calc(8pt * var(--scale));
+  font-weight: bold;
+  color: hsl(var(--family-hue), 75%, 32%);
+  background: white;
+  border-radius: 3px;
+  padding: 0 calc(2px * var(--scale));
+  pointer-events: none;
+}
+
+/*
+ * "Send to back of the line": tapping an attack narrows it away at its old
+ * spot (this), then - once `line` actually reorders it, see
+ * Battle/index.tsx's LEAVE_DURATION_MS - it grows back in at its new spot
+ * at the back (.attackButtonEntering below). The same DOM node persists
+ * throughout (React key match), so this is what actually plays both halves.
+ */
+.attackButtonLeaving {
+  animation: attack-button-leave 250ms ease-in forwards;
+}
+
+.attackButtonEntering {
+  animation: attack-button-enter 250ms ease-out;
+}
+
+@keyframes attack-button-leave {
+  0% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+}
+
+@keyframes attack-button-enter {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
