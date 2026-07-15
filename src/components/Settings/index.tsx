@@ -25,6 +25,14 @@ const Settings = () => {
 
   return (
     <Screen className={styles.screen}>
+      <button
+        type="button"
+        className={styles.closeButton}
+        aria-label="返回遊戲"
+        onClick={() => history.push("/")}
+      >
+        ×
+      </button>
       <div className={styles.content}>
         <h1 className={styles.title}>設定</h1>
 
@@ -51,14 +59,6 @@ const Settings = () => {
             </button>
           </form>
         </section>
-
-        <button
-          type="button"
-          className={styles.secondaryButton}
-          onClick={() => history.push("/")}
-        >
-          返回遊戲
-        </button>
 
         {stateKey === DEV_STATE_KEY && (
           <section className={styles.devSection}>

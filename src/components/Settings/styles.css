@@ -7,8 +7,27 @@
 .content {
   box-sizing: border-box;
   width: 100%;
-  max-width: 480px;
+  max-width: 900px;
   margin: 0 auto;
+}
+
+.closeButton {
+  position: absolute;
+  top: calc(16px * var(--scale));
+  right: calc(16px * var(--scale));
+  box-sizing: border-box;
+  width: calc(36px * var(--scale));
+  height: calc(36px * var(--scale));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  font-size: calc(16pt * var(--scale));
+  line-height: 1;
+  cursor: pointer;
 }
 
 .title {
@@ -51,7 +70,6 @@
 }
 
 .primaryButton,
-.secondaryButton,
 .devButton {
   box-sizing: border-box;
   font-size: inherit;
@@ -66,14 +84,6 @@
   background: #4a90d9;
   color: white;
   font-weight: bold;
-}
-
-.secondaryButton {
-  width: 100%;
-  margin-bottom: calc(16px * var(--scale));
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  background: transparent;
-  color: white;
 }
 
 .devSection {
