@@ -2,6 +2,18 @@
   position: absolute;
   top: 8px;
   left: 8px;
+
+  /*
+   * Higher than Maze's own .pin (1000, the highest z-index anywhere on the
+   * map - see its comment in Maze/styles.css) - Maze's wrapper div in
+   * Game/index.tsx is position: absolute with no explicit z-index, so it
+   * never forms its own stacking context, and .pin's explicit z-index
+   * escapes straight up to compete with this sibling instead of staying
+   * contained. Without a z-index here that beats it, the player pin (and
+   * the duckling train trailing it) would paint over the mini-map despite
+   * this element coming later in the DOM.
+   */
+  z-index: 2000;
   display: flex;
   flex-direction: column;
   width: min(calc(110px * var(--scale)), 45vw);
