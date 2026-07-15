@@ -90,6 +90,14 @@ const Game = () => {
                   <div
                     style={{
                       position: "absolute",
+                      // Same reasoning as MiniMap's own z-index (see its
+                      // styles.css comment): this div's ancestors are all
+                      // position:relative/absolute with no explicit
+                      // z-index of their own, so Maze's .pin (the highest
+                      // explicit z-index on the map, 1000) would otherwise
+                      // escape upward and paint over these buttons despite
+                      // this div coming later in the DOM.
+                      zIndex: 2000,
                       top: "calc(2px * var(--scale))",
                       right: "calc(2px * var(--scale))",
                       display: "flex",
