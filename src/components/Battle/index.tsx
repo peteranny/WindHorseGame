@@ -18,6 +18,9 @@ import {
   WILD_ATTACK_INTERVAL_MS,
 } from "../../data/monsters/battleFormulas";
 import { orderByMostRecentlyCaptured } from "../Maze/followerTrail";
+import simpleMap from "../Maze/map.txt";
+import { compileMap } from "../Maze/compileMap";
+import { findGoalCell } from "../Maze/goalPosition";
 import { GOAL_NAME } from "../../data/goalEncounter";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
@@ -196,6 +199,13 @@ const Battle = () => {
   const captureMonster = useGameStore((state) => state.captureMonster);
   const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
   const recordGoalWin = useGameStore((state) => state.recordGoalWin);
+  const setPosition = useGameStore((state) => state.setPosition);
+
+  // Static for the whole game (there's only ever one goal tile) - computed
+  // here purely so a goal win can walk the player onto it (see the
+  // "enter the house" effect below), same map/goalPosition helpers Maze and
+  // MiniMap already use to find it.
+  const goalCell = useMemo(() => findGoalCell(compileMap(simpleMap)), []);
 
   const [playerEffect, triggerPlayerEffect] = useSpriteEffect();
   const [enemyEffect, triggerEnemyEffect] = useSpriteEffect();
@@ -309,7 +319,13 @@ const Battle = () => {
       // in the attack grid below while its own defeat is still playing out.
       if (pendingOutcome === "win") {
         if (activeMonsterId !== null) captureMonster(activeMonsterId);
-        else if (isGoalEncounter) recordGoalWin();
+        else if (isGoalEncounter) {
+          recordGoalWin();
+          // Winning "enters" the house - the player's cell becomes the
+          // goal's own, so Maze swaps both sprites out for the combined
+          // occupied-house art (see Maze/houseState.ts).
+          if (goalCell !== null) setPosition(goalCell[0], goalCell[1]);
+        }
       }
       concludeBattle(pendingOutcome);
     }, OUTCOME_TOTAL_MS);
@@ -321,6 +337,8 @@ const Battle = () => {
     isGoalEncounter,
     captureMonster,
     recordGoalWin,
+    goalCell,
+    setPosition,
     concludeBattle,
   ]);
 

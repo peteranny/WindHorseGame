@@ -15,6 +15,7 @@ import {
   findStoppingPoint,
 } from "./exploration";
 import { findGoalCell } from "./goalPosition";
+import { computeHouseState } from "./houseState";
 import {
   extendTrail,
   orderByMostRecentlyCaptured,
@@ -24,6 +25,8 @@ import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import PLAYER_SPRITE_FRONT from "../../assets/playerSpriteFront.png";
 import PLAYER_SPRITE_BACK from "../../assets/playerSpriteBack.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
+import HOME_SPRITE from "../../assets/home.png";
+import HOME_EMPTY_SPRITE from "../../assets/home-empty.png";
 
 // How many cells of the player's own walked path to remember - only needs
 // to be long enough to resample every captured monster's follower point
@@ -60,6 +63,10 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const captured = useGameStore((state) => state.captured);
   const releaseMonster = useGameStore((state) => state.releaseMonster);
   const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
+  const houseState = useMemo(
+    () => computeHouseState(goalDefeatedAt, [x, y], goalCell),
+    [goalDefeatedAt, x, y, goalCell]
+  );
   const flowMode = useFlowStore((state) => state.mode);
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
   const isGoalEncounter = useFlowStore((state) => state.isGoalEncounter);
@@ -257,47 +264,61 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                 onClick={() => goto(r, c)}
               >
                 <div className={cn(styles.cellContent, styles[cellClass])}>
-                  {(isMonsterCell || isGoalCell) && (
+                  {isGoalCell && houseState === "occupied" ? (
+                    <img
+                      src={HOME_SPRITE}
+                      alt="home"
+                      className={styles.homeSprite}
+                    />
+                  ) : (
                     <>
-                      <div className={styles.footShadow} />
-                      <img
-                        src={isGoalCell ? GOAL_SPRITE : monster!.icon}
-                        alt={isGoalCell ? "goal" : monster!.name}
-                        className={cn(
-                          styles.monsterIcon,
-                          isTalking && styles.talking
-                        )}
-                        style={
-                          {
-                            // This art is native left-facing - flip only
-                            // when the player is to its right, so it faces
-                            // the player throughout the conversation.
-                            "--facing-scale": isBeingTalkedTo && x > c ? -1 : 1,
-                          } as React.CSSProperties
-                        }
-                      />
-                      {isGoalCell && goalDefeatedAt !== null && (
-                        <div
-                          className={styles.loveSmokeWrap}
+                      {isGoalCell && houseState === "empty" && (
+                        <img
+                          src={HOME_EMPTY_SPRITE}
+                          alt=""
                           aria-hidden="true"
-                        >
-                          {LOVE_SMOKE_HEARTS.map(
-                            ({ leftPercent, delayMs }, i) => (
-                              <span
-                                key={i}
-                                className={styles.loveSmoke}
-                                style={{
-                                  left: `${leftPercent}%`,
-                                  animationDelay: `${delayMs}ms`,
-                                }}
-                              >
-                                💕
-                              </span>
-                            )
-                          )}
-                        </div>
+                          className={styles.homeEmptySprite}
+                        />
+                      )}
+                      {(isMonsterCell || isGoalCell) && (
+                        <>
+                          <div className={styles.footShadow} />
+                          <img
+                            src={isGoalCell ? GOAL_SPRITE : monster!.icon}
+                            alt={isGoalCell ? "goal" : monster!.name}
+                            className={cn(
+                              styles.monsterIcon,
+                              isTalking && styles.talking
+                            )}
+                            style={
+                              {
+                                // This art is native left-facing - flip only
+                                // when the player is to its right, so it faces
+                                // the player throughout the conversation.
+                                "--facing-scale":
+                                  isBeingTalkedTo && x > c ? -1 : 1,
+                              } as React.CSSProperties
+                            }
+                          />
+                        </>
                       )}
                     </>
+                  )}
+                  {isGoalCell && goalDefeatedAt !== null && (
+                    <div className={styles.loveSmokeWrap} aria-hidden="true">
+                      {LOVE_SMOKE_HEARTS.map(({ leftPercent, delayMs }, i) => (
+                        <span
+                          key={i}
+                          className={styles.loveSmoke}
+                          style={{
+                            left: `${leftPercent}%`,
+                            animationDelay: `${delayMs}ms`,
+                          }}
+                        >
+                          💕
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
@@ -358,43 +379,55 @@ interface ContainerProps {
 }
 
 const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
+  const map = useMemo(() => compileMap(simpleMap), []);
+  const goalCell = useMemo(() => findGoalCell(map), [map]);
   const facing = useGameStore((state) => state.facing);
+  const position = useGameStore((state) => state.position);
+  const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
   const talkingSpeaker = useFlowStore((state) => state.talkingSpeaker);
+  // Once the player's own cell coincides with the goal's, Maze itself draws
+  // the combined "occupied house" sprite in that cell - this standalone pin
+  // (always centered on the player's current cell) would otherwise draw the
+  // player's sprite a second time right on top of it.
+  const isInsideHouse =
+    computeHouseState(goalDefeatedAt, position, goalCell) === "occupied";
   return (
     <div className={styles.container}>
       <Maze center={[centerX, centerY]} />
-      <div
-        className={styles.pin}
-        style={{
-          width: CELL_SIZE,
-          height: CELL_SIZE,
-          left: centerX - CELL_SIZE / 2,
-          top: centerY - CELL_SIZE / 2,
-        }}
-      >
-        <div className={styles.footShadow} />
-        <img
-          src={
-            facing === "down"
-              ? PLAYER_SPRITE_FRONT
-              : facing === "up"
-              ? PLAYER_SPRITE_BACK
-              : PLAYER_SPRITE
-          }
-          alt="player"
-          className={cn(
-            styles.playerSprite,
-            talkingSpeaker === "protagonist" && styles.talking
-          )}
-          style={
-            {
-              // The sprite's native art faces right, so only "left" needs a
-              // flip; the dedicated front/back art needs no mirroring.
-              "--facing-scale": facing === "left" ? -1 : 1,
-            } as React.CSSProperties
-          }
-        />
-      </div>
+      {!isInsideHouse && (
+        <div
+          className={styles.pin}
+          style={{
+            width: CELL_SIZE,
+            height: CELL_SIZE,
+            left: centerX - CELL_SIZE / 2,
+            top: centerY - CELL_SIZE / 2,
+          }}
+        >
+          <div className={styles.footShadow} />
+          <img
+            src={
+              facing === "down"
+                ? PLAYER_SPRITE_FRONT
+                : facing === "up"
+                ? PLAYER_SPRITE_BACK
+                : PLAYER_SPRITE
+            }
+            alt="player"
+            className={cn(
+              styles.playerSprite,
+              talkingSpeaker === "protagonist" && styles.talking
+            )}
+            style={
+              {
+                // The sprite's native art faces right, so only "left" needs a
+                // flip; the dedicated front/back art needs no mirroring.
+                "--facing-scale": facing === "left" ? -1 : 1,
+              } as React.CSSProperties
+            }
+          />
+        </div>
+      )}
     </div>
   );
 };

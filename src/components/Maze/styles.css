@@ -38,6 +38,24 @@
   transform: scaleX(var(--facing-scale, 1));
 }
 
+/*
+ * Both taller than a single cell (the roof/hearts overhang upward into the
+ * row above, same idea as .playerSprite's overlap in Battle/styles.css) and
+ * anchored to the cell's own bottom/center, since the house always sits on
+ * the goal's cell regardless of how much of it pokes out above.
+ */
+.homeSprite,
+.homeEmptySprite {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 160%;
+  height: 160%;
+  object-fit: contain;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
 .footShadow {
   position: absolute;
   bottom: 6%;
