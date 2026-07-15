@@ -22,11 +22,7 @@ import {
 } from "./exploration";
 import { findGoalCell } from "./goalPosition";
 import { computeHouseState } from "./houseState";
-import {
-  extendTrail,
-  orderByMostRecentlyCaptured,
-  resamplePath,
-} from "./followerTrail";
+import { extendTrail, resamplePath } from "./followerTrail";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import PLAYER_SPRITE_FRONT from "../../assets/playerSpriteFront.png";
 import PLAYER_SPRITE_BACK from "../../assets/playerSpriteBack.png";
@@ -185,10 +181,9 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
     ]
   );
 
-  const orderedFollowerIds = useMemo(
-    () => orderByMostRecentlyCaptured(captured),
-    [captured]
-  );
+  // Same order the battle attack line uses (and can reorder) - see
+  // store/types.ts's own comment on monsterOrder.
+  const orderedFollowerIds = useGameStore((state) => state.monsterOrder);
   // Fine-grained points along the player's actual walked path, nearest
   // first - one per follower, however many that turns out to be, rather
   // than grouping several into shared per-cell slots. The closest follower

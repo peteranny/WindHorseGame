@@ -17,13 +17,13 @@ import {
   WILD_ATTACK_DAMAGE,
   WILD_ATTACK_INTERVAL_MS,
 } from "../../data/monsters/battleFormulas";
-import { orderByMostRecentlyCaptured } from "../Maze/followerTrail";
 import {
   findGroupContaining,
   groupByAdjacentFamily,
   groupMultiplierAt,
   hueForFamily,
   moveGroupToBack,
+  moveGroupToFront,
 } from "./attackGroups";
 import { GOAL_NAME } from "../../data/goalEncounter";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
@@ -32,6 +32,10 @@ import GOAL_SPRITE from "../../assets/goalSprite.png";
 const INNATE_KEY = "innate";
 const LEAVE_DURATION_MS = 250;
 const ENTER_DURATION_MS = 250;
+// Gap between each thrown member's own launch when a whole family group is
+// thrown together, so the group's throws read as a distinguishable volley
+// rather than one indistinct simultaneous blob.
+const GROUP_THROW_STAGGER_MS = 300;
 const TICK_MS = 500;
 const EFFECT_DURATION_MS = 300;
 const WILD_ATTACK_TELEGRAPH_MS = 2000;
@@ -203,7 +207,8 @@ const Battle = () => {
     (state) => state.devBattleShortcutsEnabled
   );
 
-  const captured = useGameStore((state) => state.captured);
+  const monsterOrder = useGameStore((state) => state.monsterOrder);
+  const reorderMonsters = useGameStore((state) => state.reorderMonsters);
   const cooldowns = useGameStore((state) => state.cooldowns);
   const setCooldown = useGameStore((state) => state.setCooldown);
   const captureMonster = useGameStore((state) => state.captureMonster);
@@ -341,13 +346,12 @@ const Battle = () => {
     concludeBattle,
   ]);
 
-  // The attack line's order - starts as most-recently-captured-first (same
-  // as before), but from then on is purely a function of use: tapping a
-  // monster (or a whole adjacent-family group, see handleAttack) sends every
-  // member thrown to the back, same as if it were freshly re-queued. This is
-  // local, unpersisted state (matching flowStore's own ephemeral battle
-  // state) - a fresh battle always restarts from capture order.
-  const [line, setLine] = useState<AttackOption[]>(() => {
+  // The attack line's order - the innate attack always fixed first, then
+  // gameStore.monsterOrder (shared with, and reorderable from, the map's own
+  // duckling trail - see store/types.ts). Tapping a monster (or a whole
+  // adjacent-family group, see handleAttack) persists a new order via
+  // reorderMonsters, so it carries over to the next battle too.
+  const line: AttackOption[] = useMemo(() => {
     const options: AttackOption[] = [
       {
         key: INNATE_KEY,
@@ -359,7 +363,7 @@ const Battle = () => {
         step: 0,
       },
     ];
-    orderByMostRecentlyCaptured(captured).forEach((id) => {
+    monsterOrder.forEach((id) => {
       const monster = MONSTERS[id];
       options.push({
         key: String(id),
@@ -372,17 +376,42 @@ const Battle = () => {
       });
     });
     return options;
-  });
+  }, [monsterOrder]);
 
-  // Attack buttons currently mid-"send to back of line" animation - leaving
-  // its old spot (narrowing to nothing) before `line` reorders it, then
-  // entering its new spot at the back once it has.
+  // Attack buttons currently mid-reorder animation - leaving their old spot
+  // (narrowing to nothing) before `line` actually reorders them, then
+  // entering their new spot once it has.
   const [leavingKeys, setLeavingKeys] = useState<Set<string>>(new Set());
   const [enteringKeys, setEnteringKeys] = useState<Set<string>>(new Set());
 
+  // Alternates every throw between sending the tapped group to the back of
+  // the (captured-monster) line and bringing it to the front - the 1st tap
+  // this battle goes to the back, the 2nd to the front, the 3rd to the
+  // back, and so on. The innate attack never joins this cycle (see
+  // isInnateOnly below) - it always stays in its fixed first slot.
+  const [nextPlacement, setNextPlacement] = useState<"back" | "front">("back");
+
+  // A cooling-down monster can't actually be thrown right now, so it can't
+  // contribute to (or extend) a family run's bonus - treating it as
+  // family-less for grouping purposes (same as the innate attack always is)
+  // breaks the chain there exactly like a different family would, without
+  // attackGroups.ts needing to know anything about cooldowns itself.
+  const buildGroupableLine = useCallback(
+    (now: number) =>
+      line.map((option) => ({
+        ...option,
+        family: (cooldowns[option.key] ?? 0) <= now ? option.family : null,
+      })),
+    [line, cooldowns]
+  );
+
   // The line split into maximal adjacent-same-family runs - each run is one
   // visual grouping box, and what tapping any of its members throws together.
-  const attackGroups = useMemo(() => groupByAdjacentFamily(line), [line]);
+  // Recomputed fresh every render (not memoized on a snapshot of `now`) so a
+  // neighbor's cooldown ending is reflected as soon as the periodic tick
+  // below causes the next re-render, same as the cooldown overlays' own
+  // live countdown.
+  const attackGroups = groupByAdjacentFamily(buildGroupableLine(Date.now()));
 
   // Hints for the horizontally-scrolling attack grid, so players know there
   // are more (cooling-down or not) attacks off to a side rather than
@@ -410,76 +439,109 @@ const Battle = () => {
 
       // Tapping any member of an adjacent-same-family run throws the whole
       // run together - a lone innate attack (or a captured monster with no
-      // same-family neighbor) is just a run of one, same as before.
-      const group = findGroupContaining(line, option.key);
+      // same-family (ready) neighbor) is just a run of one, same as before.
+      const group = findGroupContaining(buildGroupableLine(now), option.key);
+      const isInnateOnly = group.length === 1 && group[0].key === INNATE_KEY;
 
       let totalHeal = 0;
       let totalDamage = 0;
-      let willThrow = false;
-      const isInnateOnly = group.length === 1 && group[0].key === INNATE_KEY;
+      const throwers: Array<{ member: AttackOption; multiplier: number }> = [];
 
       group.forEach((member, index) => {
         const multiplier = groupMultiplierAt(member.step, index);
         if (member.isHealer) {
           totalHeal += member.healAmount * multiplier;
-          return;
+        } else {
+          totalDamage += ATTACK_DAMAGE * multiplier;
+          throwers.push({ member, multiplier });
         }
-        willThrow = true;
-        const trajectory = getTrajectory();
-        if (member.key === INNATE_KEY) {
-          if (trajectory) {
-            triggerSpit(trajectory.from, trajectory.to, trajectory.angleDeg);
-          }
-        } else if (trajectory) {
-          triggerThrow(member.icon, trajectory.from, trajectory.to);
-        }
-        totalDamage += ATTACK_DAMAGE * multiplier;
       });
 
       if (totalHeal > 0) {
         healProtagonist(totalHeal);
         triggerPlayerEffect("heal");
       }
-      if (willThrow) {
-        // A mixed innate + captured-monster group can't happen (the innate
-        // attack has no family, so it never joins a group), so every member
-        // here shares one landing time: the spit's if this is the lone
-        // innate attack, the longer thrown-arc otherwise.
+      if (throwers.length > 0) {
         if (!totalHeal) triggerPlayerEffect("attack");
+        // A mixed innate + captured-monster group can't happen (the innate
+        // attack has no family, so it never joins a group) - launch each
+        // thrower GROUP_THROW_STAGGER_MS after the last so a multi-member
+        // volley reads as distinguishable throws rather than one blob, then
+        // land the combined damage once the final one actually arrives.
+        throwers.forEach(({ member }, throwIndex) => {
+          setTimeout(() => {
+            const trajectory = getTrajectory();
+            if (!trajectory) return;
+            if (member.key === INNATE_KEY) {
+              triggerSpit(trajectory.from, trajectory.to, trajectory.angleDeg);
+            } else {
+              triggerThrow(member.icon, trajectory.from, trajectory.to);
+            }
+          }, throwIndex * GROUP_THROW_STAGGER_MS);
+        });
         const landMs = isInnateOnly ? SPIT_DURATION_MS : THROW_DURATION_MS;
+        const totalLandMs =
+          (throwers.length - 1) * GROUP_THROW_STAGGER_MS + landMs;
         setTimeout(() => {
           damageWild(totalDamage);
           triggerEnemyEffect("hit");
-        }, landMs);
+        }, totalLandMs);
       }
 
       group.forEach((member) =>
         setCooldown(member.key, now + ATTACK_COOLDOWN_MS)
       );
 
-      const groupKeys = new Set(group.map((member) => member.key));
-      setLeavingKeys((current) => new Set([...current, ...groupKeys]));
-      setTimeout(() => {
-        setLine((current) => moveGroupToBack(current, group));
-        setLeavingKeys((current) => {
-          const next = new Set(current);
-          groupKeys.forEach((key) => next.delete(key));
-          return next;
+      // The innate attack never joins the reorder cycle - it has no family
+      // (so it's always its own group) and always stays in its fixed first
+      // slot; only the captured-monster portion of the line (line[0] is
+      // always the innate entry) actually reorders and persists.
+      if (!isInnateOnly) {
+        // A multi-member family throw scatters across both ends rather
+        // than moving as one block - each member takes the next spot in
+        // the same back/front/back/... cycle, so a repeated group throw
+        // doesn't just glue the group back together at one end every time.
+        const placements: Array<"back" | "front"> = [];
+        let placement = nextPlacement;
+        group.forEach(() => {
+          placements.push(placement);
+          placement = placement === "back" ? "front" : "back";
         });
-        setEnteringKeys((current) => new Set([...current, ...groupKeys]));
+        setNextPlacement(placement);
+        const groupKeys = new Set(group.map((member) => member.key));
+        setLeavingKeys((current) => new Set([...current, ...groupKeys]));
         setTimeout(() => {
-          setEnteringKeys((current) => {
+          let workingLine = line.slice(1);
+          group.forEach((member, index) => {
+            workingLine =
+              placements[index] === "back"
+                ? moveGroupToBack(workingLine, [member])
+                : moveGroupToFront(workingLine, [member]);
+          });
+          reorderMonsters(workingLine.map((member) => Number(member.key)));
+          setLeavingKeys((current) => {
             const next = new Set(current);
             groupKeys.forEach((key) => next.delete(key));
             return next;
           });
-        }, ENTER_DURATION_MS);
-      }, LEAVE_DURATION_MS);
+          setEnteringKeys((current) => new Set([...current, ...groupKeys]));
+          setTimeout(() => {
+            setEnteringKeys((current) => {
+              const next = new Set(current);
+              groupKeys.forEach((key) => next.delete(key));
+              return next;
+            });
+          }, ENTER_DURATION_MS);
+        }, LEAVE_DURATION_MS);
+      }
     },
     [
       pendingOutcome,
       cooldowns,
       line,
+      nextPlacement,
+      buildGroupableLine,
+      reorderMonsters,
       getTrajectory,
       healProtagonist,
       damageWild,
@@ -659,10 +721,7 @@ const Battle = () => {
               return (
                 <div
                   key={group[0].key}
-                  className={cn(
-                    styles.attackGroup,
-                    isLinked && styles.attackGroupLinked
-                  )}
+                  className={styles.attackGroup}
                   style={groupStyle}
                 >
                   {group.map((option, index) => {
@@ -680,6 +739,7 @@ const Battle = () => {
                         type="button"
                         className={cn(
                           styles.attackButton,
+                          isLinked && styles.attackButtonLinked,
                           leavingKeys.has(option.key) &&
                             styles.attackButtonLeaving,
                           enteringKeys.has(option.key) &&

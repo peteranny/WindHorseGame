@@ -60,6 +60,19 @@ export const moveGroupToBack = <T extends AttackLineMember>(
   return [...remaining, ...moved];
 };
 
+// Moves every member of `group` (by key) to the front of `line`, same
+// order-preservation as moveGroupToBack above - the alternating counterpart
+// used every other tap (see Battle/index.tsx's nextPlacement).
+export const moveGroupToFront = <T extends AttackLineMember>(
+  line: T[],
+  group: T[]
+): T[] => {
+  const movingKeys = new Set(group.map((member) => member.key));
+  const remaining = line.filter((member) => !movingKeys.has(member.key));
+  const moved = line.filter((member) => movingKeys.has(member.key));
+  return [...moved, ...remaining];
+};
+
 // A stable, deterministic hue (0-359) for a family name, so the grouping
 // indicator's glow color is consistent for a given family across renders and
 // sessions without maintaining an explicit color table per family.

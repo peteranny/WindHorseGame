@@ -1,13 +1,26 @@
 import { computeTraversedCells } from "./exploration";
 
 // Most-recently-captured first, so the first (closest) waypoint gets the
-// newest catches.
+// newest catches. Only used to seed gameStore.monsterOrder - either freshly
+// on a new capture, or as a fallback for a save from before monsterOrder
+// existed - order after that point is explicit (see addToOrder below and
+// Battle's own reordering), not re-derived from capture timestamps.
 export const orderByMostRecentlyCaptured = (
   captured: Record<number, string>
 ): number[] =>
   Object.entries(captured)
     .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
     .map(([id]) => Number(id));
+
+// A newly-captured monster joins at the front of the (duckling-train /
+// battle-line) order, same position it would have gotten from
+// orderByMostRecentlyCaptured above. A no-op if it's somehow already there.
+export const addToOrder = (order: number[], monsterId: number): number[] =>
+  order.includes(monsterId) ? order : [monsterId, ...order];
+
+// Dev-only: undoes addToOrder, as if the capture never happened.
+export const removeFromOrder = (order: number[], monsterId: number): number[] =>
+  order.filter((id) => id !== monsterId);
 
 // Prepends every cell along the step just taken (most-recently-visited
 // first) onto the existing trail (the player's own cell-by-cell path, most

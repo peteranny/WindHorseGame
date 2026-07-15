@@ -16,6 +16,11 @@ import {
 } from "../data/monsters/captureLogic";
 import { recordGoalWin as recordGoalWinPure } from "../data/goalEncounter";
 import { revealCells as revealCellsPure } from "../components/Maze/exploration";
+import {
+  addToOrder as addToOrderPure,
+  orderByMostRecentlyCaptured,
+  removeFromOrder as removeFromOrderPure,
+} from "../components/Maze/followerTrail";
 
 const DEFAULT_POSITION: [number, number] = [2, 1];
 const DEFAULT_FACING: Facing = "left";
@@ -34,6 +39,9 @@ interface GameState {
   previousPosition: [number, number] | null;
   facing: Facing;
   captured: Record<number, string>;
+  // Front-to-back order shared by the duckling follower trail and the
+  // battle attack line - see store/types.ts's own comment on this field.
+  monsterOrder: number[];
   cooldowns: Record<string, number>;
   exploredCells: Record<string, true>;
   goalDefeatedAt: string | null;
@@ -45,6 +53,7 @@ interface GameState {
   recordGoalWin: (defeatedAt?: string) => void;
   setCooldown: (key: string, availableAt: number) => void;
   revealCells: (cells: Array<[number, number]>) => void;
+  reorderMonsters: (order: number[]) => void;
   hydrate: () => Promise<void>;
 }
 
@@ -53,6 +62,7 @@ const toPersisted = (state: GameState): PersistedGameState => ({
   previousPosition: state.previousPosition,
   facing: state.facing,
   captured: state.captured,
+  monsterOrder: state.monsterOrder,
   cooldowns: state.cooldowns,
   exploredCells: state.exploredCells,
   goalDefeatedAt: state.goalDefeatedAt,
@@ -91,6 +101,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   previousPosition: null,
   facing: DEFAULT_FACING,
   captured: {},
+  monsterOrder: [],
   cooldowns: {},
   exploredCells: {},
   goalDefeatedAt: null,
@@ -128,15 +139,27 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   captureMonster: (monsterId, capturedAt = new Date().toISOString()) => {
-    set((state) => ({
-      captured: captureMonsterPure(state.captured, monsterId, capturedAt),
-    }));
+    set((state) => {
+      const captured = captureMonsterPure(
+        state.captured,
+        monsterId,
+        capturedAt
+      );
+      // captureMonsterPure returns the same reference for an already-
+      // captured monster - only a genuinely new capture joins the order.
+      const monsterOrder =
+        captured === state.captured
+          ? state.monsterOrder
+          : addToOrderPure(state.monsterOrder, monsterId);
+      return { captured, monsterOrder };
+    });
     scheduleSave();
   },
 
   releaseMonster: (monsterId) => {
     set((state) => ({
       captured: releaseMonsterPure(state.captured, monsterId),
+      monsterOrder: removeFromOrderPure(state.monsterOrder, monsterId),
     }));
     scheduleSave();
   },
@@ -162,6 +185,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     scheduleSave();
   },
 
+  // Battle's own send-to-back/bring-to-front reordering (see
+  // Battle/index.tsx) - persisted so the next battle, and the map's own
+  // duckling train, both pick up wherever the order was last left.
+  reorderMonsters: (order) => {
+    set({ monsterOrder: order });
+    scheduleSave();
+  },
+
   hydrate: () => {
     const key = get().stateKey;
     const local = key ? getLocalSnapshot(key) : null;
@@ -169,11 +200,17 @@ export const useGameStore = create<GameState>((set, get) => ({
       (remote) => {
         const winner = resolveHydratedState(local, remote);
         const position = winner?.position ?? DEFAULT_POSITION;
+        const captured = winner?.captured ?? {};
         set({
           position,
           previousPosition: winner?.previousPosition ?? null,
           facing: winner?.facing ?? DEFAULT_FACING,
-          captured: winner?.captured ?? {},
+          captured,
+          // A save from before monsterOrder existed falls back to capture
+          // order, same as the duckling trail/battle line always used to
+          // show - from here on, order is explicit (see reorderMonsters).
+          monsterOrder:
+            winner?.monsterOrder ?? orderByMostRecentlyCaptured(captured),
           cooldowns: winner?.cooldowns ?? {},
           goalDefeatedAt: winner?.goalDefeatedAt ?? null,
           // The player's starting/restored cell is always explored, even on

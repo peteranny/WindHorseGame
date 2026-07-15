@@ -30,6 +30,7 @@ const state = (timestamp: number): PersistedGameState => ({
   previousPosition: null,
   facing: "left",
   captured: {},
+  monsterOrder: [],
   cooldowns: {},
   exploredCells: {},
   goalDefeatedAt: null,

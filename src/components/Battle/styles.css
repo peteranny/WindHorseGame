@@ -668,11 +668,23 @@
   width: calc(80px * var(--scale));
   height: calc(84px * var(--scale));
   overflow: hidden;
-  border: 2px solid black;
+
+  /* Longhand (rather than the `border`/`padding` shorthand) so
+     .attackButtonLeaving/Entering below can animate just the horizontal
+     sides down to/up from 0 without also fighting the vertical ones. */
+  border-style: solid;
+  border-color: black;
+  border-top-width: 2px;
+  border-bottom-width: 2px;
+  border-left-width: 2px;
+  border-right-width: 2px;
   border-radius: 4px;
   background: white;
   font-size: inherit;
-  padding: calc(4px * var(--scale));
+  padding-top: calc(4px * var(--scale));
+  padding-bottom: calc(4px * var(--scale));
+  padding-left: calc(4px * var(--scale));
+  padding-right: calc(4px * var(--scale));
 
   &:disabled {
     cursor: not-allowed;
@@ -713,35 +725,39 @@
 
 /*
  * One maximal adjacent-same-family run in the attack line (see
- * Battle/attackGroups.ts) - a plain wrapper when it's a run of one (the
- * common case), or a highlighted "linked" box once 2+ members are actually
- * adjacent and would throw together. `--family-hue` (set inline from
- * hueForFamily) drives every color below, so each family reads as its own
- * consistent color without a hardcoded per-family table.
+ * Battle/attackGroups.ts) - `display: contents` so it never forms a box of
+ * its own; its buttons stay direct flex items of .attackGrid, spaced by
+ * that same shared `gap` whether or not they're grouped. It exists purely
+ * to carry `--family-hue` (set inline from hueForFamily) down to whichever
+ * of its buttons get the .attackButtonLinked glow below - a pure overlay
+ * that never nudges the row's own layout/spacing.
  */
 .attackGroup {
-  display: flex;
-  flex-shrink: 0;
-  gap: calc(2px * var(--scale));
+  display: contents;
 }
 
-.attackGroupLinked {
-  padding: calc(4px * var(--scale));
-  border-radius: calc(8px * var(--scale));
+.attackButtonLinked {
   background: hsla(var(--family-hue), 75%, 55%, 0.15);
-  box-shadow: 0 0 0 2px hsla(var(--family-hue), 75%, 45%, 0.8);
+
+  /*
+   * `inset` rather than an outward blur - this sits inside .attackGrid's
+   * horizontally-scrolling, overflow-clipped row, which would otherwise cut
+   * off any glow that tried to bleed past the button's own edges. Glowing
+   * inward instead stays fully contained regardless.
+   */
+  box-shadow: inset 0 0 0 2px hsla(var(--family-hue), 75%, 45%, 0.8);
   animation: family-group-glow 1.4s ease-in-out infinite;
 }
 
 @keyframes family-group-glow {
   0%,
   100% {
-    box-shadow: 0 0 0 2px hsla(var(--family-hue), 75%, 45%, 0.8);
+    box-shadow: inset 0 0 0 2px hsla(var(--family-hue), 75%, 45%, 0.8);
   }
 
   50% {
     box-shadow:
-      0 0 calc(6px * var(--scale)) 2px
+      inset 0 0 calc(6px * var(--scale)) 2px
       hsla(var(--family-hue), 75%, 55%, 0.9);
   }
 }
@@ -762,10 +778,14 @@
 
 /*
  * "Send to back of the line": tapping an attack narrows it away at its old
- * spot (this), then - once `line` actually reorders it, see
- * Battle/index.tsx's LEAVE_DURATION_MS - it grows back in at its new spot
- * at the back (.attackButtonEntering below). The same DOM node persists
- * throughout (React key match), so this is what actually plays both halves.
+ * spot (this) - collapsing its actual width/padding/border, not just a
+ * cosmetic transform, so the flex layout genuinely reflows and every
+ * attack behind it visibly slides forward to fill the gap - then, once
+ * `line` actually reorders it (see Battle/index.tsx's LEAVE_DURATION_MS),
+ * it grows back in the same way at its new spot at the back
+ * (.attackButtonEntering below), pushing that end of the row back out to
+ * make room. The same DOM node persists throughout (React key match), so
+ * this is what actually plays both halves.
  */
 .attackButtonLeaving {
   animation: attack-button-leave 250ms ease-in forwards;
@@ -777,24 +797,40 @@
 
 @keyframes attack-button-leave {
   0% {
-    transform: scaleX(1);
+    width: calc(80px * var(--scale));
+    padding-left: calc(4px * var(--scale));
+    padding-right: calc(4px * var(--scale));
+    border-left-width: 2px;
+    border-right-width: 2px;
     opacity: 1;
   }
 
   100% {
-    transform: scaleX(0);
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-left-width: 0;
+    border-right-width: 0;
     opacity: 0;
   }
 }
 
 @keyframes attack-button-enter {
   0% {
-    transform: scaleX(0);
+    width: 0;
+    padding-left: 0;
+    padding-right: 0;
+    border-left-width: 0;
+    border-right-width: 0;
     opacity: 0;
   }
 
   100% {
-    transform: scaleX(1);
+    width: calc(80px * var(--scale));
+    padding-left: calc(4px * var(--scale));
+    padding-right: calc(4px * var(--scale));
+    border-left-width: 2px;
+    border-right-width: 2px;
     opacity: 1;
   }
 }

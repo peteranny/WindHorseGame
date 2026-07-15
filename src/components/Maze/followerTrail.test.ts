@@ -1,6 +1,8 @@
 import {
+  addToOrder,
   extendTrail,
   orderByMostRecentlyCaptured,
+  removeFromOrder,
   resamplePath,
 } from "./followerTrail";
 
@@ -16,6 +18,31 @@ describe("orderByMostRecentlyCaptured", () => {
 
   it("returns an empty array for no captures", () => {
     expect(orderByMostRecentlyCaptured({})).toEqual([]);
+  });
+});
+
+describe("addToOrder", () => {
+  it("puts a newly-captured monster at the front", () => {
+    expect(addToOrder([2, 1], 3)).toEqual([3, 2, 1]);
+  });
+
+  it("is a no-op if the monster is already in the order", () => {
+    const order = [2, 1];
+    expect(addToOrder(order, 1)).toBe(order);
+  });
+
+  it("starts an empty order with just that monster", () => {
+    expect(addToOrder([], 5)).toEqual([5]);
+  });
+});
+
+describe("removeFromOrder", () => {
+  it("removes a monster from the order", () => {
+    expect(removeFromOrder([3, 2, 1], 2)).toEqual([3, 1]);
+  });
+
+  it("is a no-op for a monster not in the order", () => {
+    expect(removeFromOrder([3, 1], 2)).toEqual([3, 1]);
   });
 });
 

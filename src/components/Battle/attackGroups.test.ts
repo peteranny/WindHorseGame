@@ -4,6 +4,7 @@ import {
   groupMultiplierAt,
   hueForFamily,
   moveGroupToBack,
+  moveGroupToFront,
 } from "./attackGroups";
 
 const member = (key: string, family: string | null, step = 0.5) => ({
@@ -116,6 +117,32 @@ describe("moveGroupToBack", () => {
     const a = member("a", "wind");
     const b = member("b", "horse");
     const result = moveGroupToBack([a, b], [b]);
+    expect(result.map((m) => m.key)).toEqual(["a", "b"]);
+  });
+});
+
+describe("moveGroupToFront", () => {
+  it("moves a single member to the front, preserving the rest's order", () => {
+    const a = member("a", "wind");
+    const b = member("b", "horse");
+    const c = member("c", "plant");
+    const result = moveGroupToFront([a, b, c], [c]);
+    expect(result.map((m) => m.key)).toEqual(["c", "a", "b"]);
+  });
+
+  it("moves a whole group to the front as a block, preserving both orders", () => {
+    const a = member("a", "wind");
+    const b = member("b", "horse");
+    const c = member("c", "plant");
+    const d = member("d", "plant");
+    const result = moveGroupToFront([a, b, c, d], [c, d]);
+    expect(result.map((m) => m.key)).toEqual(["c", "d", "a", "b"]);
+  });
+
+  it("is a no-op in relative terms when the group is already at the front", () => {
+    const a = member("a", "wind");
+    const b = member("b", "horse");
+    const result = moveGroupToFront([a, b], [a]);
     expect(result.map((m) => m.key)).toEqual(["a", "b"]);
   });
 });
