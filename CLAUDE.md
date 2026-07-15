@@ -53,7 +53,7 @@ src/
       types.ts, monsters.ts    # Monster type and the typed loader that merges monsters.generated.json with icons/.
       captureLogic.ts          # Pure captureMonster/isFullyCaptured helpers (used by gameStore and the goal tile).
       battleFormulas.ts        # computeWildMaxHp and the battle constants (cooldown, damage, HP, tick rate).
-    goalEncounter.ts     # GOAL_NAME ("大風大馬") and the pure recordGoalWin first-win-wins helper, shared by
+    goalEncounter.ts     # GOAL_NAME ("小馬") and the pure recordGoalWin first-win-wins helper, shared by
                          # ConversationView and Battle (each still imports goalSprite.png directly - image
                          # imports aren't jest-transformable, so this module stays image-free and testable).
     conversations/
