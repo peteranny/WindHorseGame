@@ -76,8 +76,9 @@ src/
       <id>.json           # One file per monster (id = its index/position in monsters.generated.json), a plain
                            # array of {speaker, text, action?} pages - linear, no branching. speaker is
                            # "protagonist" | "monster" | "narration" - the last is scene/action description
-                           # (nobody's actual speech), rendered with no portrait/name (see ConversationView.tsx,
-                           # Dialog/styles.css's .narrationBlock/.narrationText). Each monster's file has one
+                           # (nobody's actual speech), rendered the same as regular dialogue (same
+                           # ConversationView.tsx textBlock/speakerText) minus the portrait image and speaker-
+                           # name line - not a visually distinct style of its own. Each monster's file has one
                            # narration page (its cryptic bulk-generated origin story) followed by one real
                            # "monster" line actually spoken to 小風, before the closing protagonist page.
       goalHint.json        # Shown until all 39 monsters are captured - ends in "end", no battle.

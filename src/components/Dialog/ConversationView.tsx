@@ -5,7 +5,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import cn from "classnames";
 import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
@@ -150,28 +149,21 @@ const ConversationView = () => {
         : monster!.name
       : "小風";
 
+  const isNarration = page.speaker === "narration";
+
   return (
     <div className={styles.conversation} onClick={advance}>
-      {page.speaker === "narration" ? (
-        <div className={styles.narrationBlock}>
-          <div
-            ref={speakerTextRef}
-            className={cn(styles.speakerText, styles.narrationText)}
-          >
-            {displayedText}
-          </div>
-        </div>
-      ) : (
-        <>
-          <img src={portrait} alt={speakerName} className={styles.portrait} />
-          <div className={styles.textBlock}>
-            <div className={styles.speakerName}>{speakerName}</div>
-            <div ref={speakerTextRef} className={styles.speakerText}>
-              {displayedText}
-            </div>
-          </div>
-        </>
+      {!isNarration && (
+        <img src={portrait} alt={speakerName} className={styles.portrait} />
       )}
+      <div className={styles.textBlock}>
+        {!isNarration && (
+          <div className={styles.speakerName}>{speakerName}</div>
+        )}
+        <div ref={speakerTextRef} className={styles.speakerText}>
+          {displayedText}
+        </div>
+      </div>
       {isTypingDone && (
         <span className={styles.advanceCaret} aria-hidden="true">
           ▼
