@@ -242,7 +242,16 @@ const useThrowEffect = (): [
 // The innate attack's water-drop spit, shot straight from the player to the
 // wild monster. Same onAnimationEnd-driven cleanup as useThrowEffect above,
 // for the same reason - no separate timer that could drift out of sync with
-// the CSS animation it's meant to track.
+// the CSS animation it's meant to track. That primary path can still fail to
+// fire at all in rare cases (a backgrounded/throttled tab pausing the CSS
+// animation, a dropped animationend event) - since that leaves the spit
+// stuck on screen indefinitely with nothing left to clear it, trigger also
+// arms a generous safety-net timeout well past the animation's own real
+// duration, so it never fires under normal conditions (onAnimationEnd
+// already will have) and never fights the primary path - it only ever
+// rescues a spit onAnimationEnd already failed to clear on its own. Guarded
+// by id so a stale timeout from an earlier spit can't clear a newer one.
+const SPIT_SAFETY_NET_MS = SPIT_DURATION_MS + 1000;
 const useSpitEffect = (): [
   SpitEffect | null,
   (from: Point, to: Point, angleDeg: number) => void,
@@ -252,7 +261,11 @@ const useSpitEffect = (): [
   const nextIdRef = useRef(0);
   const trigger = useCallback((from: Point, to: Point, angleDeg: number) => {
     nextIdRef.current += 1;
-    setEffect({ id: nextIdRef.current, from, to, angleDeg });
+    const id = nextIdRef.current;
+    setEffect({ id, from, to, angleDeg });
+    setTimeout(() => {
+      setEffect((current) => (current?.id === id ? null : current));
+    }, SPIT_SAFETY_NET_MS);
   }, []);
   const clear = useCallback(() => setEffect(null), []);
   return [effect, trigger, clear];
