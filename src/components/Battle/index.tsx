@@ -518,13 +518,8 @@ const Battle = () => {
   // are more (cooling-down or not) attacks off to a side rather than
   // assuming the visible row is the whole roster.
   const attackGridRef = useRef<HTMLDivElement | null>(null);
-  // One entry per currently-rendered attack button, keyed by option.key - lets
-  // handleAttack read a front-placed member's actual live width every frame
-  // while it grows back in at its new spot (see scrollCompensationFrameRef
-  // below), rather than precomputing a single guessed target width.
-  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   // The in-flight requestAnimationFrame loop (if any) that's currently
-  // riding scrollLeft along with a front-placed member's own entering-width
+  // tweening scrollLeft back toward 0 for a front-placed member's own
   // growth - tracked so a second tap before the first one settles cancels
   // the stale loop instead of fighting it for control of scrollLeft.
   const scrollCompensationFrameRef = useRef<number | null>(null);
@@ -658,6 +653,44 @@ const Battle = () => {
         .filter((_, index) => placements[index] === "front")
         .map((member) => member.key);
 
+      // A front placement always ends up at content-position 0 - the very
+      // start of the whole line - so scrollLeft=0 is the only valid resting
+      // state that actually reveals it (anything else leaves it sitting
+      // off-screen to the left of the visible area). Tweening scrollLeft
+      // there smoothly, over the same window as the leave+enter animation,
+      // rather than jumping straight to it, is what actually matters here -
+      // an earlier version tried to hold the tapped member's *exact* prior
+      // on-screen position throughout, but that's only solvable when there
+      // was little to no scroll to begin with: once scrolled any real
+      // distance into an overflowing row, keeping something's old screen
+      // position fixed while it relocates to content-position 0 requires
+      // scrolling *past* the start of the row, which doesn't exist -
+      // scrollLeft silently clamps to 0, and the tapped member's screen
+      // position jumps anyway once the clamp kicks in - which is exactly
+      // the left-then-right glitch this replaces. A plain time-based tween
+      // from wherever scrollLeft actually was down to 0 has no such
+      // impossible target: both ends are always valid, so the motion is
+      // monotonic - everything in view slides one direction, not two - and
+      // it still reveals the entering member growing into view instead of
+      // hiding fully off-screen the way full-width compensation did before.
+      if (frontMemberKeys.length > 0 && attackGridRef.current) {
+        const grid = attackGridRef.current;
+        const originalScrollLeft = grid.scrollLeft;
+        const startTime = performance.now();
+        if (scrollCompensationFrameRef.current !== null) {
+          cancelAnimationFrame(scrollCompensationFrameRef.current);
+        }
+        const step = () => {
+          const elapsed = performance.now() - startTime;
+          const totalMs = LEAVE_DURATION_MS + ENTER_DURATION_MS;
+          const progress = Math.min(1, elapsed / totalMs);
+          grid.scrollLeft = originalScrollLeft * (1 - progress);
+          scrollCompensationFrameRef.current =
+            progress < 1 ? requestAnimationFrame(step) : null;
+        };
+        step();
+      }
+
       setTimeout(() => {
         let workingLine = line;
         group.forEach((member, index) => {
@@ -667,45 +700,6 @@ const Battle = () => {
               : moveGroupToFront(workingLine, [member]);
         });
         setLine(workingLine);
-        // Each front-placed member grows from 0 to its full width over the
-        // same ENTER_DURATION_MS as .attackButtonEntering's own CSS
-        // animation - rather than jumping scrollLeft straight to the final
-        // compensation, this rides along a frame at a time, reading each
-        // member's *actual* live width (not a precomputed guess). Only HALF
-        // of the entering width is compensated (not the full amount), so the
-        // entering member's own center stays fixed on screen as it grows -
-        // rather than fully cancelling the push and leaving it to grow
-        // invisibly off-screen - which reads as it expanding outward in
-        // place. Combined with the leave animation's own uncompensated
-        // reflow (which already shifts whatever followed the tapped
-        // member's old spot leftward as that gap closes), the net effect is
-        // exactly what a tap should look like: the tapped member's own
-        // center holds roughly steady while whatever preceded it slides
-        // right and whatever followed it slides left, instead of the whole
-        // rest of the line snapping rigidly in place around an offscreen swap.
-        if (frontMemberKeys.length > 0 && attackGridRef.current) {
-          const grid = attackGridRef.current;
-          const baseScrollLeft = grid.scrollLeft;
-          const gapWidth = parseFloat(getComputedStyle(grid).columnGap) || 0;
-          const startTime = performance.now();
-          if (scrollCompensationFrameRef.current !== null) {
-            cancelAnimationFrame(scrollCompensationFrameRef.current);
-          }
-          const step = () => {
-            const widthSum = frontMemberKeys.reduce((total, key) => {
-              const el = buttonRefs.current[key];
-              return total + (el ? el.getBoundingClientRect().width : 0);
-            }, 0);
-            grid.scrollLeft =
-              baseScrollLeft +
-              (widthSum + gapWidth * frontMemberKeys.length) / 2;
-            scrollCompensationFrameRef.current =
-              performance.now() - startTime < ENTER_DURATION_MS
-                ? requestAnimationFrame(step)
-                : null;
-          };
-          step();
-        }
         reorderMonsters(
           workingLine
             .filter((member) => member.key !== INNATE_KEY)
@@ -954,9 +948,6 @@ const Battle = () => {
                         )}
                         <button
                           type="button"
-                          ref={(el) => {
-                            buttonRefs.current[option.key] = el;
-                          }}
                           className={cn(
                             styles.attackButton,
                             isLinked && styles.attackButtonLinked,
