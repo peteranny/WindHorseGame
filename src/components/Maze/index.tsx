@@ -369,6 +369,11 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                       ))}
                     </div>
                   )}
+                  {isGoalCell && goalDefeatedAt !== null && (
+                    <div className={styles.goalNeonSign} aria-hidden="true">
+                      40
+                    </div>
+                  )}
                 </div>
               </div>
             );

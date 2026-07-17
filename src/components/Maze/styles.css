@@ -201,6 +201,54 @@
   }
 }
 
+/*
+ * Same trigger as .loveSmokeWrap above (goalDefeatedAt !== null) - a "40"
+ * marquee for the game's own 40th-birthday framing, mounted above the
+ * house's roof rather than sharing its footprint. z-index has to beat
+ * .homeSprite/.aboveHouse's 500/501 for the same reason those two do (see
+ * .aboveHouse's own comment) - this overhangs even higher above the cell,
+ * so it'd otherwise lose to whatever the row above happens to stack.
+ */
+.goalNeonSign {
+  position: absolute;
+  z-index: 502;
+  bottom: 85%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: calc(22pt * var(--scale));
+  font-weight: bold;
+  color: #fff59d;
+  text-shadow:
+    0 0 calc(2px * var(--scale)) #fff,
+    0 0 calc(6px * var(--scale)) #ff4dd8,
+    0 0 calc(14px * var(--scale)) #ff4dd8,
+    0 0 calc(26px * var(--scale)) #f0a;
+  pointer-events: none;
+  white-space: nowrap;
+  animation: neon-sign-pulse 2600ms ease-in-out infinite;
+}
+
+@keyframes neon-sign-pulse {
+  0%,
+  100% {
+    opacity: 0.85;
+    text-shadow:
+      0 0 calc(2px * var(--scale)) #fff,
+      0 0 calc(6px * var(--scale)) #ff4dd8,
+      0 0 calc(14px * var(--scale)) #ff4dd8,
+      0 0 calc(26px * var(--scale)) #f0a;
+  }
+
+  50% {
+    opacity: 1;
+    text-shadow:
+      0 0 calc(3px * var(--scale)) #fff,
+      0 0 calc(9px * var(--scale)) #ff4dd8,
+      0 0 calc(20px * var(--scale)) #ff4dd8,
+      0 0 calc(36px * var(--scale)) #f0a;
+  }
+}
+
 .followerTrail {
   position: absolute;
   top: 0;
