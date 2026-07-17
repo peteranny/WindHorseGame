@@ -16,7 +16,9 @@ const Settings = () => {
         type="button"
         className={styles.closeButton}
         aria-label="返回遊戲"
-        onClick={() => history.push("/")}
+        onClick={() =>
+          history.push({ pathname: "/", search: window.location.search })
+        }
       >
         ×
       </button>

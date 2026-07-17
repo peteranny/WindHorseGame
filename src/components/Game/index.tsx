@@ -146,7 +146,7 @@ const Game = () => {
                       </>
                     )}
                     <Link
-                      to="/settings"
+                      to={{ pathname: "/settings", search: window.location.search }}
                       aria-label="設定"
                       style={{
                         fontSize: "calc(18pt * var(--scale))",

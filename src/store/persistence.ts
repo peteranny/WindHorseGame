@@ -1,13 +1,24 @@
 import { PersistedGameState } from "./types";
 
-const STATE_KEY_STORAGE_KEY = "stateKey";
+const STATE_KEY_QUERY_PARAM = "key";
 const snapshotStorageKey = (key: string): string => `gameState:${key}`;
 
-export const getStoredStateKey = (): string | null =>
-  localStorage.getItem(STATE_KEY_STORAGE_KEY);
+// The save-state key travels in the URL (?key=xxx) rather than localStorage -
+// unlike localStorage, it survives a cleared browser, a different device, or
+// a bookmarked/shared link, since it's part of the address itself.
+export const getStateKeyFromUrl = (): string | null =>
+  new URLSearchParams(window.location.search).get(STATE_KEY_QUERY_PARAM);
 
-export const setStoredStateKey = (key: string): void => {
-  localStorage.setItem(STATE_KEY_STORAGE_KEY, key);
+// Uses the native History API directly (not react-router's) so this stays
+// callable from the store, outside any component - callers that also need
+// react-router's own location to reflect the change (e.g. building an <a
+// href> or history.push target elsewhere) should read window.location.search
+// afterwards rather than react-router's cached location, since replaceState
+// never fires the popstate event react-router listens for.
+export const setStateKeyInUrl = (key: string): void => {
+  const url = new URL(window.location.href);
+  url.searchParams.set(STATE_KEY_QUERY_PARAM, key);
+  window.history.replaceState(null, "", url.toString());
 };
 
 // Scoped per state key - two different save slots must never be compared

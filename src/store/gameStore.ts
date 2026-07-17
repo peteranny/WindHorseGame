@@ -1,12 +1,12 @@
 import { create } from "zustand";
 import {
   getLocalSnapshot,
-  getStoredStateKey,
+  getStateKeyFromUrl,
   loadRemoteState,
   resolveHydratedState,
   saveRemoteState,
   setLocalSnapshot,
-  setStoredStateKey,
+  setStateKeyInUrl,
 } from "./persistence";
 import { createRemoteSync } from "./remoteSync";
 import { Facing, PersistedGameState } from "./types";
@@ -96,7 +96,7 @@ const scheduleSave = (): void => {
 
 export const useGameStore = create<GameState>((set, get) => ({
   hydrated: false,
-  stateKey: getStoredStateKey(),
+  stateKey: getStateKeyFromUrl(),
   position: DEFAULT_POSITION,
   previousPosition: null,
   facing: DEFAULT_FACING,
@@ -110,7 +110,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     // Switching save slots abandons any not-yet-synced write for the old
     // key rather than keeping it around to retry against the wrong slot.
     remoteSync.clearPending();
-    setStoredStateKey(key);
+    setStateKeyInUrl(key);
     set({ stateKey: key, hydrated: false });
     return get().hydrate();
   },
