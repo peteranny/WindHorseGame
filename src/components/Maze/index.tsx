@@ -85,8 +85,20 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   // from, not persisted itself - real movement this session extends it same
   // as before. Without that seed, every follower would stack on the single
   // fallbackFollowerPoint below until the player took their first step.
+  //
+  // A save made while already "in the house" is the one exception: entering
+  // is a teleport (see the houseState effect below), so previousPosition
+  // there is still whatever cell the player last walked in from - a cell
+  // outside the house. Seeding the trail from it as usual would spread the
+  // duckling train between the goal cell and that outside cell on load,
+  // instead of every follower starting bunched at the goal cell like a live
+  // house-entry does - so this mirrors that single-cell reset up front.
   const [trail, setTrail] = useState<Array<[number, number]>>(() =>
-    previousPosition ? [[x, y], previousPosition] : [[x, y]]
+    houseState === "occupied"
+      ? [[x, y]]
+      : previousPosition
+      ? [[x, y], previousPosition]
+      : [[x, y]]
   );
 
   // Entering the house (see ConversationView's own setPosition call) moves
