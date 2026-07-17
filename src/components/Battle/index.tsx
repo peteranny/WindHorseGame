@@ -305,6 +305,9 @@ const Battle = () => {
   const captureMonster = useGameStore((state) => state.captureMonster);
   const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
   const recordGoalWin = useGameStore((state) => state.recordGoalWin);
+  const resetGoalDefeatedAt = useGameStore(
+    (state) => state.resetGoalDefeatedAt
+  );
 
   const [playerHealEffect, triggerPlayerHeal] = useHealEffect();
   const [throwEffects, triggerThrow, clearThrow] = useThrowEffect();
@@ -935,6 +938,16 @@ const Battle = () => {
               >
                 Lose
               </button>
+              {isGoalEncounter && goalDefeatedAt !== null && (
+                <button
+                  type="button"
+                  className={styles.devButton}
+                  disabled={pendingOutcome !== null}
+                  onClick={resetGoalDefeatedAt}
+                >
+                  Reset Ever-Clear
+                </button>
+              )}
             </>
           )}
         </div>

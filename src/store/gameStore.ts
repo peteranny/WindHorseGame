@@ -51,6 +51,7 @@ interface GameState {
   captureMonster: (monsterId: number, capturedAt?: string) => void;
   releaseMonster: (monsterId: number) => void;
   recordGoalWin: (defeatedAt?: string) => void;
+  resetGoalDefeatedAt: () => void;
   setCooldown: (key: string, availableAt: number) => void;
   revealCells: (cells: Array<[number, number]>) => void;
   reorderMonsters: (order: number[]) => void;
@@ -168,6 +169,15 @@ export const useGameStore = create<GameState>((set, get) => ({
     set((state) => ({
       goalDefeatedAt: recordGoalWinPure(state.goalDefeatedAt, defeatedAt),
     }));
+    scheduleSave();
+  },
+
+  // Dev-only (see Battle's own devBattleShortcutsEnabled toggle) - undoes
+  // recordGoalWin's first-write-wins guard so the goal battle's "ever
+  // cleared" record can be replayed from scratch without a whole separate
+  // save-state key.
+  resetGoalDefeatedAt: () => {
+    set({ goalDefeatedAt: null });
     scheduleSave();
   },
 
