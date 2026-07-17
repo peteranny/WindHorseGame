@@ -518,10 +518,14 @@ const Battle = () => {
   // are more (cooling-down or not) attacks off to a side rather than
   // assuming the visible row is the whole roster.
   const attackGridRef = useRef<HTMLDivElement | null>(null);
+  // One entry per currently-rendered attack button, keyed by option.key - lets
+  // handleAttack read a member's actual live width every frame while it
+  // shrinks/grows, rather than precomputing a single guessed width.
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   // The in-flight requestAnimationFrame loop (if any) that's currently
-  // tweening scrollLeft back toward 0 for a front-placed member's own
-  // growth - tracked so a second tap before the first one settles cancels
-  // the stale loop instead of fighting it for control of scrollLeft.
+  // riding scrollLeft along with a leaving/entering member's own live width -
+  // tracked so a second tap before the first one settles cancels the stale
+  // loop instead of fighting it for control of scrollLeft.
   const scrollCompensationFrameRef = useRef<number | null>(null);
   useEffect(
     () => () => {
@@ -653,42 +657,51 @@ const Battle = () => {
         .filter((_, index) => placements[index] === "front")
         .map((member) => member.key);
 
-      // A front placement always ends up at content-position 0 - the very
-      // start of the whole line - so scrollLeft=0 is the only valid resting
-      // state that actually reveals it (anything else leaves it sitting
-      // off-screen to the left of the visible area). Tweening scrollLeft
-      // there smoothly, over the same window as the leave+enter animation,
-      // rather than jumping straight to it, is what actually matters here -
-      // an earlier version tried to hold the tapped member's *exact* prior
-      // on-screen position throughout, but that's only solvable when there
-      // was little to no scroll to begin with: once scrolled any real
-      // distance into an overflowing row, keeping something's old screen
-      // position fixed while it relocates to content-position 0 requires
-      // scrolling *past* the start of the row, which doesn't exist -
-      // scrollLeft silently clamps to 0, and the tapped member's screen
-      // position jumps anyway once the clamp kicks in - which is exactly
-      // the left-then-right glitch this replaces. A plain time-based tween
-      // from wherever scrollLeft actually was down to 0 has no such
-      // impossible target: both ends are always valid, so the motion is
-      // monotonic - everything in view slides one direction, not two - and
-      // it still reveals the entering member growing into view instead of
-      // hiding fully off-screen the way full-width compensation did before.
+      // Keeps the reorder feeling local rather than snapping the view however
+      // far the newly front-placed member's new content position happens to
+      // land: both the leave (shrink, at the tapped group's old spot) and
+      // enter (regrow, at the front) halves compensate scrollLeft by only
+      // HALF of their own live width change, reading each member's *actual*
+      // live width every frame rather than a precomputed guess. Full
+      // compensation (cancelling the whole shift) either hides the entering
+      // member fully off-screen (why this centering exists at all), or, if
+      // aimed at exactly restoring the tapped member's original screen
+      // position, can demand scrolling the entire depth of an overflowing
+      // row back to the start - a jarring full-row scroll once scrolled any
+      // real distance in, and still discontinuous at the leave/enter
+      // handoff. Half compensation instead keeps each half's own live center
+      // exactly fixed *locally* - the whole tapped group's shared center
+      // while it collapses together at its old spot, then just the
+      // front-placed subset's own center while it regrows at the front -
+      // bounding the total scroll adjustment to roughly the tapped group's
+      // own width, never however far into the row the player had scrolled.
+      const gapWidth = attackGridRef.current
+        ? parseFloat(getComputedStyle(attackGridRef.current).columnGap) || 0
+        : 0;
+      const widthSumOf = (keys: string[]): number =>
+        keys.reduce((total, key) => {
+          const el = buttonRefs.current[key];
+          return total + (el ? el.getBoundingClientRect().width : 0);
+        }, 0);
       if (frontMemberKeys.length > 0 && attackGridRef.current) {
         const grid = attackGridRef.current;
-        const originalScrollLeft = grid.scrollLeft;
-        const startTime = performance.now();
+        const groupKeysArray = group.map((member) => member.key);
+        const leaveBaseScrollLeft = grid.scrollLeft;
+        const originalGroupWidth = widthSumOf(groupKeysArray);
+        const leaveStartTime = performance.now();
         if (scrollCompensationFrameRef.current !== null) {
           cancelAnimationFrame(scrollCompensationFrameRef.current);
         }
-        const step = () => {
-          const elapsed = performance.now() - startTime;
-          const totalMs = LEAVE_DURATION_MS + ENTER_DURATION_MS;
-          const progress = Math.min(1, elapsed / totalMs);
-          grid.scrollLeft = originalScrollLeft * (1 - progress);
+        const leaveStep = () => {
+          const liveGroupWidth = widthSumOf(groupKeysArray);
+          grid.scrollLeft =
+            leaveBaseScrollLeft - (originalGroupWidth - liveGroupWidth) / 2;
           scrollCompensationFrameRef.current =
-            progress < 1 ? requestAnimationFrame(step) : null;
+            performance.now() - leaveStartTime < LEAVE_DURATION_MS
+              ? requestAnimationFrame(leaveStep)
+              : null;
         };
-        step();
+        leaveStep();
       }
 
       setTimeout(() => {
@@ -700,6 +713,25 @@ const Battle = () => {
               : moveGroupToFront(workingLine, [member]);
         });
         setLine(workingLine);
+        if (frontMemberKeys.length > 0 && attackGridRef.current) {
+          const grid = attackGridRef.current;
+          const baseScrollLeft = grid.scrollLeft;
+          const startTime = performance.now();
+          if (scrollCompensationFrameRef.current !== null) {
+            cancelAnimationFrame(scrollCompensationFrameRef.current);
+          }
+          const step = () => {
+            const widthSum = widthSumOf(frontMemberKeys);
+            grid.scrollLeft =
+              baseScrollLeft +
+              (widthSum + gapWidth * frontMemberKeys.length) / 2;
+            scrollCompensationFrameRef.current =
+              performance.now() - startTime < ENTER_DURATION_MS
+                ? requestAnimationFrame(step)
+                : null;
+          };
+          step();
+        }
         reorderMonsters(
           workingLine
             .filter((member) => member.key !== INNATE_KEY)
@@ -948,6 +980,9 @@ const Battle = () => {
                         )}
                         <button
                           type="button"
+                          ref={(el) => {
+                            buttonRefs.current[option.key] = el;
+                          }}
                           className={cn(
                             styles.attackButton,
                             isLinked && styles.attackButtonLinked,
