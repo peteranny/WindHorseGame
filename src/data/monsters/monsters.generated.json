@@ -136,9 +136,9 @@
     "description": "小風的媽媽",
     "family": "wind",
     "isHealer": true,
-    "healAmount": 2,
+    "healAmount": 1,
     "attackFamily": "小X媽",
-    "attackStep": 0.2
+    "attackStep": 1
   },
   {
     "id": 14,
@@ -167,9 +167,9 @@
     "description": "小馬的媽媽。",
     "family": "horse",
     "isHealer": true,
-    "healAmount": 2,
+    "healAmount": 1,
     "attackFamily": "小X媽",
-    "attackStep": 0.2
+    "attackStep": 1
   },
   {
     "id": 17,
