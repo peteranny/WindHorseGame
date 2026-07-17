@@ -354,7 +354,9 @@ const Battle = () => {
   // the throw/spit trajectories stay pinned to their true centers - and the
   // spit's rotation to their true angle - no matter how either sprite ends
   // up positioned/sized.
-  const getTrajectory = useCallback((reverse = false): {
+  const getTrajectory = useCallback((
+    target: "toEnemy" | "toPlayer" | "selfPlayer" = "toEnemy"
+  ): {
     from: Point;
     to: Point;
     angleDeg: number;
@@ -366,9 +368,17 @@ const Battle = () => {
     const battlefieldRect = battlefield.getBoundingClientRect();
     const playerCenter = rectCenter(playerSprite.getBoundingClientRect());
     const enemyCenter = rectCenter(enemySprite.getBoundingClientRect());
-    const [fromCenter, toCenter] = reverse
-      ? [enemyCenter, playerCenter]
-      : [playerCenter, enemyCenter];
+    // selfPlayer (healers, thrown at the player rather than the wild
+    // monster) uses the player's own center for both ends - throw-arc's own
+    // keyframes (Battle/styles.css) still apply a fixed vertical arc
+    // percentage regardless of horizontal distance, so an identical
+    // from/to still reads as a real toss-up-and-catch, not a no-op.
+    const [fromCenter, toCenter] =
+      target === "toPlayer"
+        ? [enemyCenter, playerCenter]
+        : target === "selfPlayer"
+        ? [playerCenter, playerCenter]
+        : [playerCenter, enemyCenter];
     return {
       from: percentIn(fromCenter, battlefieldRect),
       to: percentIn(toCenter, battlefieldRect),
@@ -388,7 +398,7 @@ const Battle = () => {
         // Mirrors the innate attack: the enemy spits at the player, and the
         // hit only lands once that spit actually arrives.
         playBump(enemySpriteRef.current, attackBumpKeyframes(-20), EFFECT_DURATION_MS);
-        const trajectory = getTrajectory(true);
+        const trajectory = getTrajectory("toPlayer");
         if (trajectory) {
           triggerEnemySpit(trajectory.from, trajectory.to, trajectory.angleDeg);
         }
@@ -609,18 +619,19 @@ const Battle = () => {
 
       if (healers.length > 0) {
         // Same staggered volley as throwers below - each healer flies in
-        // GROUP_THROW_STAGGER_MS after the last - just landing on the
-        // player instead of the wild monster (getTrajectory(true), the same
-        // reversed trajectory the wild monster's own spit uses). The heal
-        // glow itself (which builds/holds/releases over HEAL_ANIMATION_MS -
-        // HP only actually recovers once that whole animation finishes, not
-        // instantly) only starts once every one of them has actually
-        // landed, so a multi-healer group reads as a real volley arriving
-        // before the glow, rather than one simultaneous flash.
+        // GROUP_THROW_STAGGER_MS after the last, just thrown at the player
+        // rather than the wild monster ("selfPlayer" - the player's own
+        // center for both ends of the throw, a self-toss rather than a
+        // cross-battlefield shot). The heal glow itself (which builds/
+        // holds/releases over HEAL_ANIMATION_MS - HP only actually recovers
+        // once that whole animation finishes, not instantly) only starts
+        // once every one of them has actually landed, so a multi-healer
+        // group reads as a real volley arriving before the glow, rather
+        // than one simultaneous flash.
         playBump(playerSpriteRef.current, attackBumpKeyframes(20), EFFECT_DURATION_MS);
         healers.forEach(({ member }, throwIndex) => {
           setTimeout(() => {
-            const trajectory = getTrajectory(true);
+            const trajectory = getTrajectory("selfPlayer");
             if (!trajectory) return;
             triggerThrow(member.icon, trajectory.from, trajectory.to);
           }, throwIndex * GROUP_THROW_STAGGER_MS);
