@@ -421,60 +421,12 @@
 }
 
 /*
- * The player sprite's native art faces right, same direction it needs to
- * face here (player is on the left, attacking toward the enemy on the
- * right) - no base mirror needed, so player-attack/player-hit can be plain
- * translateX/rotate, same as the enemy's equivalents.
+ * The attack/hit lunge-and-bump plays via the Web Animations API instead
+ * (see Battle/index.tsx's playBump/attackBumpKeyframes/hitBumpKeyframes) so
+ * it can run alongside a concurrent heal glow below without cutting it
+ * short - only the heal glow itself still goes through a plain CSS
+ * className, since nothing else here ever animates `filter`.
  */
-@keyframes player-attack {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-
-  30% {
-    transform: translateX(calc(20px * var(--scale)));
-  }
-}
-
-@keyframes enemy-attack {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-
-  30% {
-    transform: translateX(calc(-20px * var(--scale)));
-  }
-}
-
-@keyframes player-hit {
-  0% {
-    transform: translateY(0) rotate(0deg);
-  }
-
-  40% {
-    transform: translateY(calc(12px * var(--scale))) rotate(-20deg);
-  }
-
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-}
-
-@keyframes enemy-hit {
-  0% {
-    transform: translateY(0) rotate(0deg);
-  }
-
-  40% {
-    transform: translateY(calc(12px * var(--scale))) rotate(20deg);
-  }
-
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-}
 
 /*
  * Builds quickly to a near-white flash, holds through most of the 3s
@@ -492,22 +444,6 @@
   80% {
     filter: brightness(3) drop-shadow(0 0 calc(12px * var(--scale)) limegreen);
   }
-}
-
-.playerAttack {
-  animation: player-attack 300ms ease;
-}
-
-.enemyAttack {
-  animation: enemy-attack 300ms ease;
-}
-
-.playerHit {
-  animation: player-hit 300ms ease;
-}
-
-.enemyHit {
-  animation: enemy-hit 300ms ease;
 }
 
 .playerHeal {

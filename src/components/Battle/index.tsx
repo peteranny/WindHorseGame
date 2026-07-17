@@ -68,7 +68,9 @@ const OUTCOME_PAUSE_MS = SINK_LEAD_MS + SINK_DURATION_MS + SINK_HOLD_MS;
 const OUTCOME_FADE_MS = 700;
 const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 
-type SpriteEffect = "attack" | "hit" | "heal" | null;
+// "heal" is the only sprite effect still driven by React state/CSS class -
+// see useHealEffect and playBump below for why attack/hit moved off this.
+type HealEffect = "heal" | null;
 type PendingOutcome = "win" | "lose" | null;
 
 interface AttackOption {
@@ -155,14 +157,14 @@ const HpBar = ({ hp, maxHp }: { hp: number; maxHp: number }) => (
   </div>
 );
 
-const useSpriteEffect = (): [
-  SpriteEffect,
-  (effect: SpriteEffect, durationMs?: number) => void
+const useHealEffect = (): [
+  HealEffect,
+  (effect: HealEffect, durationMs?: number) => void
 ] => {
-  const [effect, setEffect] = useState<SpriteEffect>(null);
+  const [effect, setEffect] = useState<HealEffect>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const trigger = useCallback(
-    (next: SpriteEffect, durationMs: number = EFFECT_DURATION_MS) => {
+    (next: HealEffect, durationMs: number = EFFECT_DURATION_MS) => {
       setEffect(next);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => setEffect(null), durationMs);
@@ -170,6 +172,39 @@ const useSpriteEffect = (): [
     []
   );
   return [effect, trigger];
+};
+
+// The player's own filter-based heal glow (useHealEffect above) is the only
+// sprite effect still driven by React state/className - a quick attack/hit
+// bump instead plays via the Web Animations API, fired directly on the
+// sprite's DOM node. That keeps it independent of (and unable to cut short)
+// a concurrent heal glow: `animation`'s CSS shorthand can only ever resolve
+// to one value per element, so two className-driven animations fight over
+// the same slot and only the most recent wins - but a WAAPI animation and a
+// CSS-class animation are separate mechanisms entirely, and here they also
+// animate different properties (transform vs filter), so they can run at
+// the same time with no conflict at all.
+const attackBumpKeyframes = (directionPx: number): Keyframe[] => [
+  { transform: "translateX(0)" },
+  { transform: `translateX(calc(${directionPx}px * var(--scale)))`, offset: 0.3 },
+  { transform: "translateX(0)" },
+];
+
+const hitBumpKeyframes = (rotateDeg: number): Keyframe[] => [
+  { transform: "translateY(0) rotate(0deg)" },
+  {
+    transform: `translateY(calc(12px * var(--scale))) rotate(${rotateDeg}deg)`,
+    offset: 0.4,
+  },
+  { transform: "translateY(0) rotate(0deg)" },
+];
+
+const playBump = (
+  el: HTMLElement | null,
+  keyframes: Keyframe[],
+  durationMs: number
+): void => {
+  el?.animate(keyframes, { duration: durationMs, easing: "ease" });
 };
 
 // Every captured monster currently mid-throw at the wild monster (the
@@ -260,8 +295,7 @@ const Battle = () => {
   const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
   const recordGoalWin = useGameStore((state) => state.recordGoalWin);
 
-  const [playerEffect, triggerPlayerEffect] = useSpriteEffect();
-  const [enemyEffect, triggerEnemyEffect] = useSpriteEffect();
+  const [playerHealEffect, triggerPlayerHeal] = useHealEffect();
   const [throwEffects, triggerThrow] = useThrowEffect();
   const [spitEffect, triggerSpit] = useSpitEffect();
   const [enemySpitEffect, triggerEnemySpit] = useSpitEffect();
@@ -312,14 +346,14 @@ const Battle = () => {
       ) {
         // Mirrors the innate attack: the enemy spits at the player, and the
         // hit only lands once that spit actually arrives.
-        triggerEnemyEffect("attack");
+        playBump(enemySpriteRef.current, attackBumpKeyframes(-20), EFFECT_DURATION_MS);
         const trajectory = getTrajectory(true);
         if (trajectory) {
           triggerEnemySpit(trajectory.from, trajectory.to, trajectory.angleDeg);
         }
         setTimeout(() => {
           damageProtagonist(WILD_ATTACK_DAMAGE);
-          triggerPlayerEffect("hit");
+          playBump(playerSpriteRef.current, hitBumpKeyframes(-20), EFFECT_DURATION_MS);
         }, SPIT_DURATION_MS);
         nextWildAttackAtRef.current += WILD_ATTACK_INTERVAL_MS;
       }
@@ -330,8 +364,6 @@ const Battle = () => {
     pendingOutcome,
     getTrajectory,
     damageProtagonist,
-    triggerEnemyEffect,
-    triggerPlayerEffect,
     triggerEnemySpit,
   ]);
 
@@ -536,7 +568,7 @@ const Battle = () => {
       if (totalHeal > 0) {
         // The glow builds/holds/releases over HEAL_ANIMATION_MS - HP only
         // actually recovers once that whole animation finishes, not instantly.
-        triggerPlayerEffect("heal", HEAL_ANIMATION_MS);
+        triggerPlayerHeal("heal", HEAL_ANIMATION_MS);
         const healToastText =
           group.length > 1 && group[0].family
             ? `${group[0].family} 系列治療，效果卓越！`
@@ -547,7 +579,9 @@ const Battle = () => {
         }, HEAL_ANIMATION_MS);
       }
       if (throwers.length > 0) {
-        if (!totalHeal) triggerPlayerEffect("attack");
+        // Plays even alongside a same-tap heal glow above - the two no
+        // longer compete for the same animated property (see playBump).
+        playBump(playerSpriteRef.current, attackBumpKeyframes(20), EFFECT_DURATION_MS);
         // A mixed innate + captured-monster group can't happen (the innate
         // attack has no family, so it never joins a group) - launch each
         // thrower GROUP_THROW_STAGGER_MS after the last so a multi-member
@@ -578,7 +612,7 @@ const Battle = () => {
         }
         setTimeout(() => {
           damageWild(totalDamage);
-          triggerEnemyEffect("hit");
+          playBump(enemySpriteRef.current, hitBumpKeyframes(20), EFFECT_DURATION_MS);
         }, totalLandMs);
       }
 
@@ -682,8 +716,7 @@ const Battle = () => {
       healProtagonist,
       damageWild,
       setCooldown,
-      triggerPlayerEffect,
-      triggerEnemyEffect,
+      triggerPlayerHeal,
       triggerThrow,
       triggerSpit,
       triggerFamilyToast,
@@ -733,7 +766,7 @@ const Battle = () => {
               styles.playerSprite,
               isPlayerSinking
                 ? styles.playerSink
-                : playerEffect && styles[`player${capitalize(playerEffect)}`]
+                : playerHealEffect && styles.playerHeal
             )}
           />
         </div>
@@ -745,9 +778,7 @@ const Battle = () => {
               alt={enemyName}
               className={cn(
                 styles.enemySprite,
-                isEnemySinking
-                  ? styles.enemySink
-                  : enemyEffect && styles[`enemy${capitalize(enemyEffect)}`]
+                isEnemySinking && styles.enemySink
               )}
             />
             {telegraphMarkCount > 0 && (
