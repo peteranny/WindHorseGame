@@ -34,7 +34,9 @@ const Settings = () => {
             className={styles.keyForm}
             onSubmit={(e) => {
               e.preventDefault();
-              if (input.trim()) setStateKey(input.trim());
+              if (!input.trim()) return;
+              setStateKey(input.trim());
+              history.push({ pathname: "/", search: window.location.search });
             }}
           >
             <input
