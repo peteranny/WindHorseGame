@@ -651,30 +651,40 @@ const Battle = () => {
       setLeavingKeys((current) => new Set([...current, ...groupKeys]));
 
       // Every front-placed member ends up ahead of the whole rest of the
-      // line - usually just one, but a linked group's members can scatter
-      // individually between "back" and "front" (see nextPlacement above).
+      // line, every back-placed member behind all of it - usually all of
+      // `group` shares one destination, but a linked group's members can
+      // scatter individually between the two (see nextPlacement above).
       const frontMemberKeys = group
         .filter((_, index) => placements[index] === "front")
         .map((member) => member.key);
+      const backMemberKeys = group
+        .filter((_, index) => placements[index] === "back")
+        .map((member) => member.key);
 
       // Keeps the reorder feeling local rather than snapping the view however
-      // far the newly front-placed member's new content position happens to
-      // land: both the leave (shrink, at the tapped group's old spot) and
-      // enter (regrow, at the front) halves compensate scrollLeft by only
-      // HALF of their own live width change, reading each member's *actual*
-      // live width every frame rather than a precomputed guess. Full
-      // compensation (cancelling the whole shift) either hides the entering
-      // member fully off-screen (why this centering exists at all), or, if
-      // aimed at exactly restoring the tapped member's original screen
-      // position, can demand scrolling the entire depth of an overflowing
-      // row back to the start - a jarring full-row scroll once scrolled any
-      // real distance in, and still discontinuous at the leave/enter
-      // handoff. Half compensation instead keeps each half's own live center
-      // exactly fixed *locally* - the whole tapped group's shared center
-      // while it collapses together at its old spot, then just the
-      // front-placed subset's own center while it regrows at the front -
-      // bounding the total scroll adjustment to roughly the tapped group's
-      // own width, never however far into the row the player had scrolled.
+      // far the tapped member's new content position happens to land - the
+      // same treatment applies whether it's headed to the front or the back,
+      // since both are just "grow at a new spot" from the leave phase's own
+      // point of view. Both the leave (shrink, at the tapped group's old
+      // spot) and enter (regrow, at the front and/or back) halves compensate
+      // scrollLeft by only HALF of their own live width change, reading each
+      // member's *actual* live width every frame rather than a precomputed
+      // guess. Full compensation (cancelling the whole shift) either hides
+      // the entering member fully off-screen (why this centering exists at
+      // all), or, if aimed at exactly restoring the tapped member's original
+      // screen position, can demand scrolling the entire depth of an
+      // overflowing row back to the start - a jarring full-row scroll once
+      // scrolled any real distance in, and still discontinuous at the
+      // leave/enter handoff. Half compensation instead keeps each half's own
+      // live center exactly fixed *locally* - the whole tapped group's
+      // shared center while it collapses together at its old spot, then
+      // whichever of the front-placed/back-placed subsets exist, each kept
+      // centered independently as it regrows at its own new spot - bounding
+      // the total scroll adjustment to roughly the tapped group's own width,
+      // never however far into the row the player had scrolled. (A group
+      // scattered across both ends at once is a rare case where the two
+      // subsets' own corrections simply add - neither ends up exactly
+      // centered, but the adjustment stays just as bounded either way.)
       const gapWidth = attackGridRef.current
         ? parseFloat(getComputedStyle(attackGridRef.current).columnGap) || 0
         : 0;
@@ -683,7 +693,7 @@ const Battle = () => {
           const el = buttonRefs.current[key];
           return total + (el ? el.getBoundingClientRect().width : 0);
         }, 0);
-      if (frontMemberKeys.length > 0 && attackGridRef.current) {
+      if (attackGridRef.current) {
         const grid = attackGridRef.current;
         const groupKeysArray = group.map((member) => member.key);
         const leaveBaseScrollLeft = grid.scrollLeft;
@@ -713,7 +723,7 @@ const Battle = () => {
               : moveGroupToFront(workingLine, [member]);
         });
         setLine(workingLine);
-        if (frontMemberKeys.length > 0 && attackGridRef.current) {
+        if (attackGridRef.current) {
           const grid = attackGridRef.current;
           const baseScrollLeft = grid.scrollLeft;
           const startTime = performance.now();
@@ -721,10 +731,12 @@ const Battle = () => {
             cancelAnimationFrame(scrollCompensationFrameRef.current);
           }
           const step = () => {
-            const widthSum = widthSumOf(frontMemberKeys);
+            const frontWidthSum = widthSumOf(frontMemberKeys);
+            const backWidthSum = widthSumOf(backMemberKeys);
             grid.scrollLeft =
               baseScrollLeft +
-              (widthSum + gapWidth * frontMemberKeys.length) / 2;
+              (frontWidthSum + gapWidth * frontMemberKeys.length) / 2 +
+              (backWidthSum + gapWidth * backMemberKeys.length) / 2;
             scrollCompensationFrameRef.current =
               performance.now() - startTime < ENTER_DURATION_MS
                 ? requestAnimationFrame(step)
