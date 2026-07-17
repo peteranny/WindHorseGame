@@ -73,6 +73,10 @@ const Game = () => {
                     backgroundSize:
                       "calc(100px * var(--scale)) calc(100px * var(--scale))",
                     backgroundPosition: `${backgroundOffsetX}px ${backgroundOffsetY}px`,
+                    // Matches Maze's own .withOffset transition (left/top
+                    // 0.3s) so the backdrop slides in lockstep with the
+                    // grid instead of snapping into place ahead of it.
+                    transition: "background-position 0.3s",
                   }}
                 >
                   <div
