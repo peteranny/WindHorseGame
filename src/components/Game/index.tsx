@@ -141,7 +141,7 @@ const Game = () => {
                             setDevReleaseEnabled(!devReleaseEnabled)
                           }
                         >
-                          🔓
+                          ✕
                         </button>
                       </>
                     )}
