@@ -475,6 +475,24 @@ const Battle = () => {
   // are more (cooling-down or not) attacks off to a side rather than
   // assuming the visible row is the whole roster.
   const attackGridRef = useRef<HTMLDivElement | null>(null);
+  // One entry per currently-rendered attack button, keyed by option.key - lets
+  // handleAttack read a front-placed member's actual live width every frame
+  // while it grows back in at its new spot (see scrollCompensationFrameRef
+  // below), rather than precomputing a single guessed target width.
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  // The in-flight requestAnimationFrame loop (if any) that's currently
+  // riding scrollLeft along with a front-placed member's own entering-width
+  // growth - tracked so a second tap before the first one settles cancels
+  // the stale loop instead of fighting it for control of scrollLeft.
+  const scrollCompensationFrameRef = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (scrollCompensationFrameRef.current !== null) {
+        cancelAnimationFrame(scrollCompensationFrameRef.current);
+      }
+    },
+    []
+  );
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const updateScrollHints = useCallback(() => {
@@ -587,6 +605,14 @@ const Battle = () => {
       setNextPlacement(placement);
       const groupKeys = new Set(group.map((member) => member.key));
       setLeavingKeys((current) => new Set([...current, ...groupKeys]));
+
+      // Every front-placed member ends up ahead of the whole rest of the
+      // line - usually just one, but a linked group's members can scatter
+      // individually between "back" and "front" (see nextPlacement above).
+      const frontMemberKeys = group
+        .filter((_, index) => placements[index] === "front")
+        .map((member) => member.key);
+
       setTimeout(() => {
         let workingLine = line;
         group.forEach((member, index) => {
@@ -596,6 +622,35 @@ const Battle = () => {
               : moveGroupToFront(workingLine, [member]);
         });
         setLine(workingLine);
+        // Each front-placed member grows from 0 to its full width over the
+        // same ENTER_DURATION_MS as .attackButtonEntering's own CSS
+        // animation - rather than jumping scrollLeft straight to the final
+        // compensation, this rides along a frame at a time, reading each
+        // member's *actual* live width (not a precomputed guess), so the
+        // scroll offset's growth exactly cancels the entering width's
+        // growth every frame and whatever was on screen never visibly moves.
+        if (frontMemberKeys.length > 0 && attackGridRef.current) {
+          const grid = attackGridRef.current;
+          const baseScrollLeft = grid.scrollLeft;
+          const gapWidth = parseFloat(getComputedStyle(grid).columnGap) || 0;
+          const startTime = performance.now();
+          if (scrollCompensationFrameRef.current !== null) {
+            cancelAnimationFrame(scrollCompensationFrameRef.current);
+          }
+          const step = () => {
+            const widthSum = frontMemberKeys.reduce((total, key) => {
+              const el = buttonRefs.current[key];
+              return total + (el ? el.getBoundingClientRect().width : 0);
+            }, 0);
+            grid.scrollLeft =
+              baseScrollLeft + widthSum + gapWidth * frontMemberKeys.length;
+            scrollCompensationFrameRef.current =
+              performance.now() - startTime < ENTER_DURATION_MS
+                ? requestAnimationFrame(step)
+                : null;
+          };
+          step();
+        }
         reorderMonsters(
           workingLine
             .filter((member) => member.key !== INNATE_KEY)
@@ -844,6 +899,9 @@ const Battle = () => {
                         )}
                         <button
                           type="button"
+                          ref={(el) => {
+                            buttonRefs.current[option.key] = el;
+                          }}
                           className={cn(
                             styles.attackButton,
                             isLinked && styles.attackButtonLinked,
