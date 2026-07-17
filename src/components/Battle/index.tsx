@@ -657,34 +657,26 @@ const Battle = () => {
       const frontMemberKeys = group
         .filter((_, index) => placements[index] === "front")
         .map((member) => member.key);
-      const backMemberKeys = group
-        .filter((_, index) => placements[index] === "back")
-        .map((member) => member.key);
 
-      // Keeps the reorder feeling local rather than snapping the view however
-      // far the tapped member's new content position happens to land - the
-      // same treatment applies whether it's headed to the front or the back,
-      // since both are just "grow at a new spot" from the leave phase's own
-      // point of view. Both the leave (shrink, at the tapped group's old
-      // spot) and enter (regrow, at the front and/or back) halves compensate
-      // scrollLeft by only HALF of their own live width change, reading each
-      // member's *actual* live width every frame rather than a precomputed
-      // guess. Full compensation (cancelling the whole shift) either hides
-      // the entering member fully off-screen (why this centering exists at
-      // all), or, if aimed at exactly restoring the tapped member's original
-      // screen position, can demand scrolling the entire depth of an
-      // overflowing row back to the start - a jarring full-row scroll once
-      // scrolled any real distance in, and still discontinuous at the
-      // leave/enter handoff. Half compensation instead keeps each half's own
-      // live center exactly fixed *locally* - the whole tapped group's
-      // shared center while it collapses together at its old spot, then
-      // whichever of the front-placed/back-placed subsets exist, each kept
-      // centered independently as it regrows at its own new spot - bounding
-      // the total scroll adjustment to roughly the tapped group's own width,
-      // never however far into the row the player had scrolled. (A group
-      // scattered across both ends at once is a rare case where the two
-      // subsets' own corrections simply add - neither ends up exactly
-      // centered, but the adjustment stays just as bounded either way.)
+      // Leave phase: the tapped group collapses at its OLD spot, wherever
+      // that happens to be in the line - compensating scrollLeft by only
+      // HALF of its own live shrink keeps the group's own shared center
+      // visually fixed as it collapses, so its before/after neighbors slide
+      // symmetrically toward that point (a purely cosmetic choice - nothing
+      // *needs* to stay put here, since the tapped group's old spot isn't
+      // "content" anyone still cares about once it's gone).
+      //
+      // Enter phase is not symmetric between front/back, because the two
+      // don't do the same thing to the rest of the line: a back-placed
+      // member grows into the empty tail past whatever's already visible -
+      // nothing on screen shifts, so it gets no compensation at all. A
+      // front-placed member grows at content-position 0, which pushes every
+      // *other* button in the line - including the spot the leave phase just
+      // finished settling on - rightward by its own full growing width,
+      // every frame. That has to be cancelled in FULL (not the leave
+      // phase's half), reading the live width every animation frame so it
+      // exactly tracks the CSS grow animation - otherwise the row keeps
+      // drifting out from under whatever the player was just looking at.
       const gapWidth = attackGridRef.current
         ? parseFloat(getComputedStyle(attackGridRef.current).columnGap) || 0
         : 0;
@@ -723,7 +715,7 @@ const Battle = () => {
               : moveGroupToFront(workingLine, [member]);
         });
         setLine(workingLine);
-        if (attackGridRef.current) {
+        if (frontMemberKeys.length > 0 && attackGridRef.current) {
           const grid = attackGridRef.current;
           const baseScrollLeft = grid.scrollLeft;
           const startTime = performance.now();
@@ -732,11 +724,10 @@ const Battle = () => {
           }
           const step = () => {
             const frontWidthSum = widthSumOf(frontMemberKeys);
-            const backWidthSum = widthSumOf(backMemberKeys);
             grid.scrollLeft =
               baseScrollLeft +
-              (frontWidthSum + gapWidth * frontMemberKeys.length) / 2 +
-              (backWidthSum + gapWidth * backMemberKeys.length) / 2;
+              frontWidthSum +
+              gapWidth * frontMemberKeys.length;
             scrollCompensationFrameRef.current =
               performance.now() - startTime < ENTER_DURATION_MS
                 ? requestAnimationFrame(step)
