@@ -594,29 +594,50 @@ const Battle = () => {
       let totalHeal = 0;
       let totalDamage = 0;
       const throwers: Array<{ member: AttackOption; multiplier: number }> = [];
+      const healers: Array<{ member: AttackOption; multiplier: number }> = [];
 
       group.forEach((member, index) => {
         const multiplier = groupMultiplierAt(member.step, index);
         if (member.isHealer) {
           totalHeal += member.healAmount * multiplier;
+          healers.push({ member, multiplier });
         } else {
           totalDamage += ATTACK_DAMAGE * multiplier;
           throwers.push({ member, multiplier });
         }
       });
 
-      if (totalHeal > 0) {
-        // The glow builds/holds/releases over HEAL_ANIMATION_MS - HP only
-        // actually recovers once that whole animation finishes, not instantly.
-        triggerPlayerHeal("heal", HEAL_ANIMATION_MS);
+      if (healers.length > 0) {
+        // Same staggered volley as throwers below - each healer flies in
+        // GROUP_THROW_STAGGER_MS after the last - just landing on the
+        // player instead of the wild monster (getTrajectory(true), the same
+        // reversed trajectory the wild monster's own spit uses). The heal
+        // glow itself (which builds/holds/releases over HEAL_ANIMATION_MS -
+        // HP only actually recovers once that whole animation finishes, not
+        // instantly) only starts once every one of them has actually
+        // landed, so a multi-healer group reads as a real volley arriving
+        // before the glow, rather than one simultaneous flash.
+        playBump(playerSpriteRef.current, attackBumpKeyframes(20), EFFECT_DURATION_MS);
+        healers.forEach(({ member }, throwIndex) => {
+          setTimeout(() => {
+            const trajectory = getTrajectory(true);
+            if (!trajectory) return;
+            triggerThrow(member.icon, trajectory.from, trajectory.to);
+          }, throwIndex * GROUP_THROW_STAGGER_MS);
+        });
+        const healLandMs =
+          (healers.length - 1) * GROUP_THROW_STAGGER_MS + THROW_DURATION_MS;
         const healToastText =
           group.length > 1 && group[0].family
             ? `${group[0].family} 系列治療，效果卓越！`
             : `${option.label} 進行治療！`;
-        triggerFamilyToast(healToastText, HEAL_ANIMATION_MS);
+        triggerFamilyToast(healToastText, healLandMs + HEAL_ANIMATION_MS);
         setTimeout(() => {
-          healProtagonist(totalHeal);
-        }, HEAL_ANIMATION_MS);
+          triggerPlayerHeal("heal", HEAL_ANIMATION_MS);
+          setTimeout(() => {
+            healProtagonist(totalHeal);
+          }, HEAL_ANIMATION_MS);
+        }, healLandMs);
       }
       if (throwers.length > 0) {
         // Plays even alongside a same-tap heal glow above - the two no
