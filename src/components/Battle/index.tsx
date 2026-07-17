@@ -209,45 +209,56 @@ const playBump = (
 
 // Every captured monster currently mid-throw at the wild monster (the
 // innate fist attack has nothing to throw, so it never uses this). Each
-// throw gets its own id and its own timeout that removes only itself, so
-// throwing a second monster before the first one lands doesn't cut the
-// first one's animation short - they each run to completion independently.
+// throw gets its own id, removed only by its own onAnimationEnd (see
+// .thrownIcon's render below) rather than a separately-tracked setTimeout -
+// a parallel JS timer has to be kept exactly in sync with the CSS
+// animation's own duration by convention, and any drift between the two
+// (rendering jank, batched updates) leaves a landed, no-longer-animating
+// icon frozen on screen (animation-fill-mode: forwards holds its last
+// frame) until the timer eventually catches up. Tying removal directly to
+// the browser's own animationend event can't drift, so throwing a second
+// monster before the first one lands still doesn't cut the first one's
+// animation short - they each run to completion and self-remove independently.
 const useThrowEffect = (): [
   ThrowEffect[],
-  (icon: string, from: Point, to: Point) => void
+  (icon: string, from: Point, to: Point) => void,
+  (id: number) => void
 ] => {
   const [effects, setEffects] = useState<ThrowEffect[]>([]);
   const nextIdRef = useRef(0);
   const trigger = useCallback((icon: string, from: Point, to: Point) => {
     nextIdRef.current += 1;
-    const id = nextIdRef.current;
-    setEffects((current) => [...current, { id, icon, from, to }]);
-    setTimeout(() => {
-      setEffects((current) => current.filter((effect) => effect.id !== id));
-    }, THROW_DURATION_MS);
+    setEffects((current) => [
+      ...current,
+      { id: nextIdRef.current, icon, from, to },
+    ]);
   }, []);
-  return [effects, trigger];
+  const clear = useCallback((id: number) => {
+    setEffects((current) => current.filter((effect) => effect.id !== id));
+  }, []);
+  return [effects, trigger, clear];
 };
 
 // The innate attack's water-drop spit, shot straight from the player to the
-// wild monster. Keyed by an incrementing id, same reasoning as useThrowEffect.
+// wild monster. Same onAnimationEnd-driven cleanup as useThrowEffect above,
+// for the same reason - no separate timer that could drift out of sync with
+// the CSS animation it's meant to track.
 const useSpitEffect = (): [
   SpitEffect | null,
-  (from: Point, to: Point, angleDeg: number) => void
+  (from: Point, to: Point, angleDeg: number) => void,
+  () => void
 ] => {
   const [effect, setEffect] = useState<SpitEffect | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nextIdRef = useRef(0);
   const trigger = useCallback((from: Point, to: Point, angleDeg: number) => {
     nextIdRef.current += 1;
     setEffect({ id: nextIdRef.current, from, to, angleDeg });
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => setEffect(null), SPIT_DURATION_MS);
   }, []);
-  return [effect, trigger];
+  const clear = useCallback(() => setEffect(null), []);
+  return [effect, trigger, clear];
 };
 
-// The battlefield callout banner - "X 系列攻擊，效果卓越" for a real family
+// The battlefield callout banner - "X 系列加成，效果卓越" for a real family
 // group throw, or a healing-specific message whenever a healer (solo or
 // grouped) is tapped - stays up for exactly as long as the triggering
 // action's own animation takes (durationMs), keyed by an incrementing id
@@ -296,9 +307,9 @@ const Battle = () => {
   const recordGoalWin = useGameStore((state) => state.recordGoalWin);
 
   const [playerHealEffect, triggerPlayerHeal] = useHealEffect();
-  const [throwEffects, triggerThrow] = useThrowEffect();
-  const [spitEffect, triggerSpit] = useSpitEffect();
-  const [enemySpitEffect, triggerEnemySpit] = useSpitEffect();
+  const [throwEffects, triggerThrow, clearThrow] = useThrowEffect();
+  const [spitEffect, triggerSpit, clearSpit] = useSpitEffect();
+  const [enemySpitEffect, triggerEnemySpit, clearEnemySpit] = useSpitEffect();
   const [familyToast, triggerFamilyToast] = useFamilyToast();
   const [pendingOutcome, setPendingOutcome] = useState<PendingOutcome>(null);
   // Becomes true once the battle is decided AND every in-flight throw/spit
@@ -606,7 +617,7 @@ const Battle = () => {
         // for exactly as long as this whole throw takes to land.
         if (group.length > 1 && group[0].family) {
           triggerFamilyToast(
-            `${group[0].family} 系列攻擊，效果卓越`,
+            `${group[0].family} 系列加成，效果卓越`,
             totalLandMs
           );
         }
@@ -660,9 +671,18 @@ const Battle = () => {
         // same ENTER_DURATION_MS as .attackButtonEntering's own CSS
         // animation - rather than jumping scrollLeft straight to the final
         // compensation, this rides along a frame at a time, reading each
-        // member's *actual* live width (not a precomputed guess), so the
-        // scroll offset's growth exactly cancels the entering width's
-        // growth every frame and whatever was on screen never visibly moves.
+        // member's *actual* live width (not a precomputed guess). Only HALF
+        // of the entering width is compensated (not the full amount), so the
+        // entering member's own center stays fixed on screen as it grows -
+        // rather than fully cancelling the push and leaving it to grow
+        // invisibly off-screen - which reads as it expanding outward in
+        // place. Combined with the leave animation's own uncompensated
+        // reflow (which already shifts whatever followed the tapped
+        // member's old spot leftward as that gap closes), the net effect is
+        // exactly what a tap should look like: the tapped member's own
+        // center holds roughly steady while whatever preceded it slides
+        // right and whatever followed it slides left, instead of the whole
+        // rest of the line snapping rigidly in place around an offscreen swap.
         if (frontMemberKeys.length > 0 && attackGridRef.current) {
           const grid = attackGridRef.current;
           const baseScrollLeft = grid.scrollLeft;
@@ -677,7 +697,8 @@ const Battle = () => {
               return total + (el ? el.getBoundingClientRect().width : 0);
             }, 0);
             grid.scrollLeft =
-              baseScrollLeft + widthSum + gapWidth * frontMemberKeys.length;
+              baseScrollLeft +
+              (widthSum + gapWidth * frontMemberKeys.length) / 2;
             scrollCompensationFrameRef.current =
               performance.now() - startTime < ENTER_DURATION_MS
                 ? requestAnimationFrame(step)
@@ -808,6 +829,7 @@ const Battle = () => {
             aria-hidden="true"
             className={styles.thrownIcon}
             style={pointStyle(effect.from, effect.to)}
+            onAnimationEnd={() => clearThrow(effect.id)}
           />
         ))}
         {spitEffect !== null && (
@@ -816,6 +838,7 @@ const Battle = () => {
             className={cn(styles.spitDrop, styles.spitDropForward)}
             aria-hidden="true"
             style={spitStyle(spitEffect)}
+            onAnimationEnd={clearSpit}
           >
             💧
           </span>
@@ -826,6 +849,7 @@ const Battle = () => {
             className={cn(styles.spitDrop, styles.spitDropReverse)}
             aria-hidden="true"
             style={spitStyle(enemySpitEffect)}
+            onAnimationEnd={clearEnemySpit}
           >
             💧
           </span>
