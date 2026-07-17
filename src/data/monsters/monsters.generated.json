@@ -7,7 +7,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "動物情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 1,
@@ -17,7 +17,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "植物情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 2,
@@ -27,7 +27,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "植物情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 3,
@@ -37,7 +37,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "植物情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 4,
@@ -47,7 +47,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "動物情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 5,
@@ -57,7 +57,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "動物情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 6,
@@ -67,7 +67,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "動物情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 7,
@@ -77,7 +77,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "動物情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 8,
@@ -87,7 +87,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "動物情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 9,
@@ -97,7 +97,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "動物情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 10,
@@ -107,7 +107,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "動物情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 11,
@@ -117,7 +117,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "動物情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 12,
@@ -127,7 +127,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "動物情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 13,
@@ -148,7 +148,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "水果情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 15,
@@ -158,7 +158,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "水果情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 16,
@@ -179,7 +179,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 18,
@@ -189,7 +189,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 19,
@@ -199,7 +199,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 20,
@@ -209,7 +209,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 21,
@@ -219,7 +219,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 22,
@@ -229,7 +229,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 23,
@@ -239,7 +239,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 24,
@@ -249,7 +249,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 25,
@@ -259,7 +259,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 26,
@@ -269,7 +269,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 27,
@@ -279,7 +279,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 28,
@@ -289,7 +289,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 29,
@@ -299,7 +299,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 30,
@@ -309,7 +309,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "屬性情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 31,
@@ -319,7 +319,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "星座情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 32,
@@ -329,7 +329,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "星座情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 33,
@@ -339,7 +339,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "星座情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 34,
@@ -349,7 +349,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "星座情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 35,
@@ -359,7 +359,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "星座情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 36,
@@ -369,7 +369,7 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "星座情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 37,
@@ -379,7 +379,7 @@
     "family": "horse",
     "isHealer": false,
     "attackFamily": "星座情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   },
   {
     "id": 38,
@@ -389,6 +389,6 @@
     "family": "wind",
     "isHealer": false,
     "attackFamily": "星座情人節",
-    "attackStep": 0.2
+    "attackStep": 0.1
   }
 ]
