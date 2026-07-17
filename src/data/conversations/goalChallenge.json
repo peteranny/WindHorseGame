@@ -1,11 +1,15 @@
 [
   {
-    "speaker": "monster",
+    "speaker": "narration",
     "text": "小馬看著小風身後長長的家人隊伍，滿意地點點頭——大家終於都到齊了。"
   },
   {
-    "speaker": "monster",
+    "speaker": "narration",
     "text": "不過在回家之前，小馬瞇起眼睛，想親自確認小風是不是真的準備好了。"
+  },
+  {
+    "speaker": "monster",
+    "text": "小風，敢不敢陪小馬認真比一場？"
   },
   {
     "speaker": "protagonist",

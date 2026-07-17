@@ -74,7 +74,12 @@ src/
                          # imports aren't jest-transformable, so this module stays image-free and testable).
     conversations/
       <id>.json           # One file per monster (id = its index/position in monsters.generated.json), a plain
-                           # array of {speaker, text, action?} pages - linear, no branching.
+                           # array of {speaker, text, action?} pages - linear, no branching. speaker is
+                           # "protagonist" | "monster" | "narration" - the last is scene/action description
+                           # (nobody's actual speech), rendered with no portrait/name (see ConversationView.tsx,
+                           # Dialog/styles.css's .narrationBlock/.narrationText). Each monster's file has one
+                           # narration page (its cryptic bulk-generated origin story) followed by one real
+                           # "monster" line actually spoken to 小風, before the closing protagonist page.
       goalHint.json        # Shown until all 39 monsters are captured - ends in "end", no battle.
       goalChallenge.json   # Shown once all 39 are captured but the goal battle hasn't been won - ends in
                            # "enter_challenge", same as a monster's terminal page.

@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import cn from "classnames";
 import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
@@ -151,13 +152,26 @@ const ConversationView = () => {
 
   return (
     <div className={styles.conversation} onClick={advance}>
-      <img src={portrait} alt={speakerName} className={styles.portrait} />
-      <div className={styles.textBlock}>
-        <div className={styles.speakerName}>{speakerName}</div>
-        <div ref={speakerTextRef} className={styles.speakerText}>
-          {displayedText}
+      {page.speaker === "narration" ? (
+        <div className={styles.narrationBlock}>
+          <div
+            ref={speakerTextRef}
+            className={cn(styles.speakerText, styles.narrationText)}
+          >
+            {displayedText}
+          </div>
         </div>
-      </div>
+      ) : (
+        <>
+          <img src={portrait} alt={speakerName} className={styles.portrait} />
+          <div className={styles.textBlock}>
+            <div className={styles.speakerName}>{speakerName}</div>
+            <div ref={speakerTextRef} className={styles.speakerText}>
+              {displayedText}
+            </div>
+          </div>
+        </>
+      )}
       {isTypingDone && (
         <span className={styles.advanceCaret} aria-hidden="true">
           ▼

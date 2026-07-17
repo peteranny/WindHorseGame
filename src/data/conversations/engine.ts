@@ -3,7 +3,7 @@ import { Conversation, ConversationPage } from "./types";
 const isValidSpeaker = (
   speaker: unknown
 ): speaker is ConversationPage["speaker"] =>
-  speaker === "protagonist" || speaker === "monster";
+  speaker === "protagonist" || speaker === "monster" || speaker === "narration";
 
 const isValidAction = (
   action: unknown

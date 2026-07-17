@@ -3,7 +3,7 @@ import { PROTAGONIST_MAX_HP } from "../data/monsters/battleFormulas";
 import { BattleOutcome } from "../data/conversations/engine";
 
 type Mode = "map" | "conversation" | "battle";
-type TalkingSpeaker = "protagonist" | "monster" | null;
+type TalkingSpeaker = "protagonist" | "monster" | "narration" | null;
 
 interface FlowState {
   mode: Mode;

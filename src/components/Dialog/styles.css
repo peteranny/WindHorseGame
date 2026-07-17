@@ -80,6 +80,36 @@
   word-break: break-word;
 }
 
+/*
+ * Narration (scene/action description, nobody's actual speech) skips the
+ * portrait/speaker-name entirely and takes the whole box instead - centered
+ * and italicized so it reads as stage direction rather than dialogue.
+ */
+.narrationBlock {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.narrationText {
+  /*
+   * Overrides .speakerText's own flex: 1 in effect (redundant, same value) -
+   * called out explicitly because getting this wrong is exactly what broke
+   * pagination here once already: flex: none collapsed this box down to its
+   * (empty, at first paint) content width, so paginateText's own
+   * el.clientWidth read a near-zero box and split the page into
+   * one-character chunks instead of real 2-line ones.
+   */
+  flex: 1;
+  min-width: 0;
+  max-height: 100%;
+  text-align: center;
+  font-style: italic;
+  color: #666;
+}
+
 .outer {
   position: relative;
 
