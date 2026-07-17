@@ -38,6 +38,19 @@ module.exports = {
   </head>
   <body>
     <div id="root"></div>
+    ${
+      isProd
+        ? // Evaluated server-side by gas/Code.js's doGet via HtmlService
+          // templating (<?!= ?> = unescaped) - must run before the bundle
+          // script below reads these. Not present in local dev, where
+          // there's no GAS template evaluation and no iframe wrapping to
+          // route around in the first place.
+          `<script>
+      window.__STATE_KEY__ = <?!= JSON.stringify(stateKey) ?>;
+      window.__WEBAPP_URL__ = <?!= JSON.stringify(webAppUrl) ?>;
+    </script>`
+        : ""
+    }
   </body>
 </html>`,
     }),

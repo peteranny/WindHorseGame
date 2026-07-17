@@ -1,5 +1,14 @@
 declare const __DEPLOY_DATE__: string;
 
+// Injected server-side by gas/Code.js's doGet (production builds only) -
+// the deployed app runs inside an iframe on its own origin, so
+// window.location there is unrelated to the visible /exec?key=... URL the
+// player actually bookmarks/shares. See store/persistence.ts.
+interface Window {
+  __STATE_KEY__?: string;
+  __WEBAPP_URL__?: string;
+}
+
 interface GASRun {
   withSuccessHandler<T>(fn: (result: T) => void): GASRun;
   withFailureHandler(fn: (error: Error) => void): GASRun;
