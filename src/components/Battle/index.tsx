@@ -219,6 +219,18 @@ const playBump = (
 // the browser's own animationend event can't drift, so throwing a second
 // monster before the first one lands still doesn't cut the first one's
 // animation short - they each run to completion and self-remove independently.
+//
+// onAnimationEnd can still silently fail to fire at all in rare cases (a
+// backgrounded/throttled tab pausing the CSS animation, a dropped event) -
+// and because effects is an array rather than a single nullable slot, a
+// throw that fails to clear this way doesn't just get replaced by the next
+// one the way a single-slot effect would - it's a genuine leak, sitting in
+// the array forever while later throws keep appending around it. trigger
+// arms a generous safety-net timeout well past the animation's own real
+// duration to guarantee eventual cleanup either way; clear(id) is already
+// idempotent (filters by id), so calling it again after onAnimationEnd
+// already did is a harmless no-op.
+const THROW_SAFETY_NET_MS = THROW_DURATION_MS + 1000;
 const useThrowEffect = (): [
   ThrowEffect[],
   (icon: string, from: Point, to: Point) => void,
@@ -226,16 +238,18 @@ const useThrowEffect = (): [
 ] => {
   const [effects, setEffects] = useState<ThrowEffect[]>([]);
   const nextIdRef = useRef(0);
-  const trigger = useCallback((icon: string, from: Point, to: Point) => {
-    nextIdRef.current += 1;
-    setEffects((current) => [
-      ...current,
-      { id: nextIdRef.current, icon, from, to },
-    ]);
-  }, []);
   const clear = useCallback((id: number) => {
     setEffects((current) => current.filter((effect) => effect.id !== id));
   }, []);
+  const trigger = useCallback(
+    (icon: string, from: Point, to: Point) => {
+      nextIdRef.current += 1;
+      const id = nextIdRef.current;
+      setEffects((current) => [...current, { id, icon, from, to }]);
+      setTimeout(() => clear(id), THROW_SAFETY_NET_MS);
+    },
+    [clear]
+  );
   return [effects, trigger, clear];
 };
 
