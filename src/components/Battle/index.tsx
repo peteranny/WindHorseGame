@@ -451,7 +451,7 @@ const Battle = () => {
               );
             }
             triggerFamilyToast(
-              `${GOAL_NAME}吃了冷麵，恢復了體力！`,
+              `${GOAL_NAME}吃了涼麵，恢復了體力！`,
               THROW_DURATION_MS + HEAL_ANIMATION_MS
             );
             setTimeout(() => {
