@@ -858,19 +858,38 @@ const Battle = () => {
           const el = buttonRefs.current[key];
           return total + (el ? el.getBoundingClientRect().width : 0);
         }, 0);
-      // Actually reorders the line and swaps leaving -> entering classes -
-      // called once the leave phase is truly done (see below), rather than
-      // from its own independently-timed setTimeout(LEAVE_DURATION_MS). That
-      // used to run as a second timer racing the leaveStep loop above: both
-      // were meant to represent the same "250ms leave duration", but once
-      // leaveStep started tracking the *real* measured width instead of a
-      // fixed cutoff, a fixed-duration reorder could still fire a moment
-      // before the shrink genuinely finished - snapping the button's width
-      // straight to 0 (via the leaving -> entering class swap) out from
-      // under the scroll compensation, which read as the tapped group's
-      // center settling a hair off from where it should have. Now there's
-      // only one clock for the whole leave phase.
-      const finishLeavePhase = () => {
+      if (attackGridRef.current) {
+        const grid = attackGridRef.current;
+        const groupKeysArray = group.map((member) => member.key);
+        const leaveBaseScrollLeft = grid.scrollLeft;
+        const originalGroupWidth = widthSumOf(groupKeysArray);
+        const leaveStartTime = performance.now();
+        if (scrollCompensationFrameRef.current !== null) {
+          cancelAnimationFrame(scrollCompensationFrameRef.current);
+        }
+        // Stops once the *measured* width has actually reached ~0, rather
+        // than after a fixed LEAVE_DURATION_MS elapsed - leaveStartTime is
+        // captured synchronously here, before React has even applied
+        // .attackButtonLeaving (the class - and the CSS animation it starts
+        // - only take effect once this handler returns and React commits/
+        // paints), so a wall-clock cutoff measured from this earlier moment
+        // stopped compensating slightly before the button actually finished
+        // shrinking, leaving a small permanent leftward drift once it fully
+        // vanished. SCROLL_COMPENSATION_SAFETY_MS is just a backstop.
+        const leaveStep = () => {
+          const liveGroupWidth = widthSumOf(groupKeysArray);
+          grid.scrollLeft =
+            leaveBaseScrollLeft - (originalGroupWidth - liveGroupWidth) / 2;
+          scrollCompensationFrameRef.current =
+            liveGroupWidth > 0.5 &&
+            performance.now() - leaveStartTime < SCROLL_COMPENSATION_SAFETY_MS
+              ? requestAnimationFrame(leaveStep)
+              : null;
+        };
+        leaveStep();
+      }
+
+      setTimeout(() => {
         let workingLine = line;
         group.forEach((member, index) => {
           workingLine =
@@ -886,7 +905,7 @@ const Battle = () => {
           if (scrollCompensationFrameRef.current !== null) {
             cancelAnimationFrame(scrollCompensationFrameRef.current);
           }
-          // Same reasoning as leaveStep below - stops once frontWidthSum
+          // Same reasoning as leaveStep above - stops once frontWidthSum
           // has actually stopped growing between two consecutive frames,
           // rather than after a fixed ENTER_DURATION_MS measured from
           // before .attackButtonEntering's own CSS animation really starts.
@@ -930,49 +949,7 @@ const Battle = () => {
             return next;
           });
         }, ENTER_DURATION_MS);
-      };
-
-      if (attackGridRef.current) {
-        const grid = attackGridRef.current;
-        const groupKeysArray = group.map((member) => member.key);
-        const leaveBaseScrollLeft = grid.scrollLeft;
-        const originalGroupWidth = widthSumOf(groupKeysArray);
-        const leaveStartTime = performance.now();
-        if (scrollCompensationFrameRef.current !== null) {
-          cancelAnimationFrame(scrollCompensationFrameRef.current);
-        }
-        // Stops once the *measured* width has actually reached ~0, rather
-        // than after a fixed LEAVE_DURATION_MS elapsed - leaveStartTime is
-        // captured synchronously here, before React has even applied
-        // .attackButtonLeaving (the class - and the CSS animation it starts
-        // - only take effect once this handler returns and React commits/
-        // paints), so a wall-clock cutoff measured from this earlier moment
-        // stopped compensating slightly before the button actually finished
-        // shrinking, leaving a small permanent leftward drift once it fully
-        // vanished. SCROLL_COMPENSATION_SAFETY_MS is just a backstop.
-        // finishLeavePhase only fires once, right as this loop itself
-        // considers the shrink done - see the comment above it.
-        const leaveStep = () => {
-          const liveGroupWidth = widthSumOf(groupKeysArray);
-          grid.scrollLeft =
-            leaveBaseScrollLeft - (originalGroupWidth - liveGroupWidth) / 2;
-          if (
-            liveGroupWidth > 0.5 &&
-            performance.now() - leaveStartTime < SCROLL_COMPENSATION_SAFETY_MS
-          ) {
-            scrollCompensationFrameRef.current =
-              requestAnimationFrame(leaveStep);
-          } else {
-            scrollCompensationFrameRef.current = null;
-            finishLeavePhase();
-          }
-        };
-        leaveStep();
-      } else {
-        // No grid to scroll-compensate against, so there's nothing to keep
-        // in sync with - a plain fixed-duration fallback is fine here.
-        setTimeout(finishLeavePhase, LEAVE_DURATION_MS);
-      }
+      }, LEAVE_DURATION_MS);
     },
     [
       pendingOutcome,
