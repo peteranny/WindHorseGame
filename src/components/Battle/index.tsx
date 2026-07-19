@@ -115,6 +115,11 @@ interface ThrowEffect {
   icon: string;
   from: Point;
   to: Point;
+  // A healer's own self-toss (selfPlayer - identical from/to, see
+  // getTrajectory) still arcs up and down in place, but shouldn't also
+  // shrink like a real cross-battlefield throw does - that shrink reads as
+  // "flying into the distance", which never happens here.
+  selfToss: boolean;
 }
 
 interface SpitEffect {
@@ -250,7 +255,7 @@ const playBump = (
 const THROW_SAFETY_NET_MS = THROW_DURATION_MS + 1000;
 const useThrowEffect = (): [
   ThrowEffect[],
-  (icon: string, from: Point, to: Point) => void,
+  (icon: string, from: Point, to: Point, selfToss?: boolean) => void,
   (id: number) => void
 ] => {
   const [effects, setEffects] = useState<ThrowEffect[]>([]);
@@ -259,10 +264,10 @@ const useThrowEffect = (): [
     setEffects((current) => current.filter((effect) => effect.id !== id));
   }, []);
   const trigger = useCallback(
-    (icon: string, from: Point, to: Point) => {
+    (icon: string, from: Point, to: Point, selfToss: boolean = false) => {
       nextIdRef.current += 1;
       const id = nextIdRef.current;
-      setEffects((current) => [...current, { id, icon, from, to }]);
+      setEffects((current) => [...current, { id, icon, from, to, selfToss }]);
       setTimeout(() => clear(id), THROW_SAFETY_NET_MS);
     },
     [clear]
@@ -715,7 +720,7 @@ const Battle = () => {
           setTimeout(() => {
             const trajectory = getTrajectory("selfPlayer");
             if (!trajectory) return;
-            triggerThrow(member.icon, trajectory.from, trajectory.to);
+            triggerThrow(member.icon, trajectory.from, trajectory.to, true);
           }, throwIndex * GROUP_THROW_STAGGER_MS);
         });
         const healLandMs =
@@ -1020,7 +1025,10 @@ const Battle = () => {
             src={effect.icon}
             alt=""
             aria-hidden="true"
-            className={styles.thrownIcon}
+            className={cn(
+              styles.thrownIcon,
+              effect.selfToss && styles.thrownIconSelf
+            )}
             style={pointStyle(effect.from, effect.to)}
             onAnimationEnd={() => clearThrow(effect.id)}
           />

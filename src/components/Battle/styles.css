@@ -332,6 +332,79 @@
 }
 
 /*
+ * A healer's own self-toss (selfPlayer - identical --start-x/--end-x etc,
+ * so the left/top arc above still bounces it up and down in place) - same
+ * positioning as .thrownIcon/throw-arc, but held at a constant scale(1)
+ * throughout instead of the 1.3 -> 0.8 -> 0.3 near-to-far shrink, since
+ * nothing is actually flying off into the distance here.
+ */
+.thrownIconSelf {
+  animation-name: throw-arc-self;
+}
+
+@keyframes throw-arc-self {
+  0% {
+    left: var(--start-x);
+    top: var(--start-y);
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+  }
+
+  12.5% {
+    left: calc(var(--start-x) + (var(--end-x) - var(--start-x)) * 0.125);
+    top:
+      calc(
+        var(--start-y) + (var(--end-y) - var(--start-y)) * 0.125 - 17.5%
+      );
+  }
+
+  25% {
+    left: calc(var(--start-x) + (var(--end-x) - var(--start-x)) * 0.25);
+    top: calc(var(--start-y) + (var(--end-y) - var(--start-y)) * 0.25 - 30%);
+  }
+
+  37.5% {
+    left: calc(var(--start-x) + (var(--end-x) - var(--start-x)) * 0.375);
+    top:
+      calc(
+        var(--start-y) + (var(--end-y) - var(--start-y)) * 0.375 - 37.5%
+      );
+  }
+
+  50% {
+    left: calc(var(--start-x) + (var(--end-x) - var(--start-x)) * 0.5);
+    top: calc(var(--start-y) + (var(--end-y) - var(--start-y)) * 0.5 - 40%);
+    transform: translate(-50%, -50%) rotate(180deg) scale(1);
+  }
+
+  62.5% {
+    left: calc(var(--start-x) + (var(--end-x) - var(--start-x)) * 0.625);
+    top:
+      calc(
+        var(--start-y) + (var(--end-y) - var(--start-y)) * 0.625 - 37.5%
+      );
+  }
+
+  75% {
+    left: calc(var(--start-x) + (var(--end-x) - var(--start-x)) * 0.75);
+    top: calc(var(--start-y) + (var(--end-y) - var(--start-y)) * 0.75 - 30%);
+  }
+
+  87.5% {
+    left: calc(var(--start-x) + (var(--end-x) - var(--start-x)) * 0.875);
+    top:
+      calc(
+        var(--start-y) + (var(--end-y) - var(--start-y)) * 0.875 - 17.5%
+      );
+  }
+
+  100% {
+    left: var(--end-x);
+    top: var(--end-y);
+    transform: translate(-50%, -50%) rotate(360deg) scale(1);
+  }
+}
+
+/*
  * The innate attack's water-drop spit - a straight shot rather than the
  * captured-monsters' thrown arc, since there's nothing being "thrown" here.
  * Same --start-x/--start-y/--end-x/--end-y custom properties as
