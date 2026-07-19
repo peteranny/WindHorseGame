@@ -1,9 +1,9 @@
 /*
- * Compact dev-only toggle icons living beside the ⚙ settings link (only
- * visible under the "peteranny" save key, same gate Settings used to apply
- * to these before they lived there as full-width labeled buttons) - same
+ * Compact dev-only icons living beside the ⚙ settings link (shown under any
+ * save key containing "peteranny" - see store/devMode.ts) - same
  * orangered-dashed visual language as every other dev-only affordance in
- * this app (Settings/styles.css's own .devButton, Battle/styles.css's).
+ * this app (Battle/styles.css's own .devButton). Also used for the one-off
+ * reset action button, which has no "active" state of its own.
  */
 .devToggle {
   display: flex;

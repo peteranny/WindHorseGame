@@ -9,6 +9,7 @@ import cn from "classnames";
 import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
+import { isDevStateKey } from "../../store/devMode";
 import MONSTERS from "../../data/monsters/monsters";
 import {
   ATTACK_COOLDOWN_MS,
@@ -338,10 +339,9 @@ const Battle = () => {
   const damageProtagonist = useFlowStore((state) => state.damageProtagonist);
   const healProtagonist = useFlowStore((state) => state.healProtagonist);
   const concludeBattle = useFlowStore((state) => state.concludeBattle);
-  const devBattleShortcutsEnabled = useFlowStore(
-    (state) => state.devBattleShortcutsEnabled
-  );
 
+  const stateKey = useGameStore((state) => state.stateKey);
+  const isDevMode = isDevStateKey(stateKey);
   const monsterOrder = useGameStore((state) => state.monsterOrder);
   const reorderMonsters = useGameStore((state) => state.reorderMonsters);
   const cooldowns = useGameStore((state) => state.cooldowns);
@@ -350,9 +350,6 @@ const Battle = () => {
   const captureMonster = useGameStore((state) => state.captureMonster);
   const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
   const recordGoalWin = useGameStore((state) => state.recordGoalWin);
-  const resetGoalDefeatedAt = useGameStore(
-    (state) => state.resetGoalDefeatedAt
-  );
 
   const [playerHealEffect, triggerPlayerHeal] = useHealEffect();
   const [enemyHealEffect, triggerEnemyHeal] = useHealEffect();
@@ -1059,7 +1056,7 @@ const Battle = () => {
               跳過戰鬥
             </button>
           )}
-          {devBattleShortcutsEnabled && (
+          {isDevMode && (
             <>
               <button
                 type="button"
@@ -1067,7 +1064,7 @@ const Battle = () => {
                 disabled={pendingOutcome !== null}
                 onClick={() => damageWild(wildHp)}
               >
-                Capture
+                贏
               </button>
               <button
                 type="button"
@@ -1075,18 +1072,8 @@ const Battle = () => {
                 disabled={pendingOutcome !== null}
                 onClick={() => damageProtagonist(protagonistHp)}
               >
-                Lose
+                輸
               </button>
-              {isGoalEncounter && goalDefeatedAt !== null && (
-                <button
-                  type="button"
-                  className={styles.devButton}
-                  disabled={pendingOutcome !== null}
-                  onClick={resetGoalDefeatedAt}
-                >
-                  Reset Ever-Clear
-                </button>
-              )}
             </>
           )}
         </div>

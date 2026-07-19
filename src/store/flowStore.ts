@@ -17,10 +17,10 @@ interface FlowState {
   wildHp: number;
   wildMaxHp: number;
   protagonistHp: number;
-  // Both dev-only: toggled independently from the Settings screen (only
-  // visible under the "peteranny" save key) - never persisted, resets
-  // every session.
-  devBattleShortcutsEnabled: boolean; // "Capture"/"Lose" buttons in Battle
+  // Dev-only, toggled from the map screen's compact icon row (only shown
+  // under a dev save key - see store/devMode.ts) - never persisted, resets
+  // every session. The battle screen's own win/lose shortcuts have no
+  // separate toggle - they just always show once the save key qualifies.
   devReleaseEnabled: boolean; // click a duckling-trail follower to un-capture it
   startEncounter: (monsterId: number) => void;
   startGoalEncounter: () => void;
@@ -32,7 +32,6 @@ interface FlowState {
   concludeBattle: (outcome: BattleOutcome) => void;
   endEncounter: () => void;
   setTalkingSpeaker: (speaker: TalkingSpeaker) => void;
-  setDevBattleShortcutsEnabled: (enabled: boolean) => void;
   setDevReleaseEnabled: (enabled: boolean) => void;
 }
 
@@ -45,7 +44,6 @@ export const useFlowStore = create<FlowState>((set) => ({
   wildHp: 0,
   wildMaxHp: 0,
   protagonistHp: PROTAGONIST_MAX_HP,
-  devBattleShortcutsEnabled: false,
   devReleaseEnabled: false,
   startEncounter: (monsterId) =>
     set({ mode: "conversation", activeMonsterId: monsterId }),
@@ -83,7 +81,5 @@ export const useFlowStore = create<FlowState>((set) => ({
       talkingSpeaker: null,
     }),
   setTalkingSpeaker: (speaker) => set({ talkingSpeaker: speaker }),
-  setDevBattleShortcutsEnabled: (enabled) =>
-    set({ devBattleShortcutsEnabled: enabled }),
   setDevReleaseEnabled: (enabled) => set({ devReleaseEnabled: enabled }),
 }));

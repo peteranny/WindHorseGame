@@ -13,13 +13,10 @@ import MiniMap from "../MiniMap";
 import ScreenTransition from "../ScreenTransition";
 import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
+import { isDevStateKey } from "../../store/devMode";
 import { CELL_SIZE } from "../Maze/cellSize";
 import WALL_TILE from "../../assets/wallTile.png";
 import styles from "./styles.css";
-
-// Same dev-only save key Settings used to gate these toggles behind before
-// they moved here, next to the ⚙ link, as compact icon buttons.
-const DEV_STATE_KEY = "peteranny";
 
 const Game = () => {
   const [mouse, handleMouseClick] = useMouse();
@@ -27,13 +24,12 @@ const Game = () => {
   const center: [number, number] = [width / 2, height / 2];
   const [playerX, playerY] = useGameStore((state) => state.position);
   const stateKey = useGameStore((state) => state.stateKey);
+  const isDevMode = isDevStateKey(stateKey);
+  const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
+  const resetGoalDefeatedAt = useGameStore(
+    (state) => state.resetGoalDefeatedAt
+  );
   const mode = useFlowStore((state) => state.mode);
-  const devBattleShortcutsEnabled = useFlowStore(
-    (state) => state.devBattleShortcutsEnabled
-  );
-  const setDevBattleShortcutsEnabled = useFlowStore(
-    (state) => state.setDevBattleShortcutsEnabled
-  );
   const devReleaseEnabled = useFlowStore((state) => state.devReleaseEnabled);
   const setDevReleaseEnabled = useFlowStore(
     (state) => state.setDevReleaseEnabled
@@ -109,27 +105,8 @@ const Game = () => {
                       gap: "calc(4px * var(--scale))",
                     }}
                   >
-                    {stateKey === DEV_STATE_KEY && (
+                    {isDevMode && (
                       <>
-                        <button
-                          type="button"
-                          aria-label={
-                            devBattleShortcutsEnabled
-                              ? "停用戰鬥捷徑（Capture／Lose）"
-                              : "啟用戰鬥捷徑（Capture／Lose）"
-                          }
-                          className={cn(
-                            styles.devToggle,
-                            devBattleShortcutsEnabled && styles.devToggleActive
-                          )}
-                          onClick={() =>
-                            setDevBattleShortcutsEnabled(
-                              !devBattleShortcutsEnabled
-                            )
-                          }
-                        >
-                          ⚔️
-                        </button>
                         <button
                           type="button"
                           aria-label={
@@ -147,6 +124,16 @@ const Game = () => {
                         >
                           ✕
                         </button>
+                        {goalDefeatedAt !== null && (
+                          <button
+                            type="button"
+                            aria-label="重置已通關紀錄"
+                            className={styles.devToggle}
+                            onClick={resetGoalDefeatedAt}
+                          >
+                            ♻️
+                          </button>
+                        )}
                       </>
                     )}
                     <Link

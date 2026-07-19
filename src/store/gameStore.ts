@@ -176,10 +176,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     scheduleSave();
   },
 
-  // Dev-only (see Battle's own devBattleShortcutsEnabled toggle) - undoes
-  // recordGoalWin's first-write-wins guard so the goal battle's "ever
-  // cleared" record can be replayed from scratch without a whole separate
-  // save-state key.
+  // Dev-only (see Game's own ♻️ button, shown under a dev save key - store/
+  // devMode.ts) - undoes recordGoalWin's first-write-wins guard so the goal
+  // battle's "ever cleared" record can be replayed from scratch without a
+  // whole separate save-state key.
   resetGoalDefeatedAt: () => {
     set({ goalDefeatedAt: null });
     scheduleSave();
