@@ -106,7 +106,7 @@ export const buildCooldownConversation = (
   openingPage,
   {
     speaker: "monster",
-    text: `小風，${monsterName}剛剛才贏了你，還沒消氣，要等 ${formatCooldownRemaining(
+    text: `小風，我剛剛才贏了你，我要等 ${formatCooldownRemaining(
       remainingMs
     )}才願意再戰一次！`,
     action: "end",
