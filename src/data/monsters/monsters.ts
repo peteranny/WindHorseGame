@@ -1,5 +1,6 @@
 import generated from "./monsters.generated.json";
 import { Monster } from "./types";
+import { computeAttackFamily } from "./attackFamily";
 
 import icon0 from "./icons/0.png";
 import icon1 from "./icons/1.png";
@@ -83,11 +84,13 @@ const ICONS: Record<number, string> = {
   38: icon38,
 };
 
-type MonsterMeta = Omit<Monster, "icon">;
+type MonsterMeta = Omit<Monster, "icon" | "attackFamily" | "attackStep">;
 
-const MONSTERS: Monster[] = (generated as MonsterMeta[]).map((meta) => ({
-  ...meta,
-  icon: ICONS[meta.id],
-}));
+const MONSTERS: Monster[] = (generated as MonsterMeta[]).map((meta) => {
+  const { family: attackFamily, step: attackStep } = computeAttackFamily(
+    meta.name
+  );
+  return { ...meta, icon: ICONS[meta.id], attackFamily, attackStep };
+});
 
 export default MONSTERS;

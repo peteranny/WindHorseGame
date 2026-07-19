@@ -5,9 +5,7 @@
     "name": "小馬小風",
     "description": "不管親親到了哪裡，小風都會找到小馬的，小馬也會等到小風的。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "動物情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 1,
@@ -15,9 +13,7 @@
     "name": "風車菊企鵝小風",
     "description": "小風看到小風企鵝？才有的靈感而誕生的企鵝小風。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "植物情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 2,
@@ -25,9 +21,7 @@
     "name": "牽牛小馬",
     "description": "牽小馬牛的項鍊的花。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "植物情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 3,
@@ -35,9 +29,7 @@
     "name": "月見花小風小馬",
     "description": "鳥巢上誕生了一隻很可愛，結果被小風抱起來就不哭的小馬，哈！就是有你、我、和一個家的概念。他們都戴著月見花。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "植物情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 4,
@@ -45,9 +37,7 @@
     "name": "木木小風",
     "description": "被小馬看到真正的木木小風時，小馬就要對小風負責。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "動物情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 5,
@@ -55,9 +45,7 @@
     "name": "騾子小馬",
     "description": "騾子很可愛，但小馬比較可愛，所以委屈小馬扮演騾子小馬。沒想到小馬的鼻孔印到背面，所以請小風來扮演愛愛小風，就跟小風和小馬一樣，喜歡做相親相愛的事情。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "動物情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 6,
@@ -65,9 +53,7 @@
     "name": "鴿子小風",
     "description": "產地：當小風要送小馬的時候，不小心撞到正在飛的鴿子，就會產生鴿子小風。個性：愛好和平，當小風跟小馬為了誰要先吃小X兒吵架的時候，鴿子小風都會飛過來調解。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "動物情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 7,
@@ -75,9 +61,7 @@
     "name": "山斑小馬",
     "description": "當原本顏色黑白相間的山斑馬吃到小小風兒跟小小馬兒灌溉的野草，就不小心變成山班小馬，而改變成綠藍相間的體色。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "動物情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 8,
@@ -85,9 +69,7 @@
     "name": "銀喉圓尾山雀小風",
     "description": "產地：瑞典。當小風感到寂寞的時候（因為小馬去上班）忽然一群銀喉園尾山雀圍著小風，因而產生。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "動物情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 9,
@@ -95,9 +77,7 @@
     "name": "駱駝小馬",
     "description": "由於小馬是綠色的，兩隻小風看不出來草地跟小馬的分別，因此誤以為小馬是草地，就直接在小馬身上睡著了，因此駱駝小馬就這樣出現了。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "動物情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 10,
@@ -105,9 +85,7 @@
     "name": "小鷹小風",
     "description": "在小風上班不開心的時候，會鼓勵小風開心起來的小鷹小風。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "動物情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 11,
@@ -115,9 +93,7 @@
     "name": "長頸鹿小馬",
     "description": "因為小馬沒有脖子，因此小馬以為身體長長的就是長頸鹿，結果小馬很努力的讓自己的身體慢慢變長，因此成為獨特的長頸鹿小馬了。小風看到很高興， 因為可以有整群的小風停在長頸鹿小馬上，從此以後就過著幸福快樂的日子。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "動物情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 12,
@@ -125,9 +101,7 @@
     "name": "企鵝小風",
     "description": "是最簡單畫的小風， 上網一下子就可以很多的可愛企鵝小風圖。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "動物情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 13,
@@ -136,9 +110,7 @@
     "description": "小風的媽媽",
     "family": "wind",
     "isHealer": true,
-    "healAmount": 1,
-    "attackFamily": "小X媽",
-    "attackStep": 1
+    "healAmount": 1
   },
   {
     "id": 14,
@@ -146,9 +118,7 @@
     "name": "芭樂葡萄小馬",
     "description": "這是一直愛吃芭樂的葡萄小馬，因為太愛吃，總是把芭樂吃完，為了等待下一次可以吃芭樂，於是葡萄小馬就穿著芭樂裝，等待圓圓的葡萄尾巴，從粉紅色的變成成熟的紫色且自動掉落，這樣葡萄小馬又可以繼續吃芭樂。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "水果情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 15,
@@ -156,9 +126,7 @@
     "name": "番茄小風",
     "description": "小風只要臉紅得跟蕃茄一樣就會變成蕃茄小風，所以小風媽喜歡讓其他小風吃東西很開心，就會讓其他小風臉紅紅的，之後尾巴變成小蕃茄，然後小風媽就可以煮菜了。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "水果情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 16,
@@ -167,9 +135,7 @@
     "description": "小馬的媽媽。",
     "family": "horse",
     "isHealer": true,
-    "healAmount": 1,
-    "attackFamily": "小X媽",
-    "attackStep": 1
+    "healAmount": 1
   },
   {
     "id": 17,
@@ -177,9 +143,7 @@
     "name": "電電小馬",
     "description": "小風小馬在一個暴風雨下散步，為了躲避閃電，小風小馬就跑去森林躲暴風雨，結果閃電打中了森林，暴風雨結束後，小風小馬跑出森林，就不知道為什麼，身上就有電電了。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 18,
@@ -187,9 +151,7 @@
     "name": "電電小風",
     "description": "小風小馬在一個暴風雨下散步，為了躲避閃電，小風小馬就跑去森林躲暴風雨，結果閃電打中了森林，暴風雨結束後，小風小馬跑出森林，就不知道為什麼，身上就有電電了。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 19,
@@ -197,9 +159,7 @@
     "name": "草草小馬",
     "description": "小風小馬原本看不清楚，所以都會一起滾滾滾，有一天，滾到了草叢堆，發現不知道為什麼可以看清楚了，小馬就變成草草小馬，以後就可以看得清楚滾滾滾了。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 20,
@@ -207,9 +167,7 @@
     "name": "草草小風",
     "description": "小風小馬原本看不清楚，所以都會一起滾滾滾，有一天，滾到了草叢堆，發現不知道為什麼可以看清楚了，小風就變成草草小風，以後就可以看得清楚滾滾滾了。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 21,
@@ -217,9 +175,7 @@
     "name": "水水小馬",
     "description": "小風跟小馬躺在地上一起看小風小馬星星，結果要翻身起來翻不起來，小馬就變成流汗小馬了。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 22,
@@ -227,9 +183,7 @@
     "name": "水水小風",
     "description": "小風跟小馬躺在地上一起看小風小馬星星，結果要翻身起來翻不起來，小風就變成流汗小風了。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 23,
@@ -237,9 +191,7 @@
     "name": "火火小馬",
     "description": "問號問號小風小馬有一天忽然認真，結果小馬認真過頭就變成火火小馬了。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 24,
@@ -247,9 +199,7 @@
     "name": "火火小風",
     "description": "問號問號小風小馬有一天忽然認真，結果小風認真過頭就變成火火小風了。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 25,
@@ -257,9 +207,7 @@
     "name": "超能力小馬",
     "description": "小風有一天在路上撿到鐵條，不知道為什麼就自動彎曲，結果拿給小馬也是一樣，他們就不知不覺有了超能力。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 26,
@@ -267,9 +215,7 @@
     "name": "超能力小風",
     "description": "小風有一天在路上撿到鐵條，不知道為什麼就自動彎曲，結果拿給小馬也是一樣，他們就不知不覺有了超能力。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 27,
@@ -277,9 +223,7 @@
     "name": "Akoke小馬",
     "description": "小馬穿著小小馬的內褲就變成格鬥系Akoke小馬，就不知不覺力氣變大，小馬可以舉起兩個小風了，好厲害喔！",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 28,
@@ -287,9 +231,7 @@
     "name": "Akoke小風",
     "description": "小風穿著小小風的內褲就變成格鬥系Akoke小風，就不知不覺力氣變大，小風可以舉起兩個小馬了，好厲害喔！",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 29,
@@ -297,9 +239,7 @@
     "name": "龍龍小馬",
     "description": "因為就要過小風小馬年了，小馬在小風小馬紅包裡，不知道臉上為什麼會黏著圓圓鬍子，然後就不知不覺變成龍龍小馬，叫聲變成啊龍龍龍。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 30,
@@ -307,9 +247,7 @@
     "name": "龍龍小風",
     "description": "因為就要過小風小馬年了，小風在小風小馬紅包裡，不知道臉上為什麼會黏著圓圓鬍子，然後就不知不覺變成龍龍小風，叫聲變成嗯龍。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "屬性情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 31,
@@ -317,9 +255,7 @@
     "name": "牡羊座小馬",
     "description": "小風很調皮把山羊角放在小馬頭上，就不小心變成牡羊座小馬了。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "星座情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 32,
@@ -327,9 +263,7 @@
     "name": "牡羊座小風",
     "description": "小馬很調皮把山羊角放在小風頭上，就不小心變成牡羊座小風了。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "星座情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 33,
@@ -337,9 +271,7 @@
     "name": "金牛座小馬",
     "description": "看到小馬牛時，對小馬牛的角感到？？，結果隔天起床就變成金牛座小馬了。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "星座情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 34,
@@ -347,9 +279,7 @@
     "name": "金牛座小風",
     "description": "看到小馬牛時，對小馬牛的角感到？？，結果隔天起床就變成金牛座小風了。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "星座情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 35,
@@ -357,9 +287,7 @@
     "name": "雙子座小馬",
     "description": "會以為自己是小風，和雙子座小風出生看到對方都會問號問號。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "星座情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 36,
@@ -367,9 +295,7 @@
     "name": "雙子座小風",
     "description": "會以為自己是小馬，和雙子座小馬出生看到對方都會問號問號。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "星座情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 37,
@@ -377,9 +303,7 @@
     "name": "巨蟹座小馬",
     "description": "小風小馬滾滾滾， 滾到小風小馬濕地，小馬看見問號螃蟹小馬，就不小心學習他的表情。",
     "family": "horse",
-    "isHealer": false,
-    "attackFamily": "星座情人節",
-    "attackStep": 0.1
+    "isHealer": false
   },
   {
     "id": 38,
@@ -387,8 +311,6 @@
     "name": "巨蟹座小風",
     "description": "小風小馬滾滾滾， 滾到小風小馬濕地，小風看見問號螃蟹小風，就不小心學習他的表情。",
     "family": "wind",
-    "isHealer": false,
-    "attackFamily": "星座情人節",
-    "attackStep": 0.1
+    "isHealer": false
   }
 ]
