@@ -221,36 +221,33 @@
   color: #fff59d;
   pointer-events: none;
   white-space: nowrap;
+
+  /*
+   * The glow itself is a static text-shadow, not part of the animation -
+   * this runs forever once the goal's cleared, and animating a multi-layer
+   * blurred shadow forces a full re-rasterize every single frame (60fps),
+   * rather than the cheap GPU-only compositing opacity/transform get. The
+   * pulse still reads as "glowing" via brightness (opacity) and size
+   * (scale) alone.
+   */
+  text-shadow:
+    0 0 calc(2px * var(--scale)) #fff,
+    0 0 calc(7px * var(--scale)) #ff4dd8,
+    0 0 calc(17px * var(--scale)) #ff4dd8,
+    0 0 calc(31px * var(--scale)) #f0a;
   animation: neon-sign-pulse 2600ms ease-in-out infinite;
 }
 
-/*
- * Both the glow (dim/bright text-shadow) and a gentle scale throb pulse
- * together - transform has to be repeated in full on every keyframe
- * (translateX(-50%) for centering, plus the scale) since an animation's own
- * transform value replaces this rule's static one for its whole duration,
- * rather than composing with it.
- */
 @keyframes neon-sign-pulse {
   0%,
   100% {
     opacity: 0.85;
     transform: translateX(-50%) scale(1);
-    text-shadow:
-      0 0 calc(2px * var(--scale)) #fff,
-      0 0 calc(6px * var(--scale)) #ff4dd8,
-      0 0 calc(14px * var(--scale)) #ff4dd8,
-      0 0 calc(26px * var(--scale)) #f0a;
   }
 
   50% {
     opacity: 1;
     transform: translateX(-50%) scale(1.1);
-    text-shadow:
-      0 0 calc(3px * var(--scale)) #fff,
-      0 0 calc(9px * var(--scale)) #ff4dd8,
-      0 0 calc(20px * var(--scale)) #ff4dd8,
-      0 0 calc(36px * var(--scale)) #f0a;
   }
 }
 

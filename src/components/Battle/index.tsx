@@ -54,7 +54,12 @@ const GROUP_THROW_STAGGER_MS = 300;
 // (rather than EFFECT_DURATION_MS's quick attack/hit flash) - the protagonist's
 // HP only actually recovers once this whole animation finishes.
 const HEAL_ANIMATION_MS = 3000;
-const TICK_MS = 500;
+// Drives forceTick() below, which forces a full re-render of this whole
+// component (re-grouping the attack line, re-rendering every attack
+// button) for as long as any battle lasts - kept as coarse as the
+// telegraph/cooldown displays can tolerate (see their own comments) rather
+// than tighter, since this runs continuously through every single battle.
+const TICK_MS = 1000;
 const EFFECT_DURATION_MS = 300;
 const WILD_ATTACK_TELEGRAPH_MS = 2000;
 const THROW_DURATION_MS = 2000;
