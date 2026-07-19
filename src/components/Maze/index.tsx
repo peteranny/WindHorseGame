@@ -60,6 +60,12 @@ const GOAL_FIREWORKS = [
   { leftPercent: 70, delayMs: 1400 },
 ];
 
+// Every spark in one firework's burst flies outward along its own angle,
+// evenly spaced around the full circle (see .fireworkSpark's animation -
+// each reads this as --spark-angle, a rotate() that points its own
+// translate axis outward before any distance is actually applied).
+const FIREWORK_SPARK_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
+
 interface MazeProps {
   center: [number, number];
 }
@@ -399,16 +405,31 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                   {isGoalCell && goalDefeatedAt !== null && (
                     <div className={styles.fireworkWrap} aria-hidden="true">
                       {GOAL_FIREWORKS.map(({ leftPercent, delayMs }, i) => (
-                        <span
+                        <div
                           key={i}
                           className={styles.firework}
-                          style={{
-                            left: `${leftPercent}%`,
-                            animationDelay: `${delayMs}ms`,
-                          }}
+                          style={
+                            {
+                              left: `${leftPercent}%`,
+                              "--firework-delay": `${delayMs}ms`,
+                            } as React.CSSProperties
+                          }
                         >
-                          🎆
-                        </span>
+                          <span className={styles.fireworkRocket} />
+                          <div className={styles.fireworkBurst}>
+                            {FIREWORK_SPARK_ANGLES.map((angle, si) => (
+                              <span
+                                key={si}
+                                className={styles.fireworkSpark}
+                                style={
+                                  {
+                                    "--spark-angle": `${angle}deg`,
+                                  } as React.CSSProperties
+                                }
+                              />
+                            ))}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}

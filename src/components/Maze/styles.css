@@ -269,46 +269,123 @@
   z-index: 502;
 }
 
+/*
+ * Positioning wrapper only - carries --firework-delay (set inline) down to
+ * its own .fireworkRocket/.fireworkSpark children below, so every part of
+ * one firework (the rising dot, every spark in its burst) stays on exactly
+ * the same timeline without each needing its own inline delay. The wrapper
+ * itself never animates.
+ */
 .firework {
   position: absolute;
 
   /* Roughly the house sprite's own vertical center (bottom: 28% + half of
      its 120% height) - the launch point the firework rises from. */
   bottom: 88%;
-  font-size: calc(15pt * var(--scale));
-  opacity: 0;
-  animation: firework-launch 1800ms ease-out infinite;
 }
 
 /*
- * Rises from the house's center (0%) up to just past the "40" sign (the
- * translateY distance roughly covers the same 60%-of-cell gap between
- * .firework's own bottom: 88% and .goalNeonSign's bottom: 148%), then pops -
- * a quick scale/brightness flash reads as the burst - before fading out.
+ * The rising dot - a small bright point with a soft glow, rather than an
+ * emoji glyph, so its color/size/trail are all ours to tune directly. Fades
+ * out right as .fireworkBurst's own sparks take over (see both keyframes'
+ * matching ~55% mark).
  */
-@keyframes firework-launch {
+.fireworkRocket {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: calc(5px * var(--scale));
+  height: calc(5px * var(--scale));
+  border-radius: 50%;
+  background: #fff8d6;
+  box-shadow: 0 0 calc(4px * var(--scale)) calc(2px * var(--scale)) rgba(255, 244, 190, 0.8);
+  opacity: 0;
+  animation: firework-rocket 1800ms ease-out infinite;
+  animation-delay: var(--firework-delay, 0ms);
+}
+
+/*
+ * Rises from the house's center (0%) up to just past the "40" sign - the
+ * translateY distance covers the same ~60%-of-cell gap between .firework's
+ * own bottom: 88% and .goalNeonSign's bottom: 148% - then fades out right
+ * as it arrives, handing off to the burst below.
+ */
+@keyframes firework-rocket {
   0% {
-    transform: translate(-50%, 0) scale(0.4);
-    opacity: 0.9;
-    filter: brightness(1);
+    transform: translate(-50%, 0) scale(0.6);
+    opacity: 1;
   }
 
-  55% {
-    transform: translate(-50%, calc(-58px * var(--scale))) scale(0.5);
+  52% {
+    transform: translate(-50%, calc(-60px * var(--scale))) scale(1);
     opacity: 1;
-    filter: brightness(1);
   }
 
-  65% {
-    transform: translate(-50%, calc(-60px * var(--scale))) scale(1.3);
+  60%,
+  100% {
+    transform: translate(-50%, calc(-60px * var(--scale))) scale(1);
+    opacity: 0;
+  }
+}
+
+/*
+ * Sits statically at the rocket's own peak height (no animation of its own)
+ * - every spark inside is what actually moves, each outward along its own
+ * fixed --spark-angle (set inline per instance, see Maze/index.tsx).
+ */
+.fireworkBurst {
+  position: absolute;
+  left: 0;
+  bottom: calc(60px * var(--scale));
+}
+
+/*
+ * One ray of the burst. rotate(var(--spark-angle)) first, then translateY -
+ * transforms compose left-to-right, so the translate actually happens along
+ * that rotated axis, sending each spark outward in its own direction from a
+ * shared center rather than all moving straight up. Colors cycle through
+ * three hues (below) so the burst reads as a real multicolor firework
+ * rather than a single-color ring.
+ */
+.fireworkSpark {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: calc(4px * var(--scale));
+  height: calc(4px * var(--scale));
+  border-radius: 50%;
+  opacity: 0;
+  animation: firework-spark 1800ms ease-out infinite;
+  animation-delay: var(--firework-delay, 0ms);
+
+  &:nth-child(3n + 1) {
+    background: #ff4dd8;
+  }
+
+  &:nth-child(3n + 2) {
+    background: #fff59d;
+  }
+
+  &:nth-child(3n + 3) {
+    background: #7ec8ff;
+  }
+}
+
+@keyframes firework-spark {
+  0%,
+  52% {
+    transform: rotate(var(--spark-angle)) translateY(0) scale(0.5);
+    opacity: 0;
+  }
+
+  62% {
+    transform: rotate(var(--spark-angle)) translateY(calc(-8px * var(--scale))) scale(1);
     opacity: 1;
-    filter: brightness(1.7);
   }
 
   100% {
-    transform: translate(-50%, calc(-60px * var(--scale))) scale(1.6);
+    transform: rotate(var(--spark-angle)) translateY(calc(-30px * var(--scale))) scale(0.4);
     opacity: 0;
-    filter: brightness(1);
   }
 }
 
