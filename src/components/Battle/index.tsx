@@ -46,6 +46,11 @@ const ALL_FAMILIES = Array.from(
 const INNATE_KEY = "innate";
 const LEAVE_DURATION_MS = 250;
 const ENTER_DURATION_MS = 250;
+// Backstop for the scroll-compensation rAF loops further down (leaveStep/
+// step) - they stop once the measured width itself actually converges, not
+// on a fixed duration (see their own comments for why), but this guards
+// against looping forever if a width somehow never settles.
+const SCROLL_COMPENSATION_SAFETY_MS = 1000;
 // Gap between each thrown member's own launch when a whole family group is
 // thrown together, so the group's throws read as a distinguishable volley
 // rather than one indistinct simultaneous blob.
@@ -861,12 +866,22 @@ const Battle = () => {
         if (scrollCompensationFrameRef.current !== null) {
           cancelAnimationFrame(scrollCompensationFrameRef.current);
         }
+        // Stops once the *measured* width has actually reached ~0, rather
+        // than after a fixed LEAVE_DURATION_MS elapsed - leaveStartTime is
+        // captured synchronously here, before React has even applied
+        // .attackButtonLeaving (the class - and the CSS animation it starts
+        // - only take effect once this handler returns and React commits/
+        // paints), so a wall-clock cutoff measured from this earlier moment
+        // stopped compensating slightly before the button actually finished
+        // shrinking, leaving a small permanent leftward drift once it fully
+        // vanished. SCROLL_COMPENSATION_SAFETY_MS is just a backstop.
         const leaveStep = () => {
           const liveGroupWidth = widthSumOf(groupKeysArray);
           grid.scrollLeft =
             leaveBaseScrollLeft - (originalGroupWidth - liveGroupWidth) / 2;
           scrollCompensationFrameRef.current =
-            performance.now() - leaveStartTime < LEAVE_DURATION_MS
+            liveGroupWidth > 0.5 &&
+            performance.now() - leaveStartTime < SCROLL_COMPENSATION_SAFETY_MS
               ? requestAnimationFrame(leaveStep)
               : null;
         };
@@ -889,14 +904,27 @@ const Battle = () => {
           if (scrollCompensationFrameRef.current !== null) {
             cancelAnimationFrame(scrollCompensationFrameRef.current);
           }
+          // Same reasoning as leaveStep above - stops once frontWidthSum
+          // has actually stopped growing between two consecutive frames,
+          // rather than after a fixed ENTER_DURATION_MS measured from
+          // before .attackButtonEntering's own CSS animation really starts.
+          // There's no simple constant target to compare against here (each
+          // member grows toward its own rendered width, not 0), so this
+          // tracks convergence directly instead. -1 as the initial
+          // "previous" value guarantees at least one real comparison before
+          // ever considering it settled, since a width can never be -1.
+          let previousFrontWidthSum = -1;
           const step = () => {
             const frontWidthSum = widthSumOf(frontMemberKeys);
             grid.scrollLeft =
               baseScrollLeft +
               frontWidthSum +
               gapWidth * frontMemberKeys.length;
+            const hasSettled = frontWidthSum === previousFrontWidthSum;
+            previousFrontWidthSum = frontWidthSum;
             scrollCompensationFrameRef.current =
-              performance.now() - startTime < ENTER_DURATION_MS
+              !hasSettled &&
+              performance.now() - startTime < SCROLL_COMPENSATION_SAFETY_MS
                 ? requestAnimationFrame(step)
                 : null;
           };
