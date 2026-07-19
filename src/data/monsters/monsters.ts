@@ -1,6 +1,5 @@
 import generated from "./monsters.generated.json";
 import { Monster } from "./types";
-import { computeAttackFamily } from "./attackFamily";
 
 import icon0 from "./icons/0.png";
 import icon1 from "./icons/1.png";
@@ -84,13 +83,16 @@ const ICONS: Record<number, string> = {
   38: icon38,
 };
 
-type MonsterMeta = Omit<Monster, "icon" | "attackFamily" | "attackStep">;
+type MonsterMeta = Omit<Monster, "icon" | "attackStep">;
 
-const MONSTERS: Monster[] = (generated as MonsterMeta[]).map((meta) => {
-  const { family: attackFamily, step: attackStep } = computeAttackFamily(
-    meta.name
-  );
-  return { ...meta, icon: ICONS[meta.id], attackFamily, attackStep };
-});
+// Every family's per-adjacent-member step is a flat 0.1, except healers
+// (currently only the "小X媽" family) at 1 - not configured in
+// monsters.generated.json since it's just this one fixed rule, not
+// per-monster data.
+const MONSTERS: Monster[] = (generated as MonsterMeta[]).map((meta) => ({
+  ...meta,
+  icon: ICONS[meta.id],
+  attackStep: meta.isHealer ? 1 : 0.1,
+}));
 
 export default MONSTERS;
