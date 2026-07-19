@@ -114,7 +114,7 @@ describe("buildCooldownConversation", () => {
     expect(pages).toEqual([
       {
         speaker: "protagonist",
-        text: "長頸鹿小馬好像還在調整狀態，還要等 3 分鐘才能再挑戰。",
+        text: "長頸鹿小馬剛剛才打贏小風，還不肯馬上再戰，要等 3 分鐘才願意再挑戰一次。",
         action: "end",
       },
     ]);

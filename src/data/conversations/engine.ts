@@ -98,9 +98,9 @@ export const buildCooldownConversation = (
 ): Conversation => [
   {
     speaker: "protagonist",
-    text: `${monsterName}好像還在調整狀態，還要等 ${formatCooldownRemaining(
+    text: `${monsterName}剛剛才打贏小風，還不肯馬上再戰，要等 ${formatCooldownRemaining(
       remainingMs
-    )}才能再挑戰。`,
+    )}才願意再挑戰一次。`,
     action: "end",
   },
 ];
