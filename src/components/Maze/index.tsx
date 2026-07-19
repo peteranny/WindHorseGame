@@ -324,11 +324,6 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
               <div
                 key={c}
                 className={styles.cell}
-                style={{
-                  minWidth: CELL_SIZE,
-                  maxWidth: CELL_SIZE,
-                  height: CELL_SIZE,
-                }}
                 onClick={() => goto(r, c)}
               >
                 <div className={cn(styles.cellContent, styles[cellClass])}>

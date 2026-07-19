@@ -135,6 +135,15 @@
 .cell {
   position: relative;
 
+  /* Same fixed size every cell always has - a static rule instead of an
+     inline style computed per-cell, so re-rendering the whole grid (every
+     move, every capture, every conversation-state change - see Maze's own
+     render) doesn't also allocate a fresh style object for each of the
+     map's several hundred cells on every single render. */
+  min-width: calc(100px * var(--scale));
+  max-width: calc(100px * var(--scale));
+  height: calc(100px * var(--scale));
+
   .cellContent {
     position: absolute;
     top: 0;
