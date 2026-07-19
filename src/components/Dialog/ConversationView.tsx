@@ -41,20 +41,27 @@ const ConversationView = () => {
   const enterBattle = useFlowStore((state) => state.enterBattle);
   const endEncounter = useFlowStore((state) => state.endEncounter);
   const setTalkingSpeaker = useFlowStore((state) => state.setTalkingSpeaker);
+  const devCooldownLockDisabled = useFlowStore(
+    (state) => state.devCooldownLockDisabled
+  );
   const captured = useGameStore((state) => state.captured);
   const setPosition = useGameStore((state) => state.setPosition);
   const battleCooldowns = useGameStore((state) => state.battleCooldowns);
   const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
   const capturedCount = Object.keys(captured).length;
   // Waived entirely once the goal's been cleared once - see
-  // battleFormulas.BATTLE_LOSS_COOLDOWN_MS. battleCooldownRemainingMs is a
-  // one-off snapshot (see buildCooldownConversation) rather than a live
-  // countdown - it's only ever read once, right as this page first renders.
+  // battleFormulas.BATTLE_LOSS_COOLDOWN_MS - or, before that point, while
+  // the dev-only devCooldownLockDisabled toggle is on (Game/index.tsx).
+  // battleCooldownRemainingMs is a one-off snapshot (see
+  // buildCooldownConversation) rather than a live countdown - it's only
+  // ever read once, right as this page first renders.
   const battleCooldownRemainingMs =
     (battleCooldowns[isGoalEncounter ? "goal" : String(activeMonsterId)] ??
       0) - Date.now();
   const isOnBattleCooldown =
-    goalDefeatedAt === null && battleCooldownRemainingMs > 0;
+    goalDefeatedAt === null &&
+    !devCooldownLockDisabled &&
+    battleCooldownRemainingMs > 0;
   // Static for the whole game (there's only ever one goal tile) - computed
   // here purely so the finale conversation's own end can walk the player
   // onto it (see the "enter the house" branch in advance() below), same

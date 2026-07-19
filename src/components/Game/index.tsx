@@ -34,6 +34,12 @@ const Game = () => {
   const setDevReleaseEnabled = useFlowStore(
     (state) => state.setDevReleaseEnabled
   );
+  const devCooldownLockDisabled = useFlowStore(
+    (state) => state.devCooldownLockDisabled
+  );
+  const setDevCooldownLockDisabled = useFlowStore(
+    (state) => state.setDevCooldownLockDisabled
+  );
   const screenKey = mode === "battle" ? "battle" : "game";
   // Same offsetX/offsetY formula Maze itself uses to keep the player's own
   // cell centered on screen - applied here as the infinite wall backdrop's
@@ -124,7 +130,7 @@ const Game = () => {
                         >
                           ✕
                         </button>
-                        {goalDefeatedAt !== null && (
+                        {goalDefeatedAt !== null ? (
                           <button
                             type="button"
                             aria-label="重置已通關紀錄"
@@ -132,6 +138,26 @@ const Game = () => {
                             onClick={resetGoalDefeatedAt}
                           >
                             ♻️
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            aria-label={
+                              devCooldownLockDisabled
+                                ? "啟用戰敗鎖定倒數"
+                                : "停用戰敗鎖定倒數"
+                            }
+                            className={cn(
+                              styles.devToggle,
+                              devCooldownLockDisabled && styles.devToggleActive
+                            )}
+                            onClick={() =>
+                              setDevCooldownLockDisabled(
+                                !devCooldownLockDisabled
+                              )
+                            }
+                          >
+                            🔓
                           </button>
                         )}
                       </>

@@ -22,6 +22,13 @@ interface FlowState {
   // every session. The battle screen's own win/lose shortcuts have no
   // separate toggle - they just always show once the save key qualifies.
   devReleaseEnabled: boolean; // click a duckling-trail follower to un-capture it
+  // Bypasses gameStore.battleCooldowns entirely while on, same as
+  // goalDefeatedAt already does permanently once the goal's been cleared -
+  // see ConversationView's own isOnBattleCooldown check. Only shown/relevant
+  // before that point (Game/index.tsx swaps this toggle out for the
+  // "reset ever-clear" button once goalDefeatedAt is set, since the lock is
+  // disabled forever from then on anyway).
+  devCooldownLockDisabled: boolean;
   startEncounter: (monsterId: number) => void;
   startGoalEncounter: () => void;
   enterBattle: (wildMaxHp: number) => void;
@@ -33,6 +40,7 @@ interface FlowState {
   endEncounter: () => void;
   setTalkingSpeaker: (speaker: TalkingSpeaker) => void;
   setDevReleaseEnabled: (enabled: boolean) => void;
+  setDevCooldownLockDisabled: (enabled: boolean) => void;
 }
 
 export const useFlowStore = create<FlowState>((set) => ({
@@ -45,6 +53,7 @@ export const useFlowStore = create<FlowState>((set) => ({
   wildMaxHp: 0,
   protagonistHp: PROTAGONIST_MAX_HP,
   devReleaseEnabled: false,
+  devCooldownLockDisabled: false,
   startEncounter: (monsterId) =>
     set({ mode: "conversation", activeMonsterId: monsterId }),
   startGoalEncounter: () =>
@@ -82,4 +91,6 @@ export const useFlowStore = create<FlowState>((set) => ({
     }),
   setTalkingSpeaker: (speaker) => set({ talkingSpeaker: speaker }),
   setDevReleaseEnabled: (enabled) => set({ devReleaseEnabled: enabled }),
+  setDevCooldownLockDisabled: (enabled) =>
+    set({ devCooldownLockDisabled: enabled }),
 }));
