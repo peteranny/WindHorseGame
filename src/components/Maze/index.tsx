@@ -50,6 +50,16 @@ const LOVE_SMOKE_HEARTS = [
   { leftPercent: 65, delayMs: 1600 },
 ];
 
+// Staggered the same way as the hearts above, but each shoots from the
+// house's own center up to around the "40" sign (see .firework's animation
+// in styles.css) rather than gently drifting - a slightly different left
+// offset per instance so they don't all launch from the exact same point.
+const GOAL_FIREWORKS = [
+  { leftPercent: 30, delayMs: 0 },
+  { leftPercent: 50, delayMs: 700 },
+  { leftPercent: 70, delayMs: 1400 },
+];
+
 interface MazeProps {
   center: [number, number];
 }
@@ -384,6 +394,22 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                   {isGoalCell && goalDefeatedAt !== null && (
                     <div className={styles.goalNeonSign} aria-hidden="true">
                       40
+                    </div>
+                  )}
+                  {isGoalCell && goalDefeatedAt !== null && (
+                    <div className={styles.fireworkWrap} aria-hidden="true">
+                      {GOAL_FIREWORKS.map(({ leftPercent, delayMs }, i) => (
+                        <span
+                          key={i}
+                          className={styles.firework}
+                          style={{
+                            left: `${leftPercent}%`,
+                            animationDelay: `${delayMs}ms`,
+                          }}
+                        >
+                          🎆
+                        </span>
+                      ))}
                     </div>
                   )}
                 </div>

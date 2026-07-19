@@ -254,6 +254,64 @@
   }
 }
 
+/*
+ * Same trigger as .loveSmokeWrap/.goalNeonSign above (goalDefeatedAt !== null) -
+ * a few fireworks shooting from the house's own center up to around the "40"
+ * sign, for a celebrating vibe. Shares .goalNeonSign's z-index (502, beating
+ * .homeSprite/.aboveHouse's 500/501 for the same reason - a firework flies
+ * higher than the house's own frame, so it'd otherwise lose to whatever the
+ * row above stacks).
+ */
+.fireworkWrap {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 502;
+}
+
+.firework {
+  position: absolute;
+
+  /* Roughly the house sprite's own vertical center (bottom: 28% + half of
+     its 120% height) - the launch point the firework rises from. */
+  bottom: 88%;
+  font-size: calc(15pt * var(--scale));
+  opacity: 0;
+  animation: firework-launch 1800ms ease-out infinite;
+}
+
+/*
+ * Rises from the house's center (0%) up to just past the "40" sign (the
+ * translateY distance roughly covers the same 60%-of-cell gap between
+ * .firework's own bottom: 88% and .goalNeonSign's bottom: 148%), then pops -
+ * a quick scale/brightness flash reads as the burst - before fading out.
+ */
+@keyframes firework-launch {
+  0% {
+    transform: translate(-50%, 0) scale(0.4);
+    opacity: 0.9;
+    filter: brightness(1);
+  }
+
+  55% {
+    transform: translate(-50%, calc(-58px * var(--scale))) scale(0.5);
+    opacity: 1;
+    filter: brightness(1);
+  }
+
+  65% {
+    transform: translate(-50%, calc(-60px * var(--scale))) scale(1.3);
+    opacity: 1;
+    filter: brightness(1.7);
+  }
+
+  100% {
+    transform: translate(-50%, calc(-60px * var(--scale))) scale(1.6);
+    opacity: 0;
+    filter: brightness(1);
+  }
+}
+
 .followerTrail {
   position: absolute;
   top: 0;
