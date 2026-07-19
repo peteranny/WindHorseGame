@@ -968,16 +968,15 @@
    * `inset` rather than an outward blur - this sits inside .attackGrid's
    * horizontally-scrolling, overflow-clipped row, which would otherwise cut
    * off any glow that tried to bleed past the button's own edges. Glowing
-   * inward instead stays fully contained regardless. Static rather than
-   * part of the animation below - this can run for a whole battle across
-   * several linked buttons at once, and animating a blur radius forces a
-   * full repaint every frame, unlike the cheap GPU-only transform pulse
-   * that now carries the "glowing/alive" feel instead.
+   * inward instead stays fully contained regardless. A plain static glow,
+   * not animated/pulsing - this can run for a whole battle across several
+   * linked buttons at once, and an animated box-shadow (blur or otherwise)
+   * forces a repaint every single frame rather than the cheap GPU-only
+   * compositing a transform/opacity animation would get.
    */
   box-shadow:
     inset 0 0 calc(3px * var(--scale)) 2px
     hsla(var(--family-hue), 75%, 50%, 0.85);
-  animation: family-group-glow 1.4s ease-in-out infinite;
 }
 
 /*
@@ -1021,17 +1020,6 @@
 
   50% {
     opacity: 1;
-  }
-}
-
-@keyframes family-group-glow {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.03);
   }
 }
 
