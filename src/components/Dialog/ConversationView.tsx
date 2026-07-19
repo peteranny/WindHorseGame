@@ -47,11 +47,14 @@ const ConversationView = () => {
   const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
   const capturedCount = Object.keys(captured).length;
   // Waived entirely once the goal's been cleared once - see
-  // battleFormulas.BATTLE_LOSS_COOLDOWN_MS.
-  const isOnBattleCooldown =
-    goalDefeatedAt === null &&
+  // battleFormulas.BATTLE_LOSS_COOLDOWN_MS. battleCooldownRemainingMs is a
+  // one-off snapshot (see buildCooldownConversation) rather than a live
+  // countdown - it's only ever read once, right as this page first renders.
+  const battleCooldownRemainingMs =
     (battleCooldowns[isGoalEncounter ? "goal" : String(activeMonsterId)] ??
-      0) > Date.now();
+      0) - Date.now();
+  const isOnBattleCooldown =
+    goalDefeatedAt === null && battleCooldownRemainingMs > 0;
   // Static for the whole game (there's only ever one goal tile) - computed
   // here purely so the finale conversation's own end can walk the player
   // onto it (see the "enter the house" branch in advance() below), same
@@ -72,7 +75,7 @@ const ConversationView = () => {
         ? GOAL_FINAL_CONVERSATION
         : buildOutcomeConversation(GOAL_NAME, battleOutcome)
       : isOnBattleCooldown
-      ? buildCooldownConversation(GOAL_NAME)
+      ? buildCooldownConversation(GOAL_NAME, battleCooldownRemainingMs)
       : isFullyCaptured(captured, MONSTERS.length)
       ? GOAL_CHALLENGE_CONVERSATION
       : GOAL_HINT_CONVERSATION
@@ -81,7 +84,10 @@ const ConversationView = () => {
     : battleOutcome !== null
     ? buildOutcomeConversation(MONSTERS[activeMonsterId].name, battleOutcome)
     : isOnBattleCooldown
-    ? buildCooldownConversation(MONSTERS[activeMonsterId].name)
+    ? buildCooldownConversation(
+        MONSTERS[activeMonsterId].name,
+        battleCooldownRemainingMs
+      )
     : CONVERSATIONS[activeMonsterId];
   const page = pages[pageIndex];
 

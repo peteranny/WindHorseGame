@@ -78,13 +78,32 @@ export const buildOutcomeConversation = (
   }
 };
 
+// "3 分 24 秒" (or just "24 秒" under a minute) - floored to whole seconds,
+// but never all the way down to 0 (Math.max(1, ...)) since this is only ever
+// called while remainingMs is still positive, and "0 分 0 秒" would read as
+// "already unlocked" rather than "almost there".
+export const formatCooldownRemaining = (remainingMs: number): string => {
+  const totalSeconds = Math.max(1, Math.ceil(remainingMs / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return minutes > 0 ? `${minutes} 分 ${seconds} 秒` : `${seconds} 秒`;
+};
+
 // Shown instead of a monster's (or the goal's) normal script while its
 // battle-loss cooldown is still active (see gameStore.battleCooldowns) -
 // never leads into a challenge, just sends the player back to the map.
-export const buildCooldownConversation = (monsterName: string): Conversation => [
+// remainingMs is a snapshot taken when the conversation is first entered
+// (see ConversationView) rather than a live countdown - it doesn't tick
+// down while this page is on screen.
+export const buildCooldownConversation = (
+  monsterName: string,
+  remainingMs: number
+): Conversation => [
   {
     speaker: "protagonist",
-    text: `${monsterName}好像還在調整狀態，晚點再來挑戰吧。`,
+    text: `${monsterName}好像還在調整狀態，還要等 ${formatCooldownRemaining(
+      remainingMs
+    )}才能再挑戰。`,
     action: "end",
   },
 ];

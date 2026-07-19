@@ -1,6 +1,7 @@
 import {
   buildCooldownConversation,
   buildOutcomeConversation,
+  formatCooldownRemaining,
   isTerminalPage,
   nextPageIndex,
   parseConversation,
@@ -96,13 +97,29 @@ describe("buildOutcomeConversation", () => {
   });
 });
 
+describe("formatCooldownRemaining", () => {
+  it("renders whole minutes and seconds", () => {
+    expect(formatCooldownRemaining(3 * 60 * 1000 + 24 * 1000)).toBe(
+      "3 分 24 秒"
+    );
+  });
+
+  it("omits minutes once under a minute", () => {
+    expect(formatCooldownRemaining(45 * 1000)).toBe("45 秒");
+  });
+
+  it("rounds up rather than showing 0 seconds remaining", () => {
+    expect(formatCooldownRemaining(400)).toBe("1 秒");
+  });
+});
+
 describe("buildCooldownConversation", () => {
-  it("mentions the monster's name and never leads into a challenge", () => {
-    const pages = buildCooldownConversation("長頸鹿小馬");
+  it("mentions the monster's name and how long is left, and never leads into a challenge", () => {
+    const pages = buildCooldownConversation("長頸鹿小馬", 3 * 60 * 1000);
     expect(pages).toEqual([
       {
         speaker: "protagonist",
-        text: "長頸鹿小馬好像還在調整狀態，晚點再來挑戰吧。",
+        text: "長頸鹿小馬好像還在調整狀態，還要等 3 分 0 秒才能再挑戰。",
         action: "end",
       },
     ]);
