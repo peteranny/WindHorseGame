@@ -98,18 +98,13 @@ describe("buildOutcomeConversation", () => {
 });
 
 describe("formatCooldownRemaining", () => {
-  it("renders whole minutes and seconds", () => {
-    expect(formatCooldownRemaining(3 * 60 * 1000 + 24 * 1000)).toBe(
-      "3 分 24 秒"
-    );
+  it("renders whole minutes, rounded up", () => {
+    expect(formatCooldownRemaining(3 * 60 * 1000)).toBe("3 分鐘");
+    expect(formatCooldownRemaining(3 * 60 * 1000 + 1000)).toBe("4 分鐘");
   });
 
-  it("omits minutes once under a minute", () => {
-    expect(formatCooldownRemaining(45 * 1000)).toBe("45 秒");
-  });
-
-  it("rounds up rather than showing 0 seconds remaining", () => {
-    expect(formatCooldownRemaining(400)).toBe("1 秒");
+  it("rounds up rather than showing 0 minutes remaining", () => {
+    expect(formatCooldownRemaining(400)).toBe("1 分鐘");
   });
 });
 
@@ -119,7 +114,7 @@ describe("buildCooldownConversation", () => {
     expect(pages).toEqual([
       {
         speaker: "protagonist",
-        text: "長頸鹿小馬好像還在調整狀態，還要等 3 分 0 秒才能再挑戰。",
+        text: "長頸鹿小馬好像還在調整狀態，還要等 3 分鐘才能再挑戰。",
         action: "end",
       },
     ]);

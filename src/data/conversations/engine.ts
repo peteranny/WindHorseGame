@@ -78,16 +78,13 @@ export const buildOutcomeConversation = (
   }
 };
 
-// "3 分 24 秒" (or just "24 秒" under a minute) - floored to whole seconds,
-// but never all the way down to 0 (Math.max(1, ...)) since this is only ever
-// called while remainingMs is still positive, and "0 分 0 秒" would read as
-// "already unlocked" rather than "almost there".
-export const formatCooldownRemaining = (remainingMs: number): string => {
-  const totalSeconds = Math.max(1, Math.ceil(remainingMs / 1000));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return minutes > 0 ? `${minutes} 分 ${seconds} 秒` : `${seconds} 秒`;
-};
+// "3 分鐘" - rounded UP to the next whole minute (never floored, and never
+// all the way down to 0) since this is only ever called while remainingMs
+// is still positive - "0 分鐘" would read as "already unlocked" rather than
+// "almost there", and flooring instead could show a stale "3 分鐘" for
+// nearly a whole extra minute after really only 2-and-a-bit are left.
+export const formatCooldownRemaining = (remainingMs: number): string =>
+  `${Math.max(1, Math.ceil(remainingMs / 60000))} 分鐘`;
 
 // Shown instead of a monster's (or the goal's) normal script while its
 // battle-loss cooldown is still active (see gameStore.battleCooldowns) -
