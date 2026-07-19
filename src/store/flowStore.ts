@@ -26,6 +26,7 @@ interface FlowState {
   startGoalEncounter: () => void;
   enterBattle: (wildMaxHp: number) => void;
   damageWild: (amount: number) => void;
+  healWild: (amount: number) => void;
   damageProtagonist: (amount: number) => void;
   healProtagonist: (amount: number) => void;
   concludeBattle: (outcome: BattleOutcome) => void;
@@ -59,6 +60,10 @@ export const useFlowStore = create<FlowState>((set) => ({
     }),
   damageWild: (amount) =>
     set((state) => ({ wildHp: Math.max(0, state.wildHp - amount) })),
+  healWild: (amount) =>
+    set((state) => ({
+      wildHp: Math.min(state.wildMaxHp, state.wildHp + amount),
+    })),
   damageProtagonist: (amount) =>
     set((state) => ({
       protagonistHp: Math.max(0, state.protagonistHp - amount),

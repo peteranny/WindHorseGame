@@ -451,6 +451,28 @@
 }
 
 /*
+ * Same build/hold/release glow as .playerHeal above, applied to the wild
+ * monster's own sprite instead - the goal battle's coldnoodle self-heal
+ * (see Battle/index.tsx's wildSpitCountRef) is the only thing that ever
+ * triggers this, since no wild monster outside that fight heals itself.
+ */
+@keyframes enemy-heal {
+  0%,
+  100% {
+    filter: brightness(1) drop-shadow(0 0 0 transparent);
+  }
+
+  15%,
+  80% {
+    filter: brightness(3) drop-shadow(0 0 calc(12px * var(--scale)) limegreen);
+  }
+}
+
+.enemyHeal {
+  animation: enemy-heal 3000ms ease;
+}
+
+/*
  * Plays once the battle's decided and every in-flight throw/spit has
  * landed (see Battle/index.tsx's isSinking) - a delay first (SINK_LEAD_MS,
  * a beat before the loser actually starts sinking), then the sink itself.

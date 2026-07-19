@@ -104,6 +104,8 @@ src/
     playerSpriteFront.png       # Dedicated front-facing map sprite, used while moving down.
     playerSpriteBack.png        # Dedicated back-facing map sprite, used while moving up.
     goalSprite.png              # The map's 'F' goal tile's sprite.
+    coldNoodle.png              # Thrown icon for the goal battle's own self-heal (see "Conversation ->
+                                # Battle flow"'s "Goal battle: the coldnoodle self-heal" below).
   contexts/
     MouseContext.ts       # Provides global mouse position to the tree.
   hooks/
@@ -171,6 +173,10 @@ For the goal battle specifically (`isGoalEncounter`, `activeMonsterId` stays `nu
 #### Losing locks that battle out for a while
 
 A loss (not an escape) sets `gameStore.battleCooldowns[key]` (`key` is the monster's id as a string, or the literal `"goal"`) to `Date.now() + BATTLE_LOSS_COOLDOWN_MS` (`data/monsters/battleFormulas.ts`, 5 minutes) - set in `Battle/index.tsx`'s same pending-outcome effect that calls `captureMonster`/`recordGoalWin` on a win, right as `concludeBattle("lose")` fires. This is a separate `Record<string, number>` from `gameStore.cooldowns` (the in-battle per-attack cooldown) - different concern, different key space (this one is never touched mid-battle, only on the way out). While that timestamp hasn't passed, walking up to that same monster (or the goal) and talking to it shows `buildCooldownConversation` (`data/conversations/engine.ts`) instead of the normal script - a single page telling the player to come back later, terminal action `"end"`, no way to reach `enter_challenge` - `ConversationView` picks this over `CONVERSATIONS[activeMonsterId]`/`GOAL_HINT_CONVERSATION`/`GOAL_CHALLENGE_CONVERSATION` whenever `battleCooldowns` says so, but only for a *fresh* encounter (`battleOutcome === null`) - the just-finished battle's own outcome recap still always shows first, cooldown or not. The one exception: once `gameStore.goalDefeatedAt` is set (the goal's been cleared at least once, see above), this cooldown stops applying entirely, for every monster and the goal alike, immediately - `ConversationView`'s own check is gated on `goalDefeatedAt === null`, so a still-pending cooldown timestamp left over from before the goal was cleared just stops mattering rather than needing to be individually cleared.
+
+#### Goal battle: the coldnoodle self-heal
+
+A boss mechanic exclusive to the goal battle (`isGoalEncounter`, gated in the same wild-attack `setInterval` effect that spits at the player every `WILD_ATTACK_INTERVAL_MS`): `Battle/index.tsx` keeps its own `wildSpitCountRef`, incremented on every one of those spits, and every `GOAL_SELF_HEAL_INTERVAL_SPITS`-th one (`data/monsters/battleFormulas.ts`, currently 10) queues a follow-up right after that spit lands - the goal throws a `coldNoodle.png` icon at itself (`getTrajectory("selfEnemy")`, the same "identical from/to" trick `selfPlayer` uses for a healer's self-toss, just mirrored onto the enemy's own center, reusing the shared `useThrowEffect` arc rather than a new effect type) - then, once that throw lands, the same build/hold/release glow a healer's own heal uses (`useHealEffect`, a second instance for the enemy sprite - `.enemyHeal`/`enemy-heal` in `Battle/styles.css`, an exact duplicate of `.playerHeal`/`player-heal` since nothing else ever animates the enemy sprite's `filter`), and only once that glow finishes does `flowStore.healWild` actually restore `GOAL_SELF_HEAL_PERCENT` (10%) of `wildMaxHp` - a fixed amount since `wildMaxHp` never changes mid-battle. `healWild` mirrors `healProtagonist`'s own clamp (`Math.min(state.wildMaxHp, state.wildHp + amount)`). A `familyToast` banner (the same generic one the attack grid's family throws use) announces it. No other wild monster ever heals itself - this whole path is gated on `isGoalEncounter` alone.
 
 ### Family-adjacency attack bonuses
 
