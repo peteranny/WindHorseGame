@@ -603,6 +603,19 @@
   transition: width 0.2s;
 }
 
+/*
+ * Dev-only (see Battle/index.tsx's isDevMode) - the exact hp/maxHp numbers
+ * behind each HpBar above, for anyone who wants a precise value instead of
+ * eyeballing the bar's fill percentage. Same orangered as every other
+ * dev-only affordance here (.devButton).
+ */
+.hpDevValue {
+  margin-top: calc(2px * var(--scale));
+  font-family: monospace;
+  font-size: calc(9pt * var(--scale));
+  color: orangered;
+}
+
 .actionBar {
   /*
    * Positioned (with auto z-index) purely so normal tree order decides

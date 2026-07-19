@@ -999,10 +999,18 @@ const Battle = () => {
         <div className={styles.enemyInfo}>
           <div>{enemyName}</div>
           <HpBar hp={wildHp} maxHp={wildMaxHp} />
+          {isDevMode && (
+            <div className={styles.hpDevValue}>
+              {wildHp} / {wildMaxHp}
+            </div>
+          )}
         </div>
         <div className={styles.playerInfo}>
           <div>小風</div>
           <HpBar hp={protagonistHp} maxHp={10} />
+          {isDevMode && (
+            <div className={styles.hpDevValue}>{protagonistHp} / 10</div>
+          )}
         </div>
         {throwEffects.map((effect) => (
           <img
