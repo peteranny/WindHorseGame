@@ -1001,7 +1001,7 @@ const Battle = () => {
           <HpBar hp={wildHp} maxHp={wildMaxHp} />
           {isDevMode && (
             <div className={styles.hpDevValue}>
-              {wildHp} / {wildMaxHp}
+              {wildHp.toFixed(1)} / {wildMaxHp.toFixed(1)}
             </div>
           )}
         </div>
@@ -1009,7 +1009,9 @@ const Battle = () => {
           <div>小風</div>
           <HpBar hp={protagonistHp} maxHp={10} />
           {isDevMode && (
-            <div className={styles.hpDevValue}>{protagonistHp} / 10</div>
+            <div className={styles.hpDevValue}>
+              {protagonistHp.toFixed(1)} / 10
+            </div>
           )}
         </div>
         {throwEffects.map((effect) => (
