@@ -131,7 +131,7 @@ describe("buildCooldownConversation", () => {
     );
     expect(pages[1]).toEqual({
       speaker: "monster",
-      text: "小風，長頸鹿小馬剛剛才贏了你，還沒消氣，要等 3 分鐘才願意再戰一次！",
+      text: "小風，我剛剛才贏了你，我要等 3 分鐘才願意再戰一次！",
       action: "end",
     });
     expect(terminalAction(pages, pages.length - 1)).toBe("end");

@@ -59,6 +59,18 @@ const EFFECT_DURATION_MS = 300;
 const WILD_ATTACK_TELEGRAPH_MS = 2000;
 const THROW_DURATION_MS = 2000;
 const SPIT_DURATION_MS = 500;
+// The goal battle's own coldnoodle self-heal (see wildSpitCountRef below) -
+// the noodle isn't thrown across the battlefield like a captured monster's
+// icon; it shifts in and fades in beside the enemy sprite like a side dish,
+// wiggles in place, then fades back out without moving. The glow+heal below
+// (triggerEnemyHeal/healWild) fires once the wiggle's done, right as the
+// noodle starts fading out.
+const COLD_NOODLE_ENTER_MS = 300;
+const COLD_NOODLE_WIGGLE_MS = 2000;
+const COLD_NOODLE_EXIT_MS = 300;
+const COLD_NOODLE_TOTAL_MS =
+  COLD_NOODLE_ENTER_MS + COLD_NOODLE_WIGGLE_MS + COLD_NOODLE_EXIT_MS;
+const COLD_NOODLE_HEAL_DELAY_MS = COLD_NOODLE_ENTER_MS + COLD_NOODLE_WIGGLE_MS;
 // A beat before the loser starts sinking (once every in-flight throw/spit
 // has actually landed), then the sink itself, then a further beat holding
 // the sunk pose before the white/black fade begins covering it - all three
@@ -353,6 +365,10 @@ const Battle = () => {
 
   const [playerHealEffect, triggerPlayerHeal] = useHealEffect();
   const [enemyHealEffect, triggerEnemyHeal] = useHealEffect();
+  // The goal battle's own coldnoodle self-heal side dish (see
+  // COLD_NOODLE_TOTAL_MS above) - reuses this same generic "on/off with a
+  // timeout" hook rather than a bespoke one, same as the two heal glows.
+  const [coldNoodleEffect, triggerColdNoodle] = useHealEffect();
   const [throwEffects, triggerThrow, clearThrow] = useThrowEffect();
   const [spitEffect, triggerSpit, clearSpit] = useSpitEffect();
   const [enemySpitEffect, triggerEnemySpit, clearEnemySpit] = useSpitEffect();
@@ -371,7 +387,7 @@ const Battle = () => {
   // spit's rotation to their true angle - no matter how either sprite ends
   // up positioned/sized.
   const getTrajectory = useCallback((
-    target: "toEnemy" | "toPlayer" | "selfPlayer" | "selfEnemy" = "toEnemy"
+    target: "toEnemy" | "toPlayer" | "selfPlayer" = "toEnemy"
   ): {
     from: Point;
     to: Point;
@@ -388,16 +404,12 @@ const Battle = () => {
     // monster) uses the player's own center for both ends - throw-arc's own
     // keyframes (Battle/styles.css) still apply a fixed vertical arc
     // percentage regardless of horizontal distance, so an identical
-    // from/to still reads as a real toss-up-and-catch, not a no-op. selfEnemy
-    // (the goal battle's own coldnoodle self-heal) is the same idea mirrored
-    // onto the enemy's own center.
+    // from/to still reads as a real toss-up-and-catch, not a no-op.
     const [fromCenter, toCenter] =
       target === "toPlayer"
         ? [enemyCenter, playerCenter]
         : target === "selfPlayer"
         ? [playerCenter, playerCenter]
-        : target === "selfEnemy"
-        ? [enemyCenter, enemyCenter]
         : [playerCenter, enemyCenter];
     return {
       from: percentIn(fromCenter, battlefieldRect),
@@ -410,7 +422,8 @@ const Battle = () => {
   const nextWildAttackAtRef = useRef(Date.now() + WILD_ATTACK_INTERVAL_MS);
   // Goal-battle-only boss mechanic: counts every spit the wild side has
   // thrown at the player so far this battle - every GOAL_SELF_HEAL_INTERVAL_SPITS-th
-  // one, it throws a coldnoodle to itself instead of just spitting again.
+  // one, a coldnoodle appears beside it as a self-heal (see
+  // COLD_NOODLE_TOTAL_MS above) instead of just spitting again.
   const wildSpitCountRef = useRef(0);
 
   useEffect(() => {
@@ -437,29 +450,23 @@ const Battle = () => {
           wildSpitCountRef.current % GOAL_SELF_HEAL_INTERVAL_SPITS === 0
         ) {
           // Queued right after the regular spit lands, so the two never
-          // visually overlap - a coldnoodle thrown from the goal's own
-          // center back to itself (selfEnemy, mirroring how a healer throws
-          // to the player), then the same build/hold/release glow captured
-          // monsters' own heals use, and only then the HP actually recovers.
+          // visually overlap - the coldnoodle shifts/fades in beside the
+          // enemy and wiggles (triggerColdNoodle, see COLD_NOODLE_TOTAL_MS
+          // above), then the same build/hold/release glow captured
+          // monsters' own heals use starts right as the wiggle ends, and
+          // only once that glow finishes does the HP actually recover.
           setTimeout(() => {
-            const selfTrajectory = getTrajectory("selfEnemy");
-            if (selfTrajectory) {
-              triggerThrow(
-                COLD_NOODLE_SPRITE,
-                selfTrajectory.from,
-                selfTrajectory.to
-              );
-            }
+            triggerColdNoodle("heal", COLD_NOODLE_TOTAL_MS);
             triggerFamilyToast(
               `${GOAL_NAME}吃了涼麵，恢復了體力！`,
-              THROW_DURATION_MS + HEAL_ANIMATION_MS
+              COLD_NOODLE_HEAL_DELAY_MS + HEAL_ANIMATION_MS
             );
             setTimeout(() => {
               triggerEnemyHeal("heal", HEAL_ANIMATION_MS);
               setTimeout(() => {
                 healWild(wildMaxHp * GOAL_SELF_HEAL_PERCENT);
               }, HEAL_ANIMATION_MS);
-            }, THROW_DURATION_MS);
+            }, COLD_NOODLE_HEAL_DELAY_MS);
           }, SPIT_DURATION_MS);
         }
 
@@ -474,7 +481,7 @@ const Battle = () => {
     damageProtagonist,
     triggerEnemySpit,
     isGoalEncounter,
-    triggerThrow,
+    triggerColdNoodle,
     triggerFamilyToast,
     triggerEnemyHeal,
     healWild,
@@ -978,6 +985,14 @@ const Battle = () => {
                   </span>
                 ))}
               </div>
+            )}
+            {coldNoodleEffect === "heal" && (
+              <img
+                src={COLD_NOODLE_SPRITE}
+                alt=""
+                aria-hidden="true"
+                className={styles.coldNoodleSideDish}
+              />
             )}
           </div>
         </div>

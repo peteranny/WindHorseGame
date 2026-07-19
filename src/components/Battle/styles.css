@@ -473,6 +473,83 @@
 }
 
 /*
+ * The goal battle's own coldnoodle self-heal (see Battle/index.tsx's
+ * wildSpitCountRef) - sits beside the enemy sprite like a side dish rather
+ * than being thrown across the battlefield: shifts/fades in from a slight
+ * offset, wiggles in place, then fades back out without moving. translate/
+ * rotate are independent CSS properties (not sub-parts of the single
+ * `transform` shorthand), so the wiggle can loop on its own fixed-length
+ * timeline via a separate `animation` entry without either one clobbering
+ * the other's value for the same frame.
+ */
+.coldNoodleSideDish {
+  position: absolute;
+  left: -18%;
+  bottom: 2%;
+  width: 45%;
+  /* stylelint-disable-next-line property-no-unknown */
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  pointer-events: none;
+  animation:
+    cold-noodle-fade 2600ms ease-in-out forwards,
+    cold-noodle-wiggle 400ms ease-in-out 300ms 5;
+}
+
+/*
+ * 12%/88% line up with COLD_NOODLE_ENTER_MS/(TOTAL - EXIT) out of
+ * COLD_NOODLE_TOTAL_MS (300ms and 2300ms of 2600ms) - the shift-in and
+ * fade-out durations Battle/index.tsx actually schedules the heal/glow
+ * around, so this keyframe's timing and that JS timing never drift apart.
+ */
+@keyframes cold-noodle-fade {
+  0% {
+    opacity: 0;
+    /* stylelint-disable-next-line property-no-unknown */
+    translate: calc(8px * var(--scale)) calc(10px * var(--scale));
+  }
+
+  12% {
+    opacity: 1;
+    /* stylelint-disable-next-line property-no-unknown */
+    translate: 0 0;
+  }
+
+  88% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/*
+ * Starts and ends every one of its 5 iterations at 0deg (rather than
+ * ping-ponging between two extremes) so when the animation's iteration
+ * count runs out and its effect on `rotate` lifts, there's no visible snap
+ * back to unrotated - it was already sitting at 0deg that instant.
+ */
+@keyframes cold-noodle-wiggle {
+  0%,
+  50%,
+  100% {
+    /* stylelint-disable-next-line property-no-unknown */
+    rotate: 0deg;
+  }
+
+  25% {
+    /* stylelint-disable-next-line property-no-unknown */
+    rotate: 8deg;
+  }
+
+  75% {
+    /* stylelint-disable-next-line property-no-unknown */
+    rotate: -8deg;
+  }
+}
+
+/*
  * Plays once the battle's decided and every in-flight throw/spit has
  * landed (see Battle/index.tsx's isSinking) - a delay first (SINK_LEAD_MS,
  * a beat before the loser actually starts sinking), then the sink itself.
