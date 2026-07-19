@@ -11,6 +11,11 @@ export interface PersistedGameState {
   // back / bring to front) overwrites it from then on.
   monsterOrder: number[];
   cooldowns: Record<string, number>;
+  // Per-monster (id as string) or the goal ("goal") timestamp before which
+  // that encounter's battle can't be re-challenged, set on a loss - see
+  // battleFormulas.BATTLE_LOSS_COOLDOWN_MS. Distinct from `cooldowns` above,
+  // which is the in-battle per-attack cooldown, not a between-battles one.
+  battleCooldowns: Record<string, number>;
   exploredCells: Record<string, true>;
   goalDefeatedAt: string | null;
   timestamp: number;

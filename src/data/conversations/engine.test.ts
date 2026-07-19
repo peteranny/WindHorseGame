@@ -1,4 +1,5 @@
 import {
+  buildCooldownConversation,
   buildOutcomeConversation,
   isTerminalPage,
   nextPageIndex,
@@ -92,5 +93,19 @@ describe("buildOutcomeConversation", () => {
         "enter_challenge"
       );
     });
+  });
+});
+
+describe("buildCooldownConversation", () => {
+  it("mentions the monster's name and never leads into a challenge", () => {
+    const pages = buildCooldownConversation("長頸鹿小馬");
+    expect(pages).toEqual([
+      {
+        speaker: "protagonist",
+        text: "長頸鹿小馬好像還在調整狀態，晚點再來挑戰吧。",
+        action: "end",
+      },
+    ]);
+    expect(terminalAction(pages, pages.length - 1)).toBe("end");
   });
 });

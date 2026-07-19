@@ -8,6 +8,7 @@ const state = (timestamp: number): PersistedGameState => ({
   captured: {},
   monsterOrder: [],
   cooldowns: {},
+  battleCooldowns: {},
   exploredCells: {},
   goalDefeatedAt: null,
   timestamp,

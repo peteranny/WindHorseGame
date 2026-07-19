@@ -77,3 +77,14 @@ export const buildOutcomeConversation = (
       ];
   }
 };
+
+// Shown instead of a monster's (or the goal's) normal script while its
+// battle-loss cooldown is still active (see gameStore.battleCooldowns) -
+// never leads into a challenge, just sends the player back to the map.
+export const buildCooldownConversation = (monsterName: string): Conversation => [
+  {
+    speaker: "protagonist",
+    text: `${monsterName}好像還在調整狀態，晚點再來挑戰吧。`,
+    action: "end",
+  },
+];

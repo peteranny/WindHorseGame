@@ -13,6 +13,7 @@ import MONSTERS from "../../data/monsters/monsters";
 import {
   ATTACK_COOLDOWN_MS,
   ATTACK_DAMAGE,
+  BATTLE_LOSS_COOLDOWN_MS,
   WILD_ATTACK_DAMAGE,
   WILD_ATTACK_INTERVAL_MS,
 } from "../../data/monsters/battleFormulas";
@@ -329,6 +330,7 @@ const Battle = () => {
   const reorderMonsters = useGameStore((state) => state.reorderMonsters);
   const cooldowns = useGameStore((state) => state.cooldowns);
   const setCooldown = useGameStore((state) => state.setCooldown);
+  const setBattleCooldown = useGameStore((state) => state.setBattleCooldown);
   const captureMonster = useGameStore((state) => state.captureMonster);
   const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
   const recordGoalWin = useGameStore((state) => state.recordGoalWin);
@@ -461,6 +463,17 @@ const Battle = () => {
         // conversation this outcome leads into has been read all the way
         // through - see ConversationView's own endEncounter call.
         else if (isGoalEncounter) recordGoalWin();
+      } else if (pendingOutcome === "lose") {
+        // Locks this same encounter out of being re-challenged for a while -
+        // ConversationView checks battleCooldowns before showing the normal
+        // script again. Setting it unconditionally is harmless even once
+        // the goal's been cleared: ConversationView's own check is gated on
+        // goalDefeatedAt too, so a stored cooldown from here on just never
+        // matters again.
+        setBattleCooldown(
+          isGoalEncounter ? "goal" : String(activeMonsterId),
+          Date.now() + BATTLE_LOSS_COOLDOWN_MS
+        );
       }
       concludeBattle(pendingOutcome);
     }, OUTCOME_TOTAL_MS);
@@ -472,6 +485,7 @@ const Battle = () => {
     isGoalEncounter,
     captureMonster,
     recordGoalWin,
+    setBattleCooldown,
     concludeBattle,
   ]);
 

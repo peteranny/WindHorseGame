@@ -43,6 +43,7 @@ interface GameState {
   // battle attack line - see store/types.ts's own comment on this field.
   monsterOrder: number[];
   cooldowns: Record<string, number>;
+  battleCooldowns: Record<string, number>;
   exploredCells: Record<string, true>;
   goalDefeatedAt: string | null;
   setStateKey: (key: string) => Promise<void>;
@@ -53,6 +54,7 @@ interface GameState {
   recordGoalWin: (defeatedAt?: string) => void;
   resetGoalDefeatedAt: () => void;
   setCooldown: (key: string, availableAt: number) => void;
+  setBattleCooldown: (key: string, availableAt: number) => void;
   revealCells: (cells: Array<[number, number]>) => void;
   reorderMonsters: (order: number[]) => void;
   hydrate: () => Promise<void>;
@@ -65,6 +67,7 @@ const toPersisted = (state: GameState): PersistedGameState => ({
   captured: state.captured,
   monsterOrder: state.monsterOrder,
   cooldowns: state.cooldowns,
+  battleCooldowns: state.battleCooldowns,
   exploredCells: state.exploredCells,
   goalDefeatedAt: state.goalDefeatedAt,
   timestamp: Date.now(),
@@ -104,6 +107,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   captured: {},
   monsterOrder: [],
   cooldowns: {},
+  battleCooldowns: {},
   exploredCells: {},
   goalDefeatedAt: null,
 
@@ -188,6 +192,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     scheduleSave();
   },
 
+  setBattleCooldown: (key, availableAt) => {
+    set((state) => ({
+      battleCooldowns: { ...state.battleCooldowns, [key]: availableAt },
+    }));
+    scheduleSave();
+  },
+
   revealCells: (cells) => {
     set((state) => ({
       exploredCells: revealCellsPure(state.exploredCells, cells),
@@ -222,6 +233,7 @@ export const useGameStore = create<GameState>((set, get) => ({
           monsterOrder:
             winner?.monsterOrder ?? orderByMostRecentlyCaptured(captured),
           cooldowns: winner?.cooldowns ?? {},
+          battleCooldowns: winner?.battleCooldowns ?? {},
           goalDefeatedAt: winner?.goalDefeatedAt ?? null,
           // The player's starting/restored cell is always explored, even on
           // a brand new save with nothing explored yet.

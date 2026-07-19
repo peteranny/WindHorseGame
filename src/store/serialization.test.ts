@@ -12,6 +12,7 @@ describe("PersistedGameState JSON round-trip", () => {
       },
       monsterOrder: [12, 0],
       cooldowns: { innate: 1700000000000, 12: 1700000060000 },
+      battleCooldowns: { goal: 1700000120000, 5: 1700000180000 },
       exploredCells: { "4,7": true, "3,7": true },
       goalDefeatedAt: "2024-05-01T00:00:00.000Z",
       timestamp: 1700000000000,
