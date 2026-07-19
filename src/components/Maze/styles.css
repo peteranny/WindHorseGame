@@ -42,6 +42,12 @@
   height: 80%;
   object-fit: contain;
   transform: scaleX(var(--facing-scale, 1));
+
+  /* Only actually engages once .talking's own animation is removed (a
+     running CSS animation always wins over a transition on the same
+     property) - eases back to resting position instead of snapping
+     instantly wherever the jump loop happened to be when the line ended. */
+  transition: transform 200ms ease-out;
 }
 
 /*
@@ -98,6 +104,12 @@
   height: 100%;
   object-fit: contain;
   transform: scaleX(var(--facing-scale, 1));
+
+  /* Only actually engages once .talking's own animation is removed (a
+     running CSS animation always wins over a transition on the same
+     property) - eases back to resting position instead of snapping
+     instantly wherever the jump loop happened to be when the line ended. */
+  transition: transform 200ms ease-out;
 }
 
 @keyframes player-talk-jump {
