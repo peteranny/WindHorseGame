@@ -17,6 +17,7 @@ import {
   BATTLE_LOSS_COOLDOWN_MS,
   GOAL_SELF_HEAL_INTERVAL_SPITS,
   GOAL_SELF_HEAL_PERCENT,
+  PROTAGONIST_MAX_HP,
   WILD_ATTACK_DAMAGE,
   WILD_ATTACK_INTERVAL_MS,
 } from "../../data/monsters/battleFormulas";
@@ -1121,7 +1122,16 @@ const Battle = () => {
             type="button"
             className={styles.escapeButton}
             disabled={pendingOutcome !== null}
-            onClick={() => concludeBattle("escape")}
+            onClick={() =>
+              // Escaping below half HP counts as a real loss (same sink
+              // animation, battle-loss cooldown, and "lose" outcome
+              // conversation as actually being knocked out) - otherwise a
+              // player could always bail out right before defeat to dodge
+              // the cooldown lock entirely, defeating its whole purpose.
+              protagonistHp < PROTAGONIST_MAX_HP / 2
+                ? setPendingOutcome("lose")
+                : concludeBattle("escape")
+            }
           >
             逃跑
           </button>
