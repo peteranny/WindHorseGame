@@ -48,6 +48,26 @@
   }
 }
 
+/*
+ * A replay-only shortcut through the goal's finale conversation (see
+ * ConversationView's own isFirstGoalWin check - never shown on the very
+ * first win). Same corner as .advanceCaret would sit in, but anchored
+ * top-right instead so it never overlaps that bottom-right "tap to
+ * continue" cue. Same light-blue as Battle's own .skipButton (跳過戰鬥),
+ * for a consistent "skip" visual language across both screens.
+ */
+.skipConversationButton {
+  position: absolute;
+  top: calc(6px * var(--scale));
+  right: calc(6px * var(--scale));
+  font-size: calc(9pt * var(--scale));
+  padding: calc(4px * var(--scale)) calc(8px * var(--scale));
+  border: 2px solid black;
+  border-radius: 4px;
+  background: #e0f0ff;
+  cursor: pointer;
+}
+
 .portrait {
   width: calc(60px * var(--scale));
   height: calc(60px * var(--scale));

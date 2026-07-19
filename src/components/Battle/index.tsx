@@ -356,6 +356,7 @@ const Battle = () => {
   const damageProtagonist = useFlowStore((state) => state.damageProtagonist);
   const healProtagonist = useFlowStore((state) => state.healProtagonist);
   const concludeBattle = useFlowStore((state) => state.concludeBattle);
+  const setIsFirstGoalWin = useFlowStore((state) => state.setIsFirstGoalWin);
 
   const stateKey = useGameStore((state) => state.stateKey);
   const isDevMode = isDevStateKey(stateKey);
@@ -534,8 +535,14 @@ const Battle = () => {
         // The player only actually "enters" the house (their cell becoming
         // the goal's own, see Maze/houseState.ts) once the finale
         // conversation this outcome leads into has been read all the way
-        // through - see ConversationView's own endEncounter call.
-        else if (isGoalEncounter) recordGoalWin();
+        // through - see ConversationView's own endEncounter call. Recorded
+        // before recordGoalWin so it still reflects goalDefeatedAt's value
+        // from *before* this win - recordGoalWin makes it non-null
+        // immediately, so reading it any later would always say "not first".
+        else if (isGoalEncounter) {
+          setIsFirstGoalWin(goalDefeatedAt === null);
+          recordGoalWin();
+        }
       } else if (pendingOutcome === "lose") {
         // Locks this same encounter out of being re-challenged for a while -
         // ConversationView checks battleCooldowns before showing the normal
@@ -551,12 +558,18 @@ const Battle = () => {
       concludeBattle(pendingOutcome);
     }, OUTCOME_TOTAL_MS);
     return () => clearTimeout(id);
+    // goalDefeatedAt is deliberately not a dependency here - this effect
+    // must only read whatever value it had at the render where isSinking
+    // flipped true (i.e. from *before* this win), not re-run once
+    // recordGoalWin (called synchronously right below) makes it non-null.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isSinking,
     pendingOutcome,
     activeMonsterId,
     isGoalEncounter,
     captureMonster,
+    setIsFirstGoalWin,
     recordGoalWin,
     setBattleCooldown,
     concludeBattle,

@@ -13,6 +13,15 @@ interface FlowState {
   // still lead into battle, same as a monster's (see Battle/ConversationView).
   isGoalEncounter: boolean;
   battleOutcome: BattleOutcome | null;
+  // Only meaningful alongside isGoalEncounter && battleOutcome === "win" -
+  // whether gameStore.goalDefeatedAt was still null right before this
+  // particular win (set once, in Battle's own pending-outcome effect, right
+  // as it calls gameStore.recordGoalWin - never recomputed afterward, since
+  // recordGoalWin itself immediately makes goalDefeatedAt non-null). Lets
+  // ConversationView show a "跳過對話" shortcut through the finale
+  // conversation on every *replay* win, without also letting the player
+  // skip past their very first, one-time viewing of it.
+  isFirstGoalWin: boolean;
   talkingSpeaker: TalkingSpeaker;
   wildHp: number;
   wildMaxHp: number;
@@ -38,6 +47,7 @@ interface FlowState {
   healProtagonist: (amount: number) => void;
   concludeBattle: (outcome: BattleOutcome) => void;
   endEncounter: () => void;
+  setIsFirstGoalWin: (isFirst: boolean) => void;
   setTalkingSpeaker: (speaker: TalkingSpeaker) => void;
   setDevReleaseEnabled: (enabled: boolean) => void;
   setDevCooldownLockDisabled: (enabled: boolean) => void;
@@ -48,6 +58,7 @@ export const useFlowStore = create<FlowState>((set) => ({
   activeMonsterId: null,
   isGoalEncounter: false,
   battleOutcome: null,
+  isFirstGoalWin: false,
   talkingSpeaker: null,
   wildHp: 0,
   wildMaxHp: 0,
@@ -89,6 +100,7 @@ export const useFlowStore = create<FlowState>((set) => ({
       battleOutcome: null,
       talkingSpeaker: null,
     }),
+  setIsFirstGoalWin: (isFirst) => set({ isFirstGoalWin: isFirst }),
   setTalkingSpeaker: (speaker) => set({ talkingSpeaker: speaker }),
   setDevReleaseEnabled: (enabled) => set({ devReleaseEnabled: enabled }),
   setDevCooldownLockDisabled: (enabled) =>

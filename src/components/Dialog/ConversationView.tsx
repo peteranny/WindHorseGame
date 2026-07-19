@@ -38,6 +38,7 @@ const ConversationView = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
   const isGoalEncounter = useFlowStore((state) => state.isGoalEncounter);
   const battleOutcome = useFlowStore((state) => state.battleOutcome);
+  const isFirstGoalWin = useFlowStore((state) => state.isFirstGoalWin);
   const enterBattle = useFlowStore((state) => state.enterBattle);
   const endEncounter = useFlowStore((state) => state.endEncounter);
   const setTalkingSpeaker = useFlowStore((state) => state.setTalkingSpeaker);
@@ -141,6 +142,19 @@ const ConversationView = () => {
   if ((!isGoalEncounter && activeMonsterId === null) || !page) return null;
   const monster = activeMonsterId !== null ? MONSTERS[activeMonsterId] : null;
 
+  // Shared by advance()'s own terminal-page branch and the "跳過對話"
+  // shortcut below - only once the finale conversation is actually done
+  // (read in full, or skipped) does the player "enter" the house, their
+  // cell becoming the goal's own (see Maze/houseState.ts). This is the only
+  // terminal page reachable with isGoalEncounter && "win", so no extra guard
+  // is needed beyond that combination.
+  const enterHouseIfWinner = (): void => {
+    if (isGoalEncounter && battleOutcome === "win" && goalCell !== null) {
+      setPosition(goalCell[0], goalCell[1]);
+    }
+    endEncounter();
+  };
+
   const advance = (): void => {
     if (!isTypingDone) {
       completeTyping();
@@ -154,19 +168,22 @@ const ConversationView = () => {
       if (terminalAction(pages, pageIndex) === "enter_challenge") {
         enterBattle(computeWildMaxHp(capturedCount));
       } else {
-        // Only once the finale conversation itself has been read all the
-        // way through does the player actually "enter" the house - their
-        // cell becomes the goal's own (see Maze/houseState.ts). This is the
-        // only terminal page reachable with isGoalEncounter && "win", so no
-        // extra guard is needed beyond that combination.
-        if (isGoalEncounter && battleOutcome === "win" && goalCell !== null) {
-          setPosition(goalCell[0], goalCell[1]);
-        }
-        endEncounter();
+        enterHouseIfWinner();
       }
       return;
     }
     setPageIndex((i) => nextPageIndex(pages, i));
+  };
+
+  // A replay-only shortcut through the finale conversation - never shown on
+  // the player's very first win, so that one-time viewing always plays out
+  // in full (see flowStore.isFirstGoalWin).
+  const showSkipConversationButton =
+    isGoalEncounter && battleOutcome === "win" && !isFirstGoalWin;
+  const skipConversation = (event: React.MouseEvent): void => {
+    // Stops this from also bubbling up to .conversation's own onClick={advance}.
+    event.stopPropagation();
+    enterHouseIfWinner();
   };
 
   const portrait =
@@ -201,6 +218,15 @@ const ConversationView = () => {
         <span className={styles.advanceCaret} aria-hidden="true">
           ▼
         </span>
+      )}
+      {showSkipConversationButton && (
+        <button
+          type="button"
+          className={styles.skipConversationButton}
+          onClick={skipConversation}
+        >
+          跳過對話
+        </button>
       )}
     </div>
   );
