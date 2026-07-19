@@ -266,6 +266,18 @@ const useThrowEffect = (): [
 // already will have) and never fights the primary path - it only ever
 // rescues a spit onAnimationEnd already failed to clear on its own. Guarded
 // by id so a stale timeout from an earlier spit can't clear a newer one.
+//
+// Instantiated twice below (once for the player's own spit, once for the
+// wild monster's) - each keeps its own independent id counter starting at 1,
+// so the two can (and regularly do, since the wild monster auto-attacks on
+// its own timer) land on the same id at the same time. Both spans are still
+// siblings under the same .battlefield parent though, so a bare key={id}
+// on each was a real collision, not just a coincidence - React reconciles
+// keys across a fiber's whole child list, not per JSX call site. That let
+// the two spits get their DOM nodes/onAnimationEnd handlers crossed, which
+// is what was actually causing a spit to occasionally never disappear - the
+// render-site keys are namespaced (`player-spit-`/`enemy-spit-`) to rule
+// this out for good, on top of the safety-net timeout above.
 const SPIT_SAFETY_NET_MS = SPIT_DURATION_MS + 1000;
 const useSpitEffect = (): [
   SpitEffect | null,
@@ -939,7 +951,7 @@ const Battle = () => {
         ))}
         {spitEffect !== null && (
           <span
-            key={spitEffect.id}
+            key={`player-spit-${spitEffect.id}`}
             className={cn(styles.spitDrop, styles.spitDropForward)}
             aria-hidden="true"
             style={spitStyle(spitEffect)}
@@ -950,7 +962,7 @@ const Battle = () => {
         )}
         {enemySpitEffect !== null && (
           <span
-            key={enemySpitEffect.id}
+            key={`enemy-spit-${enemySpitEffect.id}`}
             className={cn(styles.spitDrop, styles.spitDropReverse)}
             aria-hidden="true"
             style={spitStyle(enemySpitEffect)}
