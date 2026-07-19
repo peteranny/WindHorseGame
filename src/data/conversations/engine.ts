@@ -89,18 +89,26 @@ export const formatCooldownRemaining = (remainingMs: number): string =>
 // Shown instead of a monster's (or the goal's) normal script while its
 // battle-loss cooldown is still active (see gameStore.battleCooldowns) -
 // never leads into a challenge, just sends the player back to the map.
-// remainingMs is a snapshot taken when the conversation is first entered
-// (see ConversationView) rather than a live countdown - it doesn't tick
-// down while this page is on screen.
+// openingPage is that normal script's own first page (whatever it actually
+// is right now - a monster's CONVERSATIONS[id][0], or the goal's own
+// GOAL_HINT_CONVERSATION[0]/GOAL_CHALLENGE_CONVERSATION[0]), reused verbatim
+// so the encounter still opens with the same beat as an unlocked encounter
+// would - only the follow-up differs, with the monster itself refusing a
+// rematch instead of continuing into its usual script. remainingMs is a
+// snapshot taken when the conversation is first entered (see
+// ConversationView) rather than a live countdown - it doesn't tick down
+// while this page is on screen.
 export const buildCooldownConversation = (
   monsterName: string,
-  remainingMs: number
+  remainingMs: number,
+  openingPage: ConversationPage
 ): Conversation => [
+  openingPage,
   {
-    speaker: "protagonist",
-    text: `${monsterName}剛剛才打贏小風，還不肯馬上再戰，要等 ${formatCooldownRemaining(
+    speaker: "monster",
+    text: `小風，${monsterName}剛剛才贏了你，還沒消氣，要等 ${formatCooldownRemaining(
       remainingMs
-    )}才願意再挑戰一次。`,
+    )}才願意再戰一次！`,
     action: "end",
   },
 ];

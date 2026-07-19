@@ -109,15 +109,31 @@ describe("formatCooldownRemaining", () => {
 });
 
 describe("buildCooldownConversation", () => {
-  it("mentions the monster's name and how long is left, and never leads into a challenge", () => {
-    const pages = buildCooldownConversation("長頸鹿小馬", 3 * 60 * 1000);
-    expect(pages).toEqual([
-      {
-        speaker: "protagonist",
-        text: "長頸鹿小馬剛剛才打贏小風，還不肯馬上再戰，要等 3 分鐘才願意再挑戰一次。",
-        action: "end",
-      },
-    ]);
+  const openingPage = {
+    speaker: "protagonist",
+    text: "咦？前面怎麼會有一隻長頸鹿小馬！",
+  } as const;
+
+  it("opens with the same kickoff page an unlocked encounter would show", () => {
+    const pages = buildCooldownConversation(
+      "長頸鹿小馬",
+      3 * 60 * 1000,
+      openingPage
+    );
+    expect(pages[0]).toEqual(openingPage);
+  });
+
+  it("follows with the monster's own refusal, mentioning how long is left, and never leads into a challenge", () => {
+    const pages = buildCooldownConversation(
+      "長頸鹿小馬",
+      3 * 60 * 1000,
+      openingPage
+    );
+    expect(pages[1]).toEqual({
+      speaker: "monster",
+      text: "小風，長頸鹿小馬剛剛才贏了你，還沒消氣，要等 3 分鐘才願意再戰一次！",
+      action: "end",
+    });
     expect(terminalAction(pages, pages.length - 1)).toBe("end");
   });
 });

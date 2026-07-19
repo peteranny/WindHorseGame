@@ -82,7 +82,13 @@ const ConversationView = () => {
         ? GOAL_FINAL_CONVERSATION
         : buildOutcomeConversation(GOAL_NAME, battleOutcome)
       : isOnBattleCooldown
-      ? buildCooldownConversation(GOAL_NAME, battleCooldownRemainingMs)
+      ? buildCooldownConversation(
+          GOAL_NAME,
+          battleCooldownRemainingMs,
+          (isFullyCaptured(captured, MONSTERS.length)
+            ? GOAL_CHALLENGE_CONVERSATION
+            : GOAL_HINT_CONVERSATION)[0]
+        )
       : isFullyCaptured(captured, MONSTERS.length)
       ? GOAL_CHALLENGE_CONVERSATION
       : GOAL_HINT_CONVERSATION
@@ -93,7 +99,8 @@ const ConversationView = () => {
     : isOnBattleCooldown
     ? buildCooldownConversation(
         MONSTERS[activeMonsterId].name,
-        battleCooldownRemainingMs
+        battleCooldownRemainingMs,
+        CONVERSATIONS[activeMonsterId][0]
       )
     : CONVERSATIONS[activeMonsterId];
   const page = pages[pageIndex];
