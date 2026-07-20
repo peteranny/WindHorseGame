@@ -138,12 +138,41 @@
 }
 
 .enemySprite {
+  /*
+   * Positioned (default z-index:auto) purely so DOM order decides paint
+   * order against .enemyShadow below - a plain non-positioned element would
+   * otherwise always paint *above* any positioned sibling regardless of DOM
+   * order, putting the shadow on top of the sprite instead of behind it.
+   */
+  position: relative;
   width: 100%;
   height: 100%;
   /* stylelint-disable-next-line property-no-unknown */
   aspect-ratio: 1 / 1;
   object-fit: contain;
   display: block;
+}
+
+/*
+ * A ground shadow like the map's own .footShadow (Maze/styles.css) - same
+ * proportions, for visual consistency. Centered via left/margin-left rather
+ * than `transform: translateX(-50%)`, since `transform` is reserved for the
+ * WAAPI bump animation (Battle/index.tsx's playBump) - a static CSS
+ * transform and a WAAPI animation on the same property would conflict,
+ * since the animation's own keyframe values replace the static one outright
+ * rather than composing with it.
+ */
+.enemyShadow {
+  position: absolute;
+  bottom: 6%;
+  left: 50%;
+  width: 55%;
+  height: 16%;
+  margin-left: -27.5%;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 50%;
+  filter: blur(2px);
+  pointer-events: none;
 }
 
 /*

@@ -411,6 +411,13 @@ const Battle = () => {
   const battlefieldRef = useRef<HTMLDivElement>(null);
   const playerSpriteRef = useRef<HTMLImageElement>(null);
   const enemySpriteRef = useRef<HTMLImageElement>(null);
+  // A ground shadow for the enemy, like the map's own .footShadow - bumped
+  // in lockstep with the sprite (see the attack-bump call below) so it
+  // stays under the sprite's feet during its horizontal lunge instead of
+  // sitting fixed while the sprite visibly shifts away from it. Not bumped
+  // during the vertical hit-knockback (hitBumpKeyframes has no horizontal
+  // component to follow, so there's nothing for the shadow to mirror there).
+  const enemyShadowRef = useRef<HTMLDivElement>(null);
   // Measured live off the actual rendered sprites rather than hardcoded, so
   // the throw/spit trajectories stay pinned to their true centers - and the
   // spit's rotation to their true angle - no matter how either sprite ends
@@ -464,6 +471,7 @@ const Battle = () => {
         // Mirrors the innate attack: the enemy spits at the player, and the
         // hit only lands once that spit actually arrives.
         playBump(enemySpriteRef.current, attackBumpKeyframes(-20), EFFECT_DURATION_MS);
+        playBump(enemyShadowRef.current, attackBumpKeyframes(-20), EFFECT_DURATION_MS);
         const trajectory = getTrajectory("toPlayer");
         if (trajectory) {
           triggerEnemySpit(trajectory.from, trajectory.to, trajectory.angleDeg);
@@ -1021,6 +1029,7 @@ const Battle = () => {
         </div>
         <div className={styles.enemySide}>
           <div className={styles.enemySpriteWrap}>
+            <div ref={enemyShadowRef} className={styles.enemyShadow} aria-hidden="true" />
             <img
               ref={enemySpriteRef}
               src={enemyIcon}
