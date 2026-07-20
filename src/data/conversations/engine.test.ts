@@ -99,7 +99,7 @@ describe("buildOutcomeConversation", () => {
 });
 
 describe("buildGoalLossConversation", () => {
-  it("keeps the usual defeat reaction, then adds the goal's own hint as a second, terminal page", () => {
+  it("keeps the usual defeat reaction, then adds the goal's own tips across five more pages, only the last terminal", () => {
     const pages = buildGoalLossConversation("小馬");
     expect(pages).toEqual([
       {
@@ -108,10 +108,29 @@ describe("buildGoalLossConversation", () => {
       },
       {
         speaker: "monster",
-        text: "小風，想贏小馬，就要把同系列的夥伴排在一起再丟出去，這樣打起來才夠力喔！",
+        text: "小風，把同一系列的夥伴排越多隻在一起丟出去，傷害就越高——排滿十隻甚至能多出快 50% 的傷害喔！",
+      },
+      {
+        speaker: "monster",
+        text: "丟出去的兩隻通常會被拆到隊伍最前跟最後，不過一次丟三隻以上，還是有機會保持相鄰，比較容易再組成一串喔！",
+      },
+      {
+        speaker: "monster",
+        text: "如果是媽媽們（治療系）排在一起，恢復量也一樣會疊加，兩隻排在一起就能多出 50% 的治療喔！",
+      },
+      {
+        speaker: "monster",
+        text: "還有，如果覺得這場打不贏，不如提早撤退——只要撤退得夠早，就不會被算作輸掉喔！",
+      },
+      {
+        speaker: "monster",
+        text: "逃跑也是個好方法，可以拿來快速調整夥伴的順序——順序會一直保留到你下次更動為止喔！",
         action: "end",
       },
     ]);
+    for (let i = 0; i < pages.length - 1; i++) {
+      expect(isTerminalPage(pages, i)).toBe(false);
+    }
     expect(terminalAction(pages, pages.length - 1)).toBe("end");
   });
 });

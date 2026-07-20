@@ -81,9 +81,17 @@ export const buildOutcomeConversation = (
 // Shown instead of the generic buildOutcomeConversation("lose") reaction
 // whenever the goal battle specifically is lost - the goal is deliberately
 // tougher than a regular monster (see battleFormulas.ts's boss-only
-// coldnoodle self-heal), so it gets an extra page where the goal itself
-// hints at the single biggest lever a player has: lining up same-family
-// members before throwing, for the family-adjacency damage bonus.
+// coldnoodle self-heal), so it gets five extra pages where the goal itself
+// hints at the biggest levers a player has: chaining same-family attackers,
+// how throwing a group actually reshuffles it (a pair scatters to opposite
+// ends, but a longer chain - see Battle/index.tsx's nextPlacement - has some
+// members land adjacent again), chaining healers (a bigger step, so an even
+// bigger payoff), escaping early enough that it doesn't count as a loss at
+// all (see Battle/index.tsx's own "escape below half HP counts as a loss"
+// rule), and using escape as a quick way to reorder the team
+// (gameStore.monsterOrder persists across battles - see "Family-adjacency
+// attack bonuses" - so a deliberate throw-then-escape is a real way to set
+// it up ahead of a real fight).
 export const buildGoalLossConversation = (goalName: string): Conversation => [
   {
     speaker: "protagonist",
@@ -91,7 +99,23 @@ export const buildGoalLossConversation = (goalName: string): Conversation => [
   },
   {
     speaker: "monster",
-    text: `小風，想贏${goalName}，就要把同系列的夥伴排在一起再丟出去，這樣打起來才夠力喔！`,
+    text: `小風，把同一系列的夥伴排越多隻在一起丟出去，傷害就越高——排滿十隻甚至能多出快 50% 的傷害喔！`,
+  },
+  {
+    speaker: "monster",
+    text: `丟出去的兩隻通常會被拆到隊伍最前跟最後，不過一次丟三隻以上，還是有機會保持相鄰，比較容易再組成一串喔！`,
+  },
+  {
+    speaker: "monster",
+    text: `如果是媽媽們（治療系）排在一起，恢復量也一樣會疊加，兩隻排在一起就能多出 50% 的治療喔！`,
+  },
+  {
+    speaker: "monster",
+    text: `還有，如果覺得這場打不贏，不如提早撤退——只要撤退得夠早，就不會被算作輸掉喔！`,
+  },
+  {
+    speaker: "monster",
+    text: `逃跑也是個好方法，可以拿來快速調整夥伴的順序——順序會一直保留到你下次更動為止喔！`,
     action: "end",
   },
 ];
