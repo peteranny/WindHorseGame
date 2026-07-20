@@ -509,7 +509,7 @@
 
   15%,
   80% {
-    filter: brightness(3) drop-shadow(0 0 calc(12px * var(--scale)) limegreen);
+    filter: brightness(3) drop-shadow(0 0 calc(12px * var(--scale)) white);
   }
 }
 
@@ -531,7 +531,7 @@
 
   15%,
   80% {
-    filter: brightness(3) drop-shadow(0 0 calc(12px * var(--scale)) limegreen);
+    filter: brightness(3) drop-shadow(0 0 calc(12px * var(--scale)) white);
   }
 }
 
