@@ -60,7 +60,13 @@ const ConversationView = () => {
   const battleCooldownRemainingMs =
     (battleCooldowns[isGoalEncounter ? "goal" : String(activeMonsterId)] ??
       0) - Date.now();
+  // The goal battle is exempt from this lock entirely (it's tough enough
+  // already - Battle/index.tsx no longer even sets a "goal" cooldown on a
+  // loss) - checked explicitly here too, rather than only relying on that,
+  // so a stale "goal" entry saved from before this change can't still lock
+  // it out.
   const isOnBattleCooldown =
+    !isGoalEncounter &&
     goalDefeatedAt === null &&
     !devCooldownLockDisabled &&
     battleCooldownRemainingMs > 0;

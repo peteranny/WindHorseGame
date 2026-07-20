@@ -574,17 +574,14 @@ const Battle = () => {
           setIsFirstGoalWin(goalDefeatedAt === null);
           recordGoalWin();
         }
-      } else if (pendingOutcome === "lose") {
-        // Locks this same encounter out of being re-challenged for a while -
+      } else if (pendingOutcome === "lose" && !isGoalEncounter) {
+        // Locks this same monster out of being re-challenged for a while -
         // ConversationView checks battleCooldowns before showing the normal
-        // script again. Setting it unconditionally is harmless even once
-        // the goal's been cleared: ConversationView's own check is gated on
-        // goalDefeatedAt too, so a stored cooldown from here on just never
-        // matters again.
-        setBattleCooldown(
-          isGoalEncounter ? "goal" : String(activeMonsterId),
-          Date.now() + BATTLE_LOSS_COOLDOWN_MS
-        );
+        // script again. The goal battle is deliberately exempt (it's tough
+        // enough already - see its own loss hint below) - losing it still
+        // shows buildGoalLossConversation's tip, just without also locking
+        // the player out afterward.
+        setBattleCooldown(String(activeMonsterId), Date.now() + BATTLE_LOSS_COOLDOWN_MS);
       }
       concludeBattle(pendingOutcome);
     }, OUTCOME_TOTAL_MS);
