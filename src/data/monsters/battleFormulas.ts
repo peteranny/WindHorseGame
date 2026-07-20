@@ -10,8 +10,8 @@ export const BATTLE_LOSS_COOLDOWN_MS = 5 * 60 * 1000;
 // Goal-battle-only boss mechanic (see Battle/index.tsx's wild-attack effect):
 // every this-many spits at the player, a coldnoodle appears beside the goal
 // instead and heals for GOAL_SELF_HEAL_PERCENT of its own max HP.
-export const GOAL_SELF_HEAL_INTERVAL_SPITS = 5;
-export const GOAL_SELF_HEAL_PERCENT = 0.05;
+export const GOAL_SELF_HEAL_INTERVAL_SPITS = 3;
+export const GOAL_SELF_HEAL_PERCENT = 0.1;
 
 export const computeWildMaxHp = (capturedCount: number): number =>
   2 * (capturedCount + 1);
