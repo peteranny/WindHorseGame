@@ -13,7 +13,7 @@
   },
   {
     "speaker": "protagonist",
-    "text": "好，那就來比一場吧！",
+    "text": "既然你都等了，那小風就別讓你等太久——這就跟你比一場！",
     "action": "enter_challenge"
   }
 ]
