@@ -78,6 +78,24 @@ export const buildOutcomeConversation = (
   }
 };
 
+// Shown instead of the generic buildOutcomeConversation("lose") reaction
+// whenever the goal battle specifically is lost - the goal is deliberately
+// tougher than a regular monster (see battleFormulas.ts's boss-only
+// coldnoodle self-heal), so it gets an extra page where the goal itself
+// hints at the single biggest lever a player has: lining up same-family
+// members before throwing, for the family-adjacency damage bonus.
+export const buildGoalLossConversation = (goalName: string): Conversation => [
+  {
+    speaker: "protagonist",
+    text: `唔...小風被${goalName}打倒了，下次準備好了再來挑戰吧。`,
+  },
+  {
+    speaker: "monster",
+    text: `小風，想贏${goalName}，就要把同系列的夥伴排在一起再丟出去，這樣打起來才夠力喔！`,
+    action: "end",
+  },
+];
+
 // "3 分鐘" - rounded UP to the next whole minute (never floored, and never
 // all the way down to 0) since this is only ever called while remainingMs
 // is still positive - "0 分鐘" would read as "already unlocked" rather than

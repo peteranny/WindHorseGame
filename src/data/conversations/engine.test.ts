@@ -1,5 +1,6 @@
 import {
   buildCooldownConversation,
+  buildGoalLossConversation,
   buildOutcomeConversation,
   formatCooldownRemaining,
   isTerminalPage,
@@ -94,6 +95,24 @@ describe("buildOutcomeConversation", () => {
         "enter_challenge"
       );
     });
+  });
+});
+
+describe("buildGoalLossConversation", () => {
+  it("keeps the usual defeat reaction, then adds the goal's own hint as a second, terminal page", () => {
+    const pages = buildGoalLossConversation("小馬");
+    expect(pages).toEqual([
+      {
+        speaker: "protagonist",
+        text: "唔...小風被小馬打倒了，下次準備好了再來挑戰吧。",
+      },
+      {
+        speaker: "monster",
+        text: "小風，想贏小馬，就要把同系列的夥伴排在一起再丟出去，這樣打起來才夠力喔！",
+        action: "end",
+      },
+    ]);
+    expect(terminalAction(pages, pages.length - 1)).toBe("end");
   });
 });
 

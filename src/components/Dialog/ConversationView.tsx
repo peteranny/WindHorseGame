@@ -19,6 +19,7 @@ import CONVERSATIONS, {
 } from "../../data/conversations";
 import {
   buildCooldownConversation,
+  buildGoalLossConversation,
   buildOutcomeConversation,
   isTerminalPage,
   nextPageIndex,
@@ -81,6 +82,8 @@ const ConversationView = () => {
     ? battleOutcome !== null
       ? battleOutcome === "win"
         ? GOAL_FINAL_CONVERSATION
+        : battleOutcome === "lose"
+        ? buildGoalLossConversation(GOAL_NAME)
         : buildOutcomeConversation(GOAL_NAME, battleOutcome)
       : isOnBattleCooldown
       ? buildCooldownConversation(
