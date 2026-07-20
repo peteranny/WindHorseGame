@@ -725,7 +725,6 @@ const Battle = () => {
       const isInnateOnly = group.length === 1 && group[0].key === INNATE_KEY;
 
       let totalHeal = 0;
-      let totalDamage = 0;
       const throwers: Array<{ member: AttackOption; multiplier: number }> = [];
       const healers: Array<{ member: AttackOption; multiplier: number }> = [];
 
@@ -735,7 +734,6 @@ const Battle = () => {
           totalHeal += member.healAmount * multiplier;
           healers.push({ member, multiplier });
         } else {
-          totalDamage += ATTACK_DAMAGE * multiplier;
           throwers.push({ member, multiplier });
         }
       });
@@ -780,9 +778,10 @@ const Battle = () => {
         // A mixed innate + captured-monster group can't happen (the innate
         // attack has no family, so it never joins a group) - launch each
         // thrower GROUP_THROW_STAGGER_MS after the last so a multi-member
-        // volley reads as distinguishable throws rather than one blob, then
-        // land the combined damage once the final one actually arrives.
-        throwers.forEach(({ member }, throwIndex) => {
+        // volley reads as distinguishable throws rather than one blob.
+        const landMs = isInnateOnly ? SPIT_DURATION_MS : THROW_DURATION_MS;
+        throwers.forEach(({ member, multiplier }, throwIndex) => {
+          const throwDelay = throwIndex * GROUP_THROW_STAGGER_MS;
           setTimeout(() => {
             const trajectory = getTrajectory();
             if (!trajectory) return;
@@ -791,9 +790,17 @@ const Battle = () => {
             } else {
               triggerThrow(member.icon, trajectory.from, trajectory.to);
             }
-          }, throwIndex * GROUP_THROW_STAGGER_MS);
+          }, throwDelay);
+          // Each member's own damage (ATTACK_DAMAGE * its own step
+          // multiplier) lands the instant ITS throw actually arrives,
+          // rather than bundling the whole group's damage into one hit
+          // once the last member lands - a run of N members should read
+          // as N separate hits, not one delayed combined blow.
+          setTimeout(() => {
+            damageWild(ATTACK_DAMAGE * multiplier);
+            playBump(enemySpriteRef.current, hitBumpKeyframes(20), EFFECT_DURATION_MS);
+          }, throwDelay + landMs);
         });
-        const landMs = isInnateOnly ? SPIT_DURATION_MS : THROW_DURATION_MS;
         const totalLandMs =
           (throwers.length - 1) * GROUP_THROW_STAGGER_MS + landMs;
         // Only a real multi-member family throw earns the callout - a lone
@@ -805,10 +812,6 @@ const Battle = () => {
             totalLandMs
           );
         }
-        setTimeout(() => {
-          damageWild(totalDamage);
-          playBump(enemySpriteRef.current, hitBumpKeyframes(20), EFFECT_DURATION_MS);
-        }, totalLandMs);
       }
 
       group.forEach((member) =>
