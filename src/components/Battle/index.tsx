@@ -1058,7 +1058,10 @@ const Battle = () => {
           )}
         </div>
         <div className={styles.playerInfo}>
-          <div>小風</div>
+          <div className={styles.nameRow}>
+            <span>小風</span>
+            <span className={styles.levelBadge}>LV. {line.length}</span>
+          </div>
           <HpBar hp={protagonistHp} maxHp={10} />
           {isDevMode && (
             <div className={styles.hpDevValue}>

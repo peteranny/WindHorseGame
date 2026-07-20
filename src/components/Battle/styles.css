@@ -682,6 +682,21 @@
  * eyeballing the bar's fill percentage. Same orangered as every other
  * dev-only affordance here (.devButton).
  */
+.nameRow {
+  display: flex;
+  align-items: baseline;
+  gap: calc(6px * var(--scale));
+}
+
+.levelBadge {
+  font-size: calc(8pt * var(--scale));
+  font-weight: bold;
+  color: white;
+  background: black;
+  border-radius: calc(8px * var(--scale));
+  padding: calc(1px * var(--scale)) calc(6px * var(--scale));
+}
+
 .hpDevValue {
   margin-top: calc(2px * var(--scale));
   font-family: monospace;
