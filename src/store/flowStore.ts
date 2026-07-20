@@ -40,6 +40,14 @@ interface FlowState {
   devCooldownLockDisabled: boolean;
   startEncounter: (monsterId: number) => void;
   startGoalEncounter: () => void;
+  // Re-shows the finale conversation directly, without a real battle -
+  // tapping the house while occupied (see Maze/houseState.ts) calls this
+  // rather than startGoalEncounter, since that would instead show
+  // GOAL_HINT_CONVERSATION/GOAL_CHALLENGE_CONVERSATION (battleOutcome is
+  // null there). isFirstGoalWin is left untouched (still whatever it last
+  // was, default false) so a replay never re-shows the one-time first-win
+  // framing or hides the 跳過對話 shortcut.
+  replayGoalFinale: () => void;
   enterBattle: (wildMaxHp: number) => void;
   damageWild: (amount: number) => void;
   healWild: (amount: number) => void;
@@ -69,6 +77,8 @@ export const useFlowStore = create<FlowState>((set) => ({
     set({ mode: "conversation", activeMonsterId: monsterId }),
   startGoalEncounter: () =>
     set({ mode: "conversation", isGoalEncounter: true }),
+  replayGoalFinale: () =>
+    set({ mode: "conversation", isGoalEncounter: true, battleOutcome: "win" }),
   enterBattle: (wildMaxHp) =>
     set({
       mode: "battle",

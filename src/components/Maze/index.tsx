@@ -93,6 +93,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const talkingSpeaker = useFlowStore((state) => state.talkingSpeaker);
   const startEncounter = useFlowStore((state) => state.startEncounter);
   const startGoalEncounter = useFlowStore((state) => state.startGoalEncounter);
+  const replayGoalFinale = useFlowStore((state) => state.replayGoalFinale);
   const devReleaseEnabled = useFlowStore((state) => state.devReleaseEnabled);
 
   // History of the player's own cell, most recent first - used purely to
@@ -155,7 +156,16 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
     (r: number, c: number): void => {
       if (flowMode !== "map") return;
       if (r !== y && c !== x) return; // not on a shared row/column
-      if (r === y && c === x) return; // tapped the player's own cell
+      if (r === y && c === x) {
+        // Tapped the player's own cell - normally a no-op, except while
+        // occupying the cleared goal's house (see houseState.ts), where the
+        // combined house+player sprite is standing right here. That's the
+        // one case worth reacting to: replay the finale conversation.
+        if (houseState === "occupied") {
+          replayGoalFinale();
+        }
+        return;
+      }
 
       // Walks as far toward (c, r) as the path actually allows - all the
       // way there if it's clear, otherwise stopping just short of whatever
@@ -201,8 +211,10 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
       monsterIds,
       goalCell,
       captured,
+      houseState,
       startEncounter,
       startGoalEncounter,
+      replayGoalFinale,
       setPosition,
       setFacing,
       revealCells,
