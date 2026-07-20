@@ -201,10 +201,12 @@
 }
 
 /*
- * Marks mount one at a time as .telegraphMarkCount rises with the
- * countdown (see Battle/index.tsx), so each one fading in on its own
- * already reads as "appearing in turn" - this is just that fade, plus a
- * continuous wiggle once visible.
+ * All 3 marks mount together (see Battle/index.tsx's isWildTelegraphing),
+ * but each reveals on its own schedule via --telegraph-delay (evenly spaced
+ * across the telegraph window) - so "appearing in turn" is timed by CSS
+ * against the moment this element mounted, independent of how often the
+ * component itself re-renders. This is that fade, plus a continuous wiggle
+ * once visible.
  */
 .telegraphMark {
   font-size: calc(14pt * var(--scale));
@@ -212,16 +214,8 @@
   color: #333;
   opacity: 0;
   animation:
-    telegraph-appear 200ms ease-out forwards,
-    telegraph-wiggle 400ms ease-in-out infinite;
-
-  &:nth-child(2) {
-    animation-delay: 0ms, 120ms;
-  }
-
-  &:nth-child(3) {
-    animation-delay: 0ms, 240ms;
-  }
+    telegraph-appear 200ms ease-out var(--telegraph-delay, 0ms) forwards,
+    telegraph-wiggle 400ms ease-in-out var(--telegraph-delay, 0ms) infinite;
 }
 
 @keyframes telegraph-appear {

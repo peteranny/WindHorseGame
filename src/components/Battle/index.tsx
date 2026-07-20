@@ -68,6 +68,18 @@ const HEAL_ANIMATION_MS = 3000;
 const TICK_MS = 1000;
 const EFFECT_DURATION_MS = 300;
 const WILD_ATTACK_TELEGRAPH_MS = 2000;
+// The 3 telegraph marks' own reveal delays, evenly spaced across the
+// telegraph window - driven entirely by CSS animation-delay (see
+// .telegraphMark) rather than by counting up on forceTick's 1s cadence,
+// since that cadence is coarser than this 2s window can show 3 distinct
+// steps through: only 2 of its renders ever land inside the window (the
+// render at the window's true end coincides with the attack already having
+// fired), so a tick-driven count could only ever reach 1, then 2, then
+// straight to the spit - never showing all 3 as the "imminent" cue the
+// marks are meant to be.
+const TELEGRAPH_MARK_DELAYS_MS = [0, 1, 2].map(
+  (i) => (i * WILD_ATTACK_TELEGRAPH_MS) / 3
+);
 const THROW_DURATION_MS = 2000;
 const SPIT_DURATION_MS = 500;
 // The goal battle's own coldnoodle self-heal (see wildSpitCountRef below) -
@@ -980,18 +992,6 @@ const Battle = () => {
   const msUntilWildAttack = nextWildAttackAtRef.current - Date.now();
   const isWildTelegraphing =
     msUntilWildAttack > 0 && msUntilWildAttack <= WILD_ATTACK_TELEGRAPH_MS;
-  // The marks appear one at a time as the countdown runs out, so seeing all
-  // 3 doubles as a "the attack is imminent" cue.
-  const telegraphMarkCount = isWildTelegraphing
-    ? Math.min(
-        3,
-        Math.floor(
-          ((WILD_ATTACK_TELEGRAPH_MS - msUntilWildAttack) /
-            WILD_ATTACK_TELEGRAPH_MS) *
-            3
-        ) + 1
-      )
-    : 0;
 
   const isPlayerSinking = isSinking && pendingOutcome === "lose";
   const isEnemySinking = isSinking && pendingOutcome === "win";
@@ -1029,10 +1029,16 @@ const Battle = () => {
                   : enemyHealEffect && styles.enemyHeal
               )}
             />
-            {telegraphMarkCount > 0 && (
+            {isWildTelegraphing && (
               <div className={styles.telegraph} aria-hidden="true">
-                {Array.from({ length: telegraphMarkCount }, (_, i) => (
-                  <span key={i} className={styles.telegraphMark}>
+                {TELEGRAPH_MARK_DELAYS_MS.map((delayMs, i) => (
+                  <span
+                    key={i}
+                    className={styles.telegraphMark}
+                    style={
+                      { "--telegraph-delay": `${delayMs}ms` } as React.CSSProperties
+                    }
+                  >
                     ？
                   </span>
                 ))}
