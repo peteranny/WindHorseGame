@@ -15,6 +15,7 @@
     "open": "npm run check-login && clasp open-script",
     "setup": "clasp create --type webapp --title WindHorseGame --rootDir gas",
     "typecheck": "tsc --noEmit",
+    "lint": "lint-staged",
     "test": "jest"
   },
   "devDependencies": {
