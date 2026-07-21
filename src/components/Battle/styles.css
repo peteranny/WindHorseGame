@@ -691,10 +691,12 @@
    thing casting it is disappearing," not as the shadow itself falling. */
 @keyframes enemy-shadow-sink {
   0% {
+    transform: translateY(0);
     opacity: 1;
   }
 
   100% {
+    transform: translateY(calc(40px * var(--scale)));
     opacity: 0;
   }
 }
