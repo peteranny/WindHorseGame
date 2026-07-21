@@ -44,9 +44,13 @@ interface FlowState {
   // tapping the house while occupied (see Maze/houseState.ts) calls this
   // rather than startGoalEncounter, since that would instead show
   // GOAL_HINT_CONVERSATION/GOAL_CHALLENGE_CONVERSATION (battleOutcome is
-  // null there). isFirstGoalWin is left untouched (still whatever it last
-  // was, default false) so a replay never re-shows the one-time first-win
-  // framing or hides the 跳過對話 shortcut.
+  // null there). Also forces isFirstGoalWin to false - reaching the house
+  // at all requires having already gone through the finale at least once
+  // (whether read in full or skipped), so a replay is never genuinely the
+  // first viewing, but isFirstGoalWin itself stays true for the rest of the
+  // session after that real first win (nothing else ever resets it back),
+  // so leaving it alone here would keep wrongly hiding 跳過對話 on every
+  // replay after the first.
   replayGoalFinale: () => void;
   enterBattle: (wildMaxHp: number) => void;
   damageWild: (amount: number) => void;
@@ -78,7 +82,12 @@ export const useFlowStore = create<FlowState>((set) => ({
   startGoalEncounter: () =>
     set({ mode: "conversation", isGoalEncounter: true }),
   replayGoalFinale: () =>
-    set({ mode: "conversation", isGoalEncounter: true, battleOutcome: "win" }),
+    set({
+      mode: "conversation",
+      isGoalEncounter: true,
+      battleOutcome: "win",
+      isFirstGoalWin: false,
+    }),
   enterBattle: (wildMaxHp) =>
     set({
       mode: "battle",
