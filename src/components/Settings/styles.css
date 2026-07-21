@@ -98,16 +98,27 @@
   border-collapse: collapse;
   font-size: calc(9pt * var(--scale));
 
+  /* Explicit rather than inherited from .screen's white - the translucent
+     .card background sitting over .screen's own brown lightens things
+     enough that plain white text read as washed-out/low-contrast here. */
+  color: #fff;
+
   th,
   td {
     padding: calc(4px * var(--scale)) calc(6px * var(--scale));
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
     text-align: left;
   }
 
   th {
-    opacity: 0.7;
-    font-weight: normal;
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: bold;
+  }
+
+  /* Zebra striping, not just the border, so a row's own text sits on a
+     darker patch instead of directly on the lightened card background. */
+  tbody tr:nth-child(odd) {
+    background: rgba(0, 0, 0, 0.2);
   }
 }
 
