@@ -1,0 +1,11 @@
+/* No component-scoped stylesheet reaches every button in the app, so
+   native/WebKit button styling (a default text color that can render as
+   link-blue, plus the OS's own button chrome) leaks through wherever a
+   component doesn't set its own color explicitly. Bare element selectors
+   like this aren't scoped by css-loader's CSS Modules (only class/id
+   selectors are), so this rule applies globally from a single import. */
+button {
+  color: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}

@@ -20,6 +20,12 @@ Core loop is implemented end-to-end: map traversal, capture-gated blocking, conv
 src/
   index.tsx            # Entry point. Imports scale first to set --scale CSS var, mounts <App> in a Router.
   scale.ts              # Single source of truth for global UI scale. Change SCALE here to resize everything.
+  globalReset.css        # The only app-wide (non-CSS-Modules-scoped) stylesheet - a bare `button` element
+                         # selector, which css-loader's CSS Modules leaves unscoped (only class/id selectors
+                         # get hashed), so this applies globally from one import. Normalizes every button's
+                         # text color to inherit (rather than the browser/WebKit default, which can render as
+                         # link-blue) and resets appearance/-webkit-appearance - every other component's own
+                         # button styling stays a self-contained CSS Module as usual.
   globals.d.ts          # __DEPLOY_DATE__, the google.script.run (GAS) surface, and *.css/*.txt module typings.
   components/
     App.tsx             # Router shell: "/" -> Game, "/settings" -> Settings.
