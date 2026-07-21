@@ -17,7 +17,7 @@ const MiniMap = () => {
   const [x, y] = useGameStore((state) => state.position);
   const captured = useGameStore((state) => state.captured);
   const exploredCells = useGameStore((state) => state.exploredCells);
-  const setPosition = useGameStore((state) => state.setPosition);
+  const teleportTo = useGameStore((state) => state.teleportTo);
   const flowMode = useFlowStore((state) => state.mode);
   const notifyTeleported = useFlowStore((state) => state.notifyTeleported);
 
@@ -70,7 +70,7 @@ const MiniMap = () => {
                 onClick={
                   isTeleportable
                     ? () => {
-                        setPosition(c, r);
+                        teleportTo(c, r);
                         notifyTeleported();
                       }
                     : undefined

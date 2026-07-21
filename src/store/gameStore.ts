@@ -48,6 +48,12 @@ interface GameState {
   goalDefeatedAt: string | null;
   setStateKey: (key: string) => Promise<void>;
   setPosition: (x: number, y: number) => void;
+  // Same effect as setPosition, but for a jump rather than a walked step
+  // (the mini-map's tap-to-teleport) - previousPosition becomes the same
+  // cell as position instead of wherever the player jumped from, so a
+  // reload right after a teleport doesn't seed the duckling trail (see
+  // previousPosition's own comment below) as spanning the jump itself.
+  teleportTo: (x: number, y: number) => void;
   setFacing: (facing: Facing) => void;
   captureMonster: (monsterId: number, capturedAt?: string) => void;
   releaseMonster: (monsterId: number) => void;
@@ -135,6 +141,11 @@ export const useGameStore = create<GameState>((set, get) => ({
           : state.facing;
       return { position: [x, y], previousPosition: state.position, facing };
     });
+    scheduleSave();
+  },
+
+  teleportTo: (x, y) => {
+    set({ position: [x, y], previousPosition: [x, y] });
     scheduleSave();
   },
 
