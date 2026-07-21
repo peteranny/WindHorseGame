@@ -6,6 +6,8 @@ import { isDevStateKey } from "../../store/devMode";
 import { getLocalSnapshot, loadRemoteState } from "../../store/persistence";
 import { PersistedGameState } from "../../store/types";
 import MONSTERS from "../../data/monsters/monsters";
+import { GOAL_NAME } from "../../data/goalEncounter";
+import GOAL_SPRITE from "../../assets/goalSprite.png";
 import { formatCaptureTimestamp, sortByCaptureTime } from "./capturedHistory";
 import styles from "./styles.css";
 
@@ -23,6 +25,9 @@ const Settings = () => {
   const [peekCaptured, setPeekCaptured] = useState<
     PersistedGameState["captured"]
   >({});
+  const [peekGoalDefeatedAt, setPeekGoalDefeatedAt] = useState<string | null>(
+    null
+  );
 
   const handlePeek = (e: React.FormEvent): void => {
     e.preventDefault();
@@ -37,6 +42,7 @@ const Settings = () => {
     loadRemoteState(targetKey).then((remote) => {
       const resolved = remote ?? getLocalSnapshot(targetKey);
       setPeekCaptured(resolved?.captured ?? {});
+      setPeekGoalDefeatedAt(resolved?.goalDefeatedAt ?? null);
       setPeekStatus(resolved ? "found" : "not-found");
     });
   };
@@ -133,7 +139,20 @@ const Settings = () => {
                       </tr>
                     );
                   })}
-                  {capturedOrder.length === 0 && (
+                  {peekGoalDefeatedAt !== null && (
+                    <tr>
+                      <td>{capturedOrder.length + 1}</td>
+                      <td>
+                        <img
+                          className={styles.peekIcon}
+                          src={GOAL_SPRITE}
+                          alt={GOAL_NAME}
+                        />
+                      </td>
+                      <td>{formatCaptureTimestamp(peekGoalDefeatedAt)}</td>
+                    </tr>
+                  )}
+                  {capturedOrder.length === 0 && peekGoalDefeatedAt === null && (
                     <tr>
                       <td colSpan={3}>尚未捕獲任何怪獸</td>
                     </tr>

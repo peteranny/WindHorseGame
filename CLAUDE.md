@@ -56,7 +56,9 @@ src/
     Settings/             # /settings route: view/change the save-state key. Under a dev save key
                           # (isDevStateKey), an extra card looks up any other key's captured-monster
                           # history - capturedHistory.ts's sortByCaptureTime/formatCaptureTimestamp
-                          # back a compact table (order, icon, "YYYY/MM/DD hh:mm" capture time).
+                          # back a compact table (order, icon, "YYYY/MM/DD hh:mm" capture time), with
+                          # a trailing row for the goal (goalSprite.png/GOAL_NAME) and its own
+                          # goalDefeatedAt, shown only once that key has actually cleared it.
   data/
     monsters/
       monsters.generated.json  # The 39 monster definitions (name, description, family, isHealer/healAmount -
