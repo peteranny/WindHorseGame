@@ -33,6 +33,16 @@
   /* stylelint-disable-next-line property-no-unknown */
   aspect-ratio: 1;
 
+  /*
+   * .miniMap itself is pointer-events: none (so ordinary map taps reach the
+   * real Maze underneath it) - only a teleportable cell opts back in, and
+   * only that cell, so the rest of the overlay still passes clicks through.
+   */
+  &.teleportable {
+    pointer-events: auto;
+    cursor: pointer;
+  }
+
   &.wall {
     background: transparent;
   }

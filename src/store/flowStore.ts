@@ -38,6 +38,14 @@ interface FlowState {
   // "reset ever-clear" button once goalDefeatedAt is set, since the lock is
   // disabled forever from then on anyway).
   devCooldownLockDisabled: boolean;
+  // Bumped on every mini-map teleport-tap (see MiniMap/index.tsx) - Maze
+  // watches this to collapse the duckling follower trail onto the player's
+  // new cell, the same way it does when entering the goal's house (see its
+  // own previousHouseStateRef effect), since a teleport is never a walked
+  // step extendTrail can make sense of. The actual destination itself
+  // travels through gameStore.position as usual - this is purely a "something
+  // just teleported" signal, not a queued target.
+  teleportSeq: number;
   startEncounter: (monsterId: number) => void;
   startGoalEncounter: () => void;
   // Re-shows the finale conversation directly, without a real battle -
@@ -63,6 +71,7 @@ interface FlowState {
   setTalkingSpeaker: (speaker: TalkingSpeaker) => void;
   setDevReleaseEnabled: (enabled: boolean) => void;
   setDevCooldownLockDisabled: (enabled: boolean) => void;
+  notifyTeleported: () => void;
 }
 
 export const useFlowStore = create<FlowState>((set) => ({
@@ -77,6 +86,7 @@ export const useFlowStore = create<FlowState>((set) => ({
   protagonistHp: PROTAGONIST_MAX_HP,
   devReleaseEnabled: false,
   devCooldownLockDisabled: false,
+  teleportSeq: 0,
   startEncounter: (monsterId) =>
     set({ mode: "conversation", activeMonsterId: monsterId }),
   startGoalEncounter: () =>
@@ -124,4 +134,6 @@ export const useFlowStore = create<FlowState>((set) => ({
   setDevReleaseEnabled: (enabled) => set({ devReleaseEnabled: enabled }),
   setDevCooldownLockDisabled: (enabled) =>
     set({ devCooldownLockDisabled: enabled }),
+  notifyTeleported: () =>
+    set((state) => ({ teleportSeq: state.teleportSeq + 1 })),
 }));

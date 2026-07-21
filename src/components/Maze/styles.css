@@ -17,6 +17,21 @@
   justify-content: center;
 }
 
+/*
+ * Applied (on top of .pin above) whenever the player stands in the row
+ * above the goal cell (see Maze/index.tsx's isBehindHouse / houseState.ts's
+ * isAboveGoalCell) - the house's own roof overhangs upward into that row
+ * (.homeSprite/.homeEmptySprite's bottom: 28% + height: 120%), so it needs
+ * to paint in front of the player there, the opposite of every other cell
+ * where the player pin should win. Below .homeSprite/.aboveHouse's 500/501
+ * and .goalNeonSign/.fireworkWrap's 502 so all of those draw in front, but
+ * still a real positive z-index so ordinary road/wall content and followers
+ * (auto/low z-index) stay behind the player as usual.
+ */
+.pin.pinBehindHouse {
+  z-index: 100;
+}
+
 .cellContent {
   display: flex;
   justify-content: center;

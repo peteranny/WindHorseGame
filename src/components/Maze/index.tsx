@@ -21,7 +21,8 @@ import {
   findStoppingPoint,
 } from "./exploration";
 import { findGoalCell } from "./goalPosition";
-import { computeHouseState } from "./houseState";
+import { computeHouseState, isAboveGoalCell } from "./houseState";
+import { isPassableCell } from "./passability";
 import { extendTrail, resamplePath } from "./followerTrail";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import PLAYER_SPRITE_FRONT from "../../assets/playerSpriteFront.png";
@@ -142,14 +143,24 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
     previousHouseStateRef.current = houseState;
   }, [houseState, goalCell]);
 
+  // A mini-map tap teleports the player straight to a (non-adjacent, often
+  // diagonal) cell rather than walking there - extendTrail only makes sense
+  // for the single-step-at-a-time path goto itself produces, so this instead
+  // collapses the trail onto the new cell outright, exactly like entering
+  // the goal's house above. Ordinary walking right after just re-extends it
+  // from that single point same as it would fresh out of the house.
+  const teleportSeq = useFlowStore((state) => state.teleportSeq);
+  const previousTeleportSeqRef = useRef(teleportSeq);
+  useEffect(() => {
+    if (teleportSeq !== previousTeleportSeqRef.current) {
+      setTrail([[x, y]]);
+    }
+    previousTeleportSeqRef.current = teleportSeq;
+  }, [teleportSeq, x, y]);
+
   const isPassable = useCallback(
-    (r: number, c: number): boolean => {
-      const cell = map[r][c];
-      if (cell === CELL_TYPE.ROAD) return true;
-      if (cell === CELL_TYPE.WALL) return false;
-      const monsterId = monsterIds[r][c];
-      return monsterId !== null && captured[monsterId] !== undefined;
-    },
+    (r: number, c: number): boolean =>
+      isPassableCell(map, monsterIds, captured, r, c),
     [map, monsterIds, captured]
   );
   const goto = useCallback(
@@ -333,11 +344,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                 (isGoalCell && isGoalEncounter));
             const isTalking = isBeingTalkedTo && talkingSpeaker === "monster";
             return (
-              <div
-                key={c}
-                className={styles.cell}
-                onClick={() => goto(r, c)}
-              >
+              <div key={c} className={styles.cell} onClick={() => goto(r, c)}>
                 <div className={cn(styles.cellContent, styles[cellClass])}>
                   {isGoalCell && houseState === "occupied" ? (
                     <img
@@ -511,12 +518,16 @@ const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
   // player's sprite a second time right on top of it.
   const isInsideHouse =
     computeHouseState(goalDefeatedAt, position, goalCell) === "occupied";
+  // The house's roof overhangs upward past its own cell (see .homeSprite in
+  // styles.css), so standing in the row above the goal should draw the roof
+  // in front of the player instead of the usual player-always-on-top order.
+  const isBehindHouse = isAboveGoalCell(position, goalCell);
   return (
     <div className={styles.container}>
       <Maze center={[centerX, centerY]} />
       {!isInsideHouse && (
         <div
-          className={styles.pin}
+          className={cn(styles.pin, isBehindHouse && styles.pinBehindHouse)}
           style={{
             width: CELL_SIZE,
             height: CELL_SIZE,

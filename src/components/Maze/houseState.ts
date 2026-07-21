@@ -18,3 +18,15 @@ export const computeHouseState = (
   const [goalX, goalY] = goalCell;
   return x === goalX && y === goalY ? "occupied" : "empty";
 };
+
+// The house's own sprite overhangs upward past the top of its cell (see
+// .homeSprite/.homeEmptySprite in styles.css), so it can visually overlap the
+// player pin whenever the player stands in a cell above the goal - the pin
+// then needs a lower z-index than the house so the roof draws in front, the
+// opposite of every other row where the player pin should win. Row index
+// increases downward (see Maze/index.tsx's map.map((cells, r) => ...)), so
+// "above" is simply a smaller row than the goal's own.
+export const isAboveGoalCell = (
+  position: [number, number],
+  goalCell: [number, number] | null
+): boolean => goalCell !== null && position[1] < goalCell[1];

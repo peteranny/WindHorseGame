@@ -6,7 +6,9 @@ import { CELL_TYPE, compileMap } from "../Maze/compileMap";
 import { computeMonsterIds } from "../Maze/monsterPositions";
 import { findGoalCell } from "../Maze/goalPosition";
 import { cellKey } from "../Maze/exploration";
+import { isPassableCell } from "../Maze/passability";
 import { useGameStore } from "../../store/gameStore";
+import { useFlowStore } from "../../store/flowStore";
 
 const MiniMap = () => {
   const map = useMemo(() => compileMap(simpleMap), []);
@@ -15,6 +17,9 @@ const MiniMap = () => {
   const [x, y] = useGameStore((state) => state.position);
   const captured = useGameStore((state) => state.captured);
   const exploredCells = useGameStore((state) => state.exploredCells);
+  const setPosition = useGameStore((state) => state.setPosition);
+  const flowMode = useFlowStore((state) => state.mode);
+  const notifyTeleported = useFlowStore((state) => state.notifyTeleported);
 
   return (
     <div className={styles.miniMap}>
@@ -44,14 +49,32 @@ const MiniMap = () => {
               : isGoal
               ? "goal"
               : null;
+            // Only an already-explored, currently-walkable cell can be
+            // teleported to - the same "passable" rule ordinary movement
+            // already uses (plain road, or a captured monster's cell), never
+            // a wall, an uncaptured monster, the goal tile, or unrevealed fog.
+            const isTeleportable =
+              !isPlayer &&
+              flowMode === "map" &&
+              isExplored &&
+              isPassableCell(map, monsterIds, captured, r, c);
             return (
               <div
                 key={c}
                 className={cn(
                   styles.cell,
                   styles[baseClass],
-                  markerClass && styles[markerClass]
+                  markerClass && styles[markerClass],
+                  isTeleportable && styles.teleportable
                 )}
+                onClick={
+                  isTeleportable
+                    ? () => {
+                        setPosition(c, r);
+                        notifyTeleported();
+                      }
+                    : undefined
+                }
               />
             );
           })}
