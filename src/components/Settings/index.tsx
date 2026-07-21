@@ -24,7 +24,7 @@ const Settings = () => {
     PersistedGameState["captured"]
   >({});
 
-  const handlePeek = async (e: React.FormEvent): Promise<void> => {
+  const handlePeek = (e: React.FormEvent): void => {
     e.preventDefault();
     const targetKey = peekKeyInput.trim();
     if (!targetKey) return;
@@ -34,10 +34,11 @@ const Settings = () => {
     // cached snapshot for that key - the only way to test this locally,
     // where google.script.run doesn't exist at all (loadRemoteState always
     // resolves null there).
-    const remote = await loadRemoteState(targetKey);
-    const resolved = remote ?? getLocalSnapshot(targetKey);
-    setPeekCaptured(resolved?.captured ?? {});
-    setPeekStatus(resolved ? "found" : "not-found");
+    loadRemoteState(targetKey).then((remote) => {
+      const resolved = remote ?? getLocalSnapshot(targetKey);
+      setPeekCaptured(resolved?.captured ?? {});
+      setPeekStatus(resolved ? "found" : "not-found");
+    });
   };
 
   const capturedOrder = sortByCaptureTime(peekCaptured);
