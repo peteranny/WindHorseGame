@@ -90,6 +90,25 @@ if (typeof window !== "undefined") {
   setInterval(() => remoteSync.retryPending(), RETRY_INTERVAL_MS);
 }
 
+// x takes priority over y since ordinary movement (setPosition) is always
+// purely horizontal or vertical, never both - a mini-map teleport can be
+// diagonal though, so this really means "whichever axis differs, x first"
+// rather than a guarantee only one axis ever changes.
+const facingFromMove = (
+  [prevX, prevY]: [number, number],
+  [x, y]: [number, number],
+  currentFacing: Facing
+): Facing =>
+  x > prevX
+    ? "right"
+    : x < prevX
+    ? "left"
+    : y > prevY
+    ? "down"
+    : y < prevY
+    ? "up"
+    : currentFacing;
+
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
 const scheduleSave = (): void => {
@@ -127,25 +146,20 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   setPosition: (x, y) => {
-    set((state) => {
-      const [prevX, prevY] = state.position;
-      const facing: Facing =
-        x > prevX
-          ? "right"
-          : x < prevX
-          ? "left"
-          : y > prevY
-          ? "down"
-          : y < prevY
-          ? "up"
-          : state.facing;
-      return { position: [x, y], previousPosition: state.position, facing };
-    });
+    set((state) => ({
+      position: [x, y],
+      previousPosition: state.position,
+      facing: facingFromMove(state.position, [x, y], state.facing),
+    }));
     scheduleSave();
   },
 
   teleportTo: (x, y) => {
-    set({ position: [x, y], previousPosition: [x, y] });
+    set((state) => ({
+      position: [x, y],
+      previousPosition: [x, y],
+      facing: facingFromMove(state.position, [x, y], state.facing),
+    }));
     scheduleSave();
   },
 

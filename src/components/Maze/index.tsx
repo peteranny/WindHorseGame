@@ -273,10 +273,10 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
     behindX >= 0 &&
     behindX < map[behindY].length &&
     isPassable(behindY, behindX);
-  const playerCenter: [number, number] = [
-    x * CELL_SIZE + CELL_SIZE / 2,
-    y * CELL_SIZE + CELL_SIZE / 2,
-  ];
+  const playerCenter: [number, number] = useMemo(
+    () => [x * CELL_SIZE + CELL_SIZE / 2, y * CELL_SIZE + CELL_SIZE / 2],
+    [x, y]
+  );
   // Half a cell back, matching resamplePath's own initialGap - not the
   // full cell (the behind cell's own center), which would visibly jump
   // once real movement starts populating followerPoints instead.
@@ -297,6 +297,24 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   if (isBehindPassable) {
     lastPassableFollowerPointRef.current = behindFollowerPoint;
   }
+  // A teleport can land somewhere whose behind-cell (opposite the player's
+  // current facing) is a wall - isBehindPassable would then stay false, so
+  // the render-time check above never gets to move the ref off wherever it
+  // last held before the jump, leaving the whole train stuck rendering at
+  // that stale, possibly far-off point instead of snapping to the new
+  // location. Only step in for exactly that case (a passable behind-cell is
+  // already handled correctly by the check above) and put the train at the
+  // player's own cell instead, same as the "occupied" case below does.
+  const previousTeleportSeqForFollowerRef = useRef(teleportSeq);
+  useEffect(() => {
+    if (
+      teleportSeq !== previousTeleportSeqForFollowerRef.current &&
+      !isBehindPassable
+    ) {
+      lastPassableFollowerPointRef.current = playerCenter;
+    }
+    previousTeleportSeqForFollowerRef.current = teleportSeq;
+  }, [teleportSeq, playerCenter, isBehindPassable]);
   const fallbackFollowerPoint = lastPassableFollowerPointRef.current;
   // While occupied, the whole train collapses onto this same fallback
   // point (see the trail-reset effect above) - dead center of the house's
