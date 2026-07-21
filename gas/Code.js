@@ -1,5 +1,12 @@
+// Every save lives on the "2026" sheet specifically, not just whichever one
+// happened to be active when the script last ran - the container-bound
+// spreadsheet holds other sheets too, and this project only ever owns "2026".
+const STATE_SHEET_NAME = "2026";
+const getStateSheet = () =>
+  SpreadsheetApp.getActiveSpreadsheet().getSheetByName(STATE_SHEET_NAME);
+
 function saveState(key, json) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const sheet = getStateSheet();
   const data = sheet.getDataRange().getValues();
   for (let i = 0; i < data.length; i++) {
     if (data[i][0] === key) {
@@ -10,8 +17,18 @@ function saveState(key, json) {
   sheet.appendRow([key, json]);
 }
 
+// Every non-empty key (column A) across the whole sheet - backs Settings'
+// dev-only "peek another key's captures" flow, which shows this as a
+// pick list rather than making the player type/remember a key exactly.
+function listStateKeys() {
+  const data = getStateSheet().getDataRange().getValues();
+  return data
+    .map((row) => row[0])
+    .filter((key) => typeof key === "string" && key !== "");
+}
+
 function loadState(key) {
-  const data = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet().getDataRange().getValues();
+  const data = getStateSheet().getDataRange().getValues();
   for (const row of data) {
     if (row[0] === key) {
       return typeof row[1] === "string" ? row[1] : null;

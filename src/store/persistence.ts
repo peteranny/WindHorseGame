@@ -1,7 +1,23 @@
 import { PersistedGameState } from "./types";
 
 const STATE_KEY_QUERY_PARAM = "key";
-const snapshotStorageKey = (key: string): string => `gameState:${key}`;
+const SNAPSHOT_STORAGE_PREFIX = "gameState:";
+const snapshotStorageKey = (key: string): string =>
+  `${SNAPSHOT_STORAGE_PREFIX}${key}`;
+
+// Every save key this browser happens to have a cached snapshot for - the
+// local-dev stand-in for listStateKeys() below, since google.script.run
+// doesn't exist there at all.
+const listLocalSnapshotKeys = (): string[] => {
+  const keys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const storageKey = localStorage.key(i);
+    if (storageKey?.startsWith(SNAPSHOT_STORAGE_PREFIX)) {
+      keys.push(storageKey.slice(SNAPSHOT_STORAGE_PREFIX.length));
+    }
+  }
+  return keys;
+};
 
 // The save-state key travels in the URL (?key=xxx) rather than localStorage -
 // unlike localStorage, it survives a cleared browser, a different device, or
@@ -72,6 +88,21 @@ export const resolveHydratedState = (
   remote: PersistedGameState | null
 ): PersistedGameState | null =>
   remote && (!local || remote.timestamp >= local.timestamp) ? remote : local;
+
+// Every save key that currently has a row in the Google Sheet - backs
+// Settings' dev-only "peek another key's captures" flow, so the player
+// picks from a real list instead of typing/remembering a key exactly.
+export const loadRemoteStateKeys = (): Promise<string[]> =>
+  new Promise((resolve) => {
+    if (typeof google === "undefined") {
+      resolve(listLocalSnapshotKeys());
+      return;
+    }
+    google.script.run
+      .withSuccessHandler<string[]>((keys) => resolve(keys ?? []))
+      .withFailureHandler(() => resolve([]))
+      .listStateKeys();
+  });
 
 export const loadRemoteState = (
   key: string

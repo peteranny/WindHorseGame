@@ -86,6 +86,13 @@
   font-weight: bold;
 }
 
+.devButton {
+  border: 2px dashed orangered;
+  background: #fff3e0;
+  color: orangered;
+  font-weight: bold;
+}
+
 .peekStatus {
   margin: calc(8px * var(--scale)) 0 0;
   font-size: calc(10pt * var(--scale));
@@ -127,6 +134,80 @@
   width: calc(28px * var(--scale));
   height: calc(28px * var(--scale));
   object-fit: contain;
+}
+
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(20px * var(--scale));
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.dialogBox {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(360px * var(--scale));
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #3d2a1d;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: calc(8px * var(--scale));
+  padding: calc(16px * var(--scale));
+}
+
+.dialogHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(8px * var(--scale));
+  margin-bottom: calc(12px * var(--scale));
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: calc(12pt * var(--scale));
+  word-break: break-all;
+}
+
+.dialogClose {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: white;
+  font-size: calc(16pt * var(--scale));
+  line-height: 1;
+  cursor: pointer;
+}
+
+.keyOptionList {
+  display: flex;
+  flex-direction: column;
+  gap: calc(4px * var(--scale));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.keyOptionButton {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  padding: calc(8px * var(--scale)) calc(10px * var(--scale));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: calc(4px * var(--scale));
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  font-size: inherit;
+  word-break: break-all;
+  cursor: pointer;
+}
+
+.keyOptionButton:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .advancedInfo {

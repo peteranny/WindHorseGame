@@ -3,7 +3,11 @@ import { useHistory } from "react-router-dom";
 import Screen from "../Screen";
 import { useGameStore } from "../../store/gameStore";
 import { isDevStateKey } from "../../store/devMode";
-import { getLocalSnapshot, loadRemoteState } from "../../store/persistence";
+import {
+  getLocalSnapshot,
+  loadRemoteState,
+  loadRemoteStateKeys,
+} from "../../store/persistence";
 import { PersistedGameState } from "../../store/types";
 import MONSTERS from "../../data/monsters/monsters";
 import { GOAL_NAME } from "../../data/goalEncounter";
@@ -11,6 +15,7 @@ import GOAL_SPRITE from "../../assets/goalSprite.png";
 import { formatCaptureTimestamp, sortByCaptureTime } from "./capturedHistory";
 import styles from "./styles.css";
 
+type KeyListStatus = "idle" | "loading" | "loaded";
 type PeekStatus = "idle" | "loading" | "found" | "not-found";
 
 const Settings = () => {
@@ -20,7 +25,15 @@ const Settings = () => {
   const [input, setInput] = useState(stateKey ?? "");
   const isDevMode = isDevStateKey(stateKey);
 
-  const [peekKeyInput, setPeekKeyInput] = useState("");
+  // The key list is only fetched the first time the picker dialog opens
+  // (see openKeyDialog) - never on Settings mount, and never again once
+  // loaded once per visit here.
+  const [isKeyDialogOpen, setIsKeyDialogOpen] = useState(false);
+  const [keyListStatus, setKeyListStatus] = useState<KeyListStatus>("idle");
+  const [keyOptions, setKeyOptions] = useState<string[]>([]);
+
+  const [isTableDialogOpen, setIsTableDialogOpen] = useState(false);
+  const [selectedPeekKey, setSelectedPeekKey] = useState<string | null>(null);
   const [peekStatus, setPeekStatus] = useState<PeekStatus>("idle");
   const [peekCaptured, setPeekCaptured] = useState<
     PersistedGameState["captured"]
@@ -29,18 +42,30 @@ const Settings = () => {
     null
   );
 
-  const handlePeek = (e: React.FormEvent): void => {
-    e.preventDefault();
-    const targetKey = peekKeyInput.trim();
-    if (!targetKey) return;
+  const openKeyDialog = (): void => {
+    setIsKeyDialogOpen(true);
+    if (keyListStatus === "idle") {
+      setKeyListStatus("loading");
+      loadRemoteStateKeys().then((keys) => {
+        setKeyOptions(keys);
+        setKeyListStatus("loaded");
+      });
+    }
+  };
+
+  const handleSelectKey = (key: string): void => {
+    setSelectedPeekKey(key);
+    setIsKeyDialogOpen(false);
+    setIsTableDialogOpen(true);
     setPeekStatus("loading");
     // Remote (the Google Sheet, the actual source of truth for a key that
     // isn't this browser's own) first, falling back to this browser's own
     // cached snapshot for that key - the only way to test this locally,
     // where google.script.run doesn't exist at all (loadRemoteState always
-    // resolves null there).
-    loadRemoteState(targetKey).then((remote) => {
-      const resolved = remote ?? getLocalSnapshot(targetKey);
+    // resolves null there). Only ever fetched for the one key just picked,
+    // never for every option in the list.
+    loadRemoteState(key).then((remote) => {
+      const resolved = remote ?? getLocalSnapshot(key);
       setPeekCaptured(resolved?.captured ?? {});
       setPeekGoalDefeatedAt(resolved?.goalDefeatedAt ?? null);
       setPeekStatus(resolved ? "found" : "not-found");
@@ -93,17 +118,86 @@ const Settings = () => {
         {isDevMode && (
           <section className={styles.card}>
             <p className={styles.currentKey}>查詢金鑰的捕獲紀錄（開發用）</p>
-            <form className={styles.keyForm} onSubmit={handlePeek}>
-              <input
-                className={styles.keyInput}
-                value={peekKeyInput}
-                onChange={(e) => setPeekKeyInput(e.target.value)}
-                placeholder="輸入要查詢的存檔金鑰"
-              />
-              <button type="submit" className={styles.devButton}>
-                查詢
+            <button
+              type="button"
+              className={styles.devButton}
+              onClick={openKeyDialog}
+            >
+              查詢捕獲紀錄
+            </button>
+          </section>
+        )}
+
+        {__DEPLOY_DATE__ && (
+          <p className={styles.advancedInfo}>Last Updated: {__DEPLOY_DATE__}</p>
+        )}
+      </div>
+
+      {isKeyDialogOpen && (
+        <div
+          className={styles.dialogOverlay}
+          onClick={() => setIsKeyDialogOpen(false)}
+        >
+          <div
+            className={styles.dialogBox}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.dialogHeader}>
+              <h2 className={styles.dialogTitle}>選擇存檔金鑰</h2>
+              <button
+                type="button"
+                className={styles.dialogClose}
+                aria-label="關閉"
+                onClick={() => setIsKeyDialogOpen(false)}
+              >
+                ×
               </button>
-            </form>
+            </div>
+            {keyListStatus === "loading" && (
+              <p className={styles.peekStatus}>載入中...</p>
+            )}
+            {keyListStatus === "loaded" && keyOptions.length === 0 && (
+              <p className={styles.peekStatus}>找不到任何存檔金鑰</p>
+            )}
+            {keyListStatus === "loaded" && keyOptions.length > 0 && (
+              <ul className={styles.keyOptionList}>
+                {keyOptions.map((key) => (
+                  <li key={key}>
+                    <button
+                      type="button"
+                      className={styles.keyOptionButton}
+                      onClick={() => handleSelectKey(key)}
+                    >
+                      {key}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
+      {isTableDialogOpen && (
+        <div
+          className={styles.dialogOverlay}
+          onClick={() => setIsTableDialogOpen(false)}
+        >
+          <div
+            className={styles.dialogBox}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.dialogHeader}>
+              <h2 className={styles.dialogTitle}>{selectedPeekKey}</h2>
+              <button
+                type="button"
+                className={styles.dialogClose}
+                aria-label="關閉"
+                onClick={() => setIsTableDialogOpen(false)}
+              >
+                ×
+              </button>
+            </div>
             {peekStatus === "loading" && (
               <p className={styles.peekStatus}>查詢中...</p>
             )}
@@ -160,13 +254,9 @@ const Settings = () => {
                 </tbody>
               </table>
             )}
-          </section>
-        )}
-
-        {__DEPLOY_DATE__ && (
-          <p className={styles.advancedInfo}>Last Updated: {__DEPLOY_DATE__}</p>
-        )}
-      </div>
+          </div>
+        </div>
+      )}
     </Screen>
   );
 };

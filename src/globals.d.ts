@@ -14,6 +14,7 @@ interface GASRun {
   withFailureHandler(fn: (error: Error) => void): GASRun;
   loadState(key: string): GASRun;
   saveState(key: string, json: string): GASRun;
+  listStateKeys(): GASRun;
 }
 
 declare const google: {

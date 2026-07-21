@@ -54,10 +54,14 @@ src/
                           # the goal tile - the latter two always visible as beacons even through unexplored fog.
     StateKeyGate/         # Blocks rendering until the save-state key is set and state is hydrated.
     Settings/             # /settings route: view/change the save-state key. Under a dev save key
-                          # (isDevStateKey), an extra card looks up any other key's captured-monster
-                          # history - capturedHistory.ts's sortByCaptureTime/formatCaptureTimestamp
-                          # back a compact table (order, icon, "YYYY/MM/DD hh:mm" capture time), with
-                          # a trailing row for the goal (goalSprite.png/GOAL_NAME) and its own
+                          # (isDevStateKey), an extra card's button opens a two-step dialog flow:
+                          # tapping it lazily fetches every save key (persistence.ts's
+                          # loadRemoteStateKeys, only called on that first tap) into a picker dialog;
+                          # picking one lazily fetches (loadRemoteState, falling back to
+                          # getLocalSnapshot for local dev) only that key's own data into a second
+                          # dialog - a compact table (order, icon, "YYYY/MM/DD hh:mm" capture time,
+                          # capturedHistory.ts's sortByCaptureTime/formatCaptureTimestamp) with a
+                          # trailing row for the goal (goalSprite.png/GOAL_NAME) and its own
                           # goalDefeatedAt, shown only once that key has actually cleared it.
   data/
     monsters/
@@ -235,4 +239,4 @@ npm run deploy         # build, push, and activate the live deployment
 
 ## Google Sheet integration
 
-The GAS project is container-bound to a Google Sheet, storing one row per save-state key: column A = key, column B = the full state JSON blob (position, captured monsters, monsterOrder, cooldowns, goalDefeatedAt, timestamp — see `store/types.ts`). `google.script.run.saveState(key, json)` finds the key's row and overwrites column B (appending a new row if the key is new); `loadState(key)` reads it back. There's no more per-field (x/y) column layout — the whole persisted slice travels as one JSON string.
+The GAS project is container-bound to a Google Sheet, but every save lives specifically on the sheet named `"2026"` within it (`Code.js`'s `STATE_SHEET_NAME`/`getStateSheet()`) - not just whichever sheet happened to be active, since the container-bound spreadsheet holds other sheets too. Storage is one row per save-state key: column A = key, column B = the full state JSON blob (position, captured monsters, monsterOrder, cooldowns, goalDefeatedAt, timestamp — see `store/types.ts`). `google.script.run.saveState(key, json)` finds the key's row and overwrites column B (appending a new row if the key is new); `loadState(key)` reads it back; `listStateKeys()` returns every non-empty key across the whole sheet (backs Settings' dev-only key-picker, see below). There's no more per-field (x/y) column layout — the whole persisted slice travels as one JSON string.
