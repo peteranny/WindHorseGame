@@ -53,7 +53,10 @@ src/
     MiniMap/              # Small corner overview of the whole map: player position, uncaptured monsters, and
                           # the goal tile - the latter two always visible as beacons even through unexplored fog.
     StateKeyGate/         # Blocks rendering until the save-state key is set and state is hydrated.
-    Settings/             # /settings route: view/change the save-state key.
+    Settings/             # /settings route: view/change the save-state key. Under a dev save key
+                          # (isDevStateKey), an extra card looks up any other key's captured-monster
+                          # history - capturedHistory.ts's sortByCaptureTime/formatCaptureTimestamp
+                          # back a compact table (order, icon, "YYYY/MM/DD hh:mm" capture time).
   data/
     monsters/
       monsters.generated.json  # The 39 monster definitions (name, description, family, isHealer/healAmount -

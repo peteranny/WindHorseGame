@@ -86,6 +86,38 @@
   font-weight: bold;
 }
 
+.peekStatus {
+  margin: calc(8px * var(--scale)) 0 0;
+  font-size: calc(10pt * var(--scale));
+  opacity: 0.8;
+}
+
+.peekTable {
+  width: 100%;
+  margin-top: calc(12px * var(--scale));
+  border-collapse: collapse;
+  font-size: calc(9pt * var(--scale));
+
+  th,
+  td {
+    padding: calc(4px * var(--scale)) calc(6px * var(--scale));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    text-align: left;
+  }
+
+  th {
+    opacity: 0.7;
+    font-weight: normal;
+  }
+}
+
+.peekIcon {
+  display: block;
+  width: calc(28px * var(--scale));
+  height: calc(28px * var(--scale));
+  object-fit: contain;
+}
+
 .advancedInfo {
   margin-top: calc(24px * var(--scale));
   opacity: 0.5;
