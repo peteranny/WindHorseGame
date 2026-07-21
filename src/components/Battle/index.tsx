@@ -1026,7 +1026,14 @@ const Battle = () => {
         </div>
         <div className={styles.enemySide}>
           <div className={styles.enemySpriteWrap}>
-            <div ref={enemyShadowRef} className={styles.enemyShadow} aria-hidden="true" />
+            <div
+              ref={enemyShadowRef}
+              className={cn(
+                styles.enemyShadow,
+                isEnemySinking && styles.enemyShadowSink
+              )}
+              aria-hidden="true"
+            />
             <img
               ref={enemySpriteRef}
               src={enemyIcon}

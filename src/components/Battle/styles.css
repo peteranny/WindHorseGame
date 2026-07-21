@@ -685,6 +685,24 @@
   animation: enemy-sink 500ms ease-in 300ms forwards;
 }
 
+/* Same timing as .enemySink so the shadow fades out in step with the
+   sprite falling above it - the shadow itself doesn't move/rotate, since a
+   ground shadow staying put while only its opacity fades reads as "the
+   thing casting it is disappearing," not as the shadow itself falling. */
+@keyframes enemy-shadow-sink {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+.enemyShadowSink {
+  animation: enemy-shadow-sink 500ms ease-in 300ms forwards;
+}
+
 .hpBarOuter {
   height: calc(8px * var(--scale));
   background: #ccc;
