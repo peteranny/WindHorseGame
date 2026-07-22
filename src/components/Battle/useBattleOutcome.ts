@@ -21,6 +21,11 @@ const SINK_HOLD_MS = 400;
 const OUTCOME_PAUSE_MS = SINK_LEAD_MS + SINK_DURATION_MS + SINK_HOLD_MS;
 const OUTCOME_FADE_MS = 700;
 const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
+// Extra beat holding the screen fully black/white once the fade above has
+// already reached opacity 1, before concludeBattle actually swaps the
+// screen away - .outcomeFade's animation-fill-mode: forwards holds that
+// last frame for free, so this needs no matching change in styles.css.
+const OUTCOME_HOLD_MS = 1000;
 
 interface UseBattleOutcomeParams {
   activeMonsterId: number | null;
@@ -101,7 +106,8 @@ export const useBattleOutcome = ({
     // fade portion instead of sitting through the same multi-beat pause a
     // real win/loss's sink sequence needs.
     const totalMs =
-      pendingOutcome === "escape" ? OUTCOME_FADE_MS : OUTCOME_TOTAL_MS;
+      (pendingOutcome === "escape" ? OUTCOME_FADE_MS : OUTCOME_TOTAL_MS) +
+      OUTCOME_HOLD_MS;
     const id = setTimeout(() => {
       // Only actually captured/recorded once the fade finishes and we're
       // leaving this screen - otherwise the defeated monster would show up
