@@ -48,7 +48,12 @@ export type BattleOutcome = "win" | "lose" | "escape";
 
 export const buildOutcomeConversation = (
   monsterName: string,
-  outcome: BattleOutcome
+  outcome: BattleOutcome,
+  // Only meaningful alongside "win" - a captured healer monster gets one
+  // extra page (in its own voice) mentioning it can now heal in battle,
+  // since the player has no other way of learning that a given monster is
+  // a healer before actually adding it to their own attack line.
+  isHealer = false
 ): Conversation => {
   switch (outcome) {
     case "win":
@@ -56,8 +61,17 @@ export const buildOutcomeConversation = (
         {
           speaker: "protagonist",
           text: `太好了，成功抓到${monsterName}了！`,
-          action: "end",
+          ...(isHealer ? {} : ({ action: "end" } as const)),
         },
+        ...(isHealer
+          ? [
+              {
+                speaker: "monster" as const,
+                text: `以後的戰鬥，我可以幫你補血囉！`,
+                action: "end" as const,
+              },
+            ]
+          : []),
       ];
     case "lose":
       return [

@@ -105,7 +105,11 @@ const ConversationView = () => {
     : activeMonsterId === null
     ? []
     : battleOutcome !== null
-    ? buildOutcomeConversation(MONSTERS[activeMonsterId].name, battleOutcome)
+    ? buildOutcomeConversation(
+        MONSTERS[activeMonsterId].name,
+        battleOutcome,
+        MONSTERS[activeMonsterId].isHealer
+      )
     : isOnBattleCooldown
     ? buildCooldownConversation(
         MONSTERS[activeMonsterId].name,

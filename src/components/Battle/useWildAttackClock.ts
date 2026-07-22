@@ -2,10 +2,13 @@ import { RefObject, useEffect, useReducer, useRef } from "react";
 import {
   GOAL_SELF_HEAL_INTERVAL_SPITS,
   GOAL_SELF_HEAL_PERCENT,
+  HEALER_ENEMY_SELF_HEAL_INTERVAL_SPITS,
+  HEALER_ENEMY_SELF_HEAL_PERCENT,
   WILD_ATTACK_DAMAGE,
   WILD_ATTACK_INTERVAL_MS,
 } from "../../data/monsters/battleFormulas";
 import { GOAL_NAME } from "../../data/goalEncounter";
+import MONSTERS from "../../data/monsters/monsters";
 import { Point } from "./geometry";
 import {
   EFFECT_DURATION_MS,
@@ -54,6 +57,7 @@ interface UseWildAttackClockParams {
   pendingOutcome: PendingOutcome;
   isEntering: boolean;
   isGoalEncounter: boolean;
+  activeMonsterId: number | null;
   wildMaxHp: number;
   enemySpriteRef: RefObject<HTMLElement>;
   enemyShadowRef: RefObject<HTMLElement>;
@@ -69,14 +73,17 @@ interface UseWildAttackClockParams {
   healWild: (amount: number) => void;
 }
 
-// Goal-battle-only boss mechanic: counts every spit the wild side has
-// thrown at the player so far this battle - every GOAL_SELF_HEAL_INTERVAL_SPITS-th
-// one, a coldnoodle appears beside it as a self-heal instead of just
-// spitting again.
+// Counts every spit the wild side has thrown at the player so far this
+// battle. The goal boss gets its own coldnoodle self-heal every
+// GOAL_SELF_HEAL_INTERVAL_SPITS-th one; any other healer monster
+// (Monster.isHealer) gets a plainer version of the same idea every
+// HEALER_ENEMY_SELF_HEAL_INTERVAL_SPITS-th one instead - no side dish, just
+// an immediate heal glow, since nothing is thrown for it to wait on.
 export const useWildAttackClock = ({
   pendingOutcome,
   isEntering,
   isGoalEncounter,
+  activeMonsterId,
   wildMaxHp,
   enemySpriteRef,
   enemyShadowRef,
@@ -100,6 +107,13 @@ export const useWildAttackClock = ({
     Date.now() + ENTRANCE_LOCK_MS + WILD_ATTACK_INTERVAL_MS
   );
   const wildSpitCountRef = useRef(0);
+  // Non-goal healer monsters (Monster.isHealer, e.g. 小風媽/小馬媽) get their
+  // own version of the goal's self-heal mechanic below - null whenever
+  // there's no such wild monster to heal (the goal itself, or a non-healer).
+  const healerEnemyName =
+    !isGoalEncounter && activeMonsterId !== null && MONSTERS[activeMonsterId].isHealer
+      ? MONSTERS[activeMonsterId].name
+      : null;
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -142,6 +156,19 @@ export const useWildAttackClock = ({
               }, HEAL_ANIMATION_MS);
             }, COLD_NOODLE_HEAL_DELAY_MS);
           }, SPIT_DURATION_MS);
+        } else if (
+          healerEnemyName !== null &&
+          wildSpitCountRef.current % HEALER_ENEMY_SELF_HEAL_INTERVAL_SPITS === 0
+        ) {
+          // Unlike the goal's coldnoodle above, this is an immediate skill -
+          // nothing is thrown/travels first, so the toast and heal glow
+          // fire right away instead of being queued behind a spit's flight
+          // time. HP still only actually recovers once the glow finishes.
+          triggerToast(`${healerEnemyName}進行自我治療！`);
+          triggerEnemyHeal("heal", HEAL_ANIMATION_MS);
+          setTimeout(() => {
+            healWild(wildMaxHp * HEALER_ENEMY_SELF_HEAL_PERCENT);
+          }, HEAL_ANIMATION_MS);
         }
 
         nextWildAttackAtRef.current += WILD_ATTACK_INTERVAL_MS;
@@ -161,6 +188,7 @@ export const useWildAttackClock = ({
     triggerEnemyHeal,
     healWild,
     wildMaxHp,
+    healerEnemyName,
   ]);
 
   const msUntilWildAttack = nextWildAttackAtRef.current - Date.now();

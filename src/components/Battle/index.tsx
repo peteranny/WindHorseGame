@@ -120,6 +120,7 @@ const Battle = () => {
     pendingOutcome,
     isEntering,
     isGoalEncounter,
+    activeMonsterId,
     wildMaxHp,
     enemySpriteRef,
     enemyShadowRef,
