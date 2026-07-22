@@ -707,7 +707,7 @@
 
 /*
  * Played once on mount, delayed via --enter-delay (set inline from
- * Battle/index.tsx's ENTER_PLAYER_DELAY_TOTAL_MS/OVERLAY_TOTAL_MS - the
+ * Battle/index.tsx's ENTER_PLAYER_DELAY_TOTAL_MS/DISTORT_OUT_MS - the
  * moment BattleTransition's own distortion overlay finishes clearing, see
  * BattleTransition/timing.ts) so both sprites stay fully invisible for as
  * long as that overlay is still covering the screen, then visibly slide +
@@ -717,13 +717,13 @@
  */
 .enemyEnter {
   animation:
-    battle-sprite-enter var(--enter-duration, 1750ms) ease-out
+    battle-sprite-enter var(--enter-duration, 1050ms) ease-out
     var(--enter-delay, 0ms) both;
 }
 
 .playerEnter {
   animation:
-    battle-sprite-enter-reverse var(--enter-duration, 1750ms) ease-out
+    battle-sprite-enter-reverse var(--enter-duration, 1050ms) ease-out
     var(--enter-delay, 0ms) both;
 }
 
@@ -748,6 +748,32 @@
   100% {
     opacity: 1;
     transform: translateX(0) scale(1);
+  }
+}
+
+/*
+ * The enemyInfo/playerInfo HP blocks (each its own instance of this same
+ * class - only --enter-delay/--enter-duration inline differ, matching
+ * whichever sprite they belong to exactly, see Battle/index.tsx) fade in
+ * rather than sliding, since they're pinned to a fixed corner (not
+ * traveling across the battlefield like their sprite is) - but on the same
+ * schedule, so a block never appears before (or noticeably after) its own
+ * sprite has finished entering.
+ */
+.infoEnter {
+  opacity: 0;
+  animation:
+    battle-info-fade var(--enter-duration, 1050ms) ease-out
+    var(--enter-delay, 0ms) both;
+}
+
+@keyframes battle-info-fade {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
   }
 }
 
@@ -1017,9 +1043,9 @@
    * would escape all the way up past every ancestor here that's
    * position:relative/absolute with no explicit z-index of its own
    * (.attackGroup, .actionBar, .battle...) and could end up competing
-   * directly with unrelated overlays elsewhere on the page (ScreenTransition's
-   * crossfade layers, .outcomeFade) instead of staying contained to this
-   * one button.
+   * directly with unrelated overlays elsewhere on the page (BattleTransition's
+   * own distortion overlay, .outcomeFade) instead of staying contained to
+   * this one button.
    */
   z-index: 0;
   display: flex;

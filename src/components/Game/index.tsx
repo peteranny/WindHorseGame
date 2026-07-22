@@ -10,7 +10,6 @@ import Dialog from "../Dialog";
 import Battle from "../Battle";
 import StateKeyGate from "../StateKeyGate";
 import MiniMap from "../MiniMap";
-import ScreenTransition from "../ScreenTransition";
 import BattleTransition from "../BattleTransition";
 import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
@@ -41,7 +40,6 @@ const Game = () => {
   const setDevCooldownLockDisabled = useFlowStore(
     (state) => state.setDevCooldownLockDisabled
   );
-  const screenKey = mode === "battle" ? "battle" : "game";
   // Same offsetX/offsetY formula Maze itself uses to keep the player's own
   // cell centered on screen - applied here as the infinite wall backdrop's
   // own background-position, so its tiling stays in phase with the actual
@@ -55,11 +53,10 @@ const Game = () => {
         onClick={handleMouseClick}
       >
         <StateKeyGate>
-          <BattleTransition mode={mode} />
-          <ScreenTransition screenKey={screenKey}>
-            {mode === "battle" ? (
-              <Battle />
-            ) : (
+          <BattleTransition
+            mode={mode}
+            battleContent={<Battle />}
+            otherContent={
               <>
                 <div
                   ref={ref}
@@ -183,8 +180,8 @@ const Game = () => {
                 </div>
                 <Dialog />
               </>
-            )}
-          </ScreenTransition>
+            }
+          />
         </StateKeyGate>
       </Screen>
     </MouseContext.Provider>

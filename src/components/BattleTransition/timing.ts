@@ -1,14 +1,14 @@
 // Shared between BattleTransition (which plays these stages) and Battle
-// (whose own sprite-entrance/intro-text animations are delayed to start
-// exactly once the last of these has finished covering the screen) - kept
-// in one place so the two can never drift out of sync with each other.
-export const FREEZE_MS = 500;
-export const FLASH_MS = 600;
-export const DISTORT_IN_MS = 1500;
-export const DISTORT_OUT_MS = 1000;
-
-// The moment the distortion has fully cleared and the battle scene
-// underneath is completely visible - Battle's own entrance sequence starts
-// counting from here, not from its own mount time (which happens earlier,
-// while still hidden behind the still-covering overlay).
-export const OVERLAY_TOTAL_MS = FREEZE_MS + FLASH_MS + DISTORT_IN_MS + DISTORT_OUT_MS;
+// (whose own sprite-entrance/intro-text animations are delayed relative to
+// DISTORT_OUT_MS - see below) - kept in one place so the two can never
+// drift out of sync with each other.
+export const FREEZE_MS = 300;
+export const FLASH_MS = 360;
+export const DISTORT_IN_MS = 900;
+// Battle itself only ever mounts right as this final "reveal" stage starts
+// (BattleTransition swaps the actual map/battle content the instant the
+// distortion is fully, opaquely covering the screen, then starts clearing
+// it) - so DISTORT_OUT_MS doubles as Battle's own base delay before its
+// sprite-entrance/intro-text animations start, timed from Battle's own
+// mount rather than from this whole sequence's start.
+export const DISTORT_OUT_MS = 600;

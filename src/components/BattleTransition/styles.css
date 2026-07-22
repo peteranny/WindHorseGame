@@ -1,7 +1,26 @@
 /*
- * Sits on top of everything else in Screen (a positioned ancestor, so
- * inset: 0 here fills the whole viewport regardless of Game's own flex
- * layout underneath) for the full "freeze" -> "flash" -> "cover" ->
+ * The two content branches (battleContent/otherContent) never render at
+ * the same time - only one is ever mounted (see BattleTransition/index.tsx's
+ * `displayed` state) - so this is just a plain positioned box, not a
+ * crossfading stack of layers. Game's own flex layout expects whatever's
+ * inside to be a flex column filling the available height, hence .layer.
+ */
+.stack {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * Sits on top of .layer (a positioned ancestor via .stack, so inset: 0
+ * here fills that same box) for the full "freeze" -> "flash" -> "cover" ->
  * "reveal" sequence - pointer-events stays "auto" throughout so the map/
  * conversation screen genuinely can't be clicked again mid-transition,
  * matching the "freeze" stage's own intent even once that stage itself
@@ -23,7 +42,7 @@
   opacity: 0;
 
   /* Must match BattleTransition/timing.ts's FLASH_MS. */
-  animation: battle-flash-pulse 600ms ease-out forwards;
+  animation: battle-flash-pulse 360ms ease-out forwards;
 }
 
 @keyframes battle-flash-pulse {
@@ -49,7 +68,7 @@
  */
 .cover {
   /* Must match BattleTransition/timing.ts's DISTORT_IN_MS. */
-  animation: battle-distort-in 1500ms ease-in both;
+  animation: battle-distort-in 900ms ease-in both;
 }
 
 @keyframes battle-distort-in {
@@ -72,7 +91,7 @@
  */
 .reveal {
   /* Must match BattleTransition/timing.ts's DISTORT_OUT_MS. */
-  animation: battle-distort-out 1000ms ease-out both;
+  animation: battle-distort-out 600ms ease-out both;
 }
 
 @keyframes battle-distort-out {

@@ -30,7 +30,7 @@ import {
   moveGroupToFront,
 } from "./attackGroups";
 import { GOAL_NAME } from "../../data/goalEncounter";
-import { OVERLAY_TOTAL_MS } from "../BattleTransition/timing";
+import { DISTORT_OUT_MS } from "../BattleTransition/timing";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
 import COLD_NOODLE_SPRITE from "../../assets/coldNoodle.png";
@@ -109,21 +109,24 @@ const OUTCOME_PAUSE_MS = SINK_LEAD_MS + SINK_DURATION_MS + SINK_HOLD_MS;
 const OUTCOME_FADE_MS = 700;
 const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 
-// The entrance sequence that plays once per fresh battle mount, right as
-// BattleTransition's own distortion overlay (see its timing.ts) finishes
-// clearing - OVERLAY_TOTAL_MS is this component's own mount time, but the
-// overlay covers it for that long first, so every delay below counts from
-// there rather than from 0. Enemy leads, player follows a beat later (a
+// The entrance sequence that plays once per fresh battle mount. This
+// component only ever mounts right as BattleTransition's own "reveal" stage
+// starts (see its index.tsx - the distortion is fully opaque right then,
+// and the map/battle content swap happens at that exact instant), so
+// DISTORT_OUT_MS - the time that final stage itself takes to clear - is
+// this component's own base delay before anything below starts, not the
+// whole freeze/flash/cover sequence that already finished before this
+// component even mounted. Enemy leads, player follows a beat later (a
 // classic staggered arrival), then the intro banner names the opponent once
 // both have actually landed - the action bar (see .actionBarLocked) stays
 // disabled for this whole span so a player can't attack mid-entrance.
-const ENTER_ENEMY_MS = 1750;
-const ENTER_PLAYER_DELAY_MS = 600;
-const ENTER_PLAYER_MS = 1750;
-const ENTER_PLAYER_DELAY_TOTAL_MS = OVERLAY_TOTAL_MS + ENTER_PLAYER_DELAY_MS;
+const ENTER_ENEMY_MS = 1050;
+const ENTER_PLAYER_DELAY_MS = 360;
+const ENTER_PLAYER_MS = 1050;
+const ENTER_PLAYER_DELAY_TOTAL_MS = DISTORT_OUT_MS + ENTER_PLAYER_DELAY_MS;
 const INTRO_BANNER_DELAY_MS = ENTER_PLAYER_DELAY_TOTAL_MS + ENTER_PLAYER_MS;
-const INTRO_BANNER_FADE_MS = 1000;
-const INTRO_BANNER_HOLD_MS = 4000;
+const INTRO_BANNER_FADE_MS = 600;
+const INTRO_BANNER_HOLD_MS = 2400;
 const INTRO_BANNER_MS = INTRO_BANNER_FADE_MS * 2 + INTRO_BANNER_HOLD_MS;
 const ENTRANCE_LOCK_MS = INTRO_BANNER_DELAY_MS + INTRO_BANNER_MS;
 
@@ -429,7 +432,7 @@ const Battle = () => {
 
   // True for exactly ENTRANCE_LOCK_MS starting from this component's own
   // mount (a fresh Battle instance mounts every time a new battle starts,
-  // see ScreenTransition's own per-key layer cleanup) - drives the sprite
+  // see BattleTransition's own `displayed` swap) - drives the sprite
   // entrance animations, the intro banner, and locks the action bar
   // (.actionBarLocked) until the whole sequence has played out.
   const [isEntering, setIsEntering] = useState(true);
@@ -485,7 +488,15 @@ const Battle = () => {
   }, []);
 
   const [, forceTick] = useReducer((n: number) => n + 1, 0);
-  const nextWildAttackAtRef = useRef(Date.now() + WILD_ATTACK_INTERVAL_MS);
+  // Delayed past ENTRANCE_LOCK_MS (rather than starting to count down from
+  // the instant this component mounts) so the wild monster's own attack
+  // clock doesn't start running before the player can actually do anything
+  // back - the first attack lands WILD_ATTACK_INTERVAL_MS after the
+  // entrance sequence (and thus the action bar) actually unlocks, same as
+  // every attack after it.
+  const nextWildAttackAtRef = useRef(
+    Date.now() + ENTRANCE_LOCK_MS + WILD_ATTACK_INTERVAL_MS
+  );
   // Goal-battle-only boss mechanic: counts every spit the wild side has
   // thrown at the player so far this battle - every GOAL_SELF_HEAL_INTERVAL_SPITS-th
   // one, a coldnoodle appears beside it as a self-heal (see
@@ -496,6 +507,7 @@ const Battle = () => {
     const id = setInterval(() => {
       if (
         pendingOutcome === null &&
+        !isEntering &&
         Date.now() >= nextWildAttackAtRef.current
       ) {
         // Mirrors the innate attack: the enemy spits at the player, and the
@@ -544,6 +556,7 @@ const Battle = () => {
     return () => clearInterval(id);
   }, [
     pendingOutcome,
+    isEntering,
     getTrajectory,
     damageProtagonist,
     triggerEnemySpit,
@@ -1085,7 +1098,7 @@ const Battle = () => {
               )}
               style={
                 {
-                  "--enter-delay": `${OVERLAY_TOTAL_MS}ms`,
+                  "--enter-delay": `${DISTORT_OUT_MS}ms`,
                   "--enter-duration": `${ENTER_ENEMY_MS}ms`,
                 } as React.CSSProperties
               }
@@ -1115,7 +1128,15 @@ const Battle = () => {
             )}
           </div>
         </div>
-        <div className={styles.enemyInfo}>
+        <div
+          className={cn(styles.enemyInfo, isEntering && styles.infoEnter)}
+          style={
+            {
+              "--enter-delay": `${DISTORT_OUT_MS}ms`,
+              "--enter-duration": `${ENTER_ENEMY_MS}ms`,
+            } as React.CSSProperties
+          }
+        >
           <div>{enemyName}</div>
           <HpBar hp={wildHp} maxHp={wildMaxHp} />
           {isDevMode && (
@@ -1124,7 +1145,15 @@ const Battle = () => {
             </div>
           )}
         </div>
-        <div className={styles.playerInfo}>
+        <div
+          className={cn(styles.playerInfo, isEntering && styles.infoEnter)}
+          style={
+            {
+              "--enter-delay": `${ENTER_PLAYER_DELAY_TOTAL_MS}ms`,
+              "--enter-duration": `${ENTER_PLAYER_MS}ms`,
+            } as React.CSSProperties
+          }
+        >
           <div className={styles.nameRow}>
             <span>小風</span>
             <span className={styles.levelBadge}>LV. {line.length}</span>
