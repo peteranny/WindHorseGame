@@ -119,7 +119,9 @@ const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 // component even mounted. Enemy leads, player follows a beat later (a
 // classic staggered arrival), then the intro banner names the opponent once
 // both have actually landed - the action bar (see .actionBarLocked) stays
-// disabled for this whole span so a player can't attack mid-entrance.
+// entirely blank (not just dimmed) for this whole span so a player can't
+// attack mid-entrance, then "drops in" with a brief shake once it's ready
+// (see isActionBarRevealing/.actionBarReveal below).
 const ENTER_ENEMY_MS = 1050;
 const ENTER_PLAYER_DELAY_MS = 360;
 const ENTER_PLAYER_MS = 1050;
@@ -129,6 +131,9 @@ const INTRO_BANNER_FADE_MS = 600;
 const INTRO_BANNER_HOLD_MS = 2400;
 const INTRO_BANNER_MS = INTRO_BANNER_FADE_MS * 2 + INTRO_BANNER_HOLD_MS;
 const ENTRANCE_LOCK_MS = INTRO_BANNER_DELAY_MS + INTRO_BANNER_MS;
+// How long the drop-and-settle shake itself takes once the action bar
+// unlocks - purely cosmetic, .actionBarReveal's own animation duration.
+const ACTION_BAR_REVEAL_MS = 450;
 
 // "heal" is the only sprite effect still driven by React state/CSS class -
 // see useHealEffect and playBump below for why attack/hit moved off this.
@@ -436,9 +441,25 @@ const Battle = () => {
   // entrance animations, the intro banner, and locks the action bar
   // (.actionBarLocked) until the whole sequence has played out.
   const [isEntering, setIsEntering] = useState(true);
+  // Flips true for exactly ACTION_BAR_REVEAL_MS the instant isEntering
+  // flips false - just long enough to play .actionBarReveal's one-shot
+  // drop-and-settle shake, then clears itself so a later re-render (a
+  // cooldown tick, an attack) doesn't replay it.
+  const [isActionBarRevealing, setIsActionBarRevealing] = useState(false);
   useEffect(() => {
-    const id = setTimeout(() => setIsEntering(false), ENTRANCE_LOCK_MS);
-    return () => clearTimeout(id);
+    let revealTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    const lockTimeoutId = setTimeout(() => {
+      setIsEntering(false);
+      setIsActionBarRevealing(true);
+      revealTimeoutId = setTimeout(
+        () => setIsActionBarRevealing(false),
+        ACTION_BAR_REVEAL_MS
+      );
+    }, ENTRANCE_LOCK_MS);
+    return () => {
+      clearTimeout(lockTimeoutId);
+      if (revealTimeoutId) clearTimeout(revealTimeoutId);
+    };
   }, []);
 
   const battlefieldRef = useRef<HTMLDivElement>(null);
@@ -1332,9 +1353,10 @@ const Battle = () => {
                             leavingKeys.has(option.key) &&
                               styles.attackButtonLeaving,
                             enteringKeys.has(option.key) &&
-                              styles.attackButtonEntering
+                              styles.attackButtonEntering,
+                            isActionBarRevealing && styles.attackButtonReveal
                           )}
-                          disabled={!ready || pendingOutcome !== null}
+                          disabled={!ready || pendingOutcome !== null || isEntering}
                           onClick={() => handleAttack(option)}
                         >
                           {option.trueFamily !== null && (

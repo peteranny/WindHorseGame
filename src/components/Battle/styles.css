@@ -823,15 +823,18 @@
 
 /*
  * Locks the whole action bar (escape/skip/dev buttons, the attack grid)
- * during Battle/index.tsx's own entrance sequence (isEntering) - dimmed and
- * unclickable as one unit rather than disabling every individual button,
- * since nothing in here should be tappable until the enemy/player have
+ * during Battle/index.tsx's own entrance sequence (isEntering) - left
+ * entirely blank (opacity: 0, not just dimmed) and unclickable as one unit
+ * rather than disabling every individual button, since nothing in here
+ * should even be visible, let alone tappable, until the enemy/player have
  * actually finished walking on screen and the intro banner's played out.
+ * Snaps back to fully opaque the instant isEntering clears (no fade of its
+ * own here) - .attackButtonReveal below is what actually plays the
+ * cells' own drop-in-and-settle moment, not a transition on this class.
  */
 .actionBarLocked {
   pointer-events: none;
-  opacity: 0.4;
-  transition: opacity 200ms ease-out;
+  opacity: 0;
 }
 
 .hpBarOuter {
@@ -1270,5 +1273,40 @@
     border-left-width: 2px;
     border-right-width: 2px;
     opacity: 1;
+  }
+}
+
+/*
+ * The instant .actionBarLocked lifts (Battle/index.tsx's isActionBarRevealing,
+ * true for exactly ACTION_BAR_REVEAL_MS), every attack cell plays this once -
+ * a sudden appearance (the bar itself already snapped to opacity: 1 the same
+ * frame) followed by a small drop-and-settle wobble, as if it just landed on
+ * the ground rather than sliding in from anywhere. Deliberately restrained
+ * (a few degrees of rotation, a few pixels of vertical bounce) rather than a
+ * cartoonish shake - see Battle/index.tsx's own ACTION_BAR_REVEAL_MS (450ms).
+ */
+.attackButtonReveal {
+  animation: attack-button-reveal 450ms ease-out;
+}
+
+@keyframes attack-button-reveal {
+  0% {
+    transform: translateY(calc(-10px * var(--scale))) rotate(0deg);
+  }
+
+  35% {
+    transform: translateY(calc(2px * var(--scale))) rotate(-3deg);
+  }
+
+  55% {
+    transform: translateY(calc(-1px * var(--scale))) rotate(2deg);
+  }
+
+  75% {
+    transform: translateY(calc(1px * var(--scale))) rotate(-1deg);
+  }
+
+  100% {
+    transform: translateY(0) rotate(0deg);
   }
 }

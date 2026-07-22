@@ -60,80 +60,311 @@
 }
 
 /*
- * Grows from a small dot at screen center out to fully cover the overlay -
- * whichever of .radial/.stripes/.particles below supplies the actual
- * pattern, this just handles the shared grow-in/warp-out motion. `both`
- * holds the 100% frame once "cover" finishes, so the pattern stays fully
- * covering (not snapping back) for however long "reveal" takes to start.
+ * Every variant is black + *transparent* (never white) - the map/dialog
+ * scene underneath (still fully opaque and un-faded, see index.tsx's
+ * `displayed`) shows straight through the transparent portion, so a player
+ * can still place where they are through the pattern rather than staring
+ * at a flat, high-contrast strobe. "cover" grows the black portion of the
+ * pattern from a thin sliver up to total coverage (the 100% keyframe drops
+ * the gradient entirely for a plain solid black, guaranteeing the screen
+ * really is 100% opaque by the time the map/battle content swaps
+ * underneath, regardless of how exactly each pattern's own math tiles);
+ * "reveal" runs the same fill in reverse, opening back up from solid black
+ * into the pattern and fading out entirely, so the battle scene emerges
+ * gradually rather than snapping into view. Shared scale/rotate motion
+ * across all three variants; only the actual gradient differs, so `both`
+ * on both classes holds each variant's own last keyframe until the next
+ * phase - or unmount - takes over.
  */
 .cover {
   /* Must match BattleTransition/timing.ts's DISTORT_IN_MS. */
-  animation: battle-distort-in 900ms ease-in both;
+  animation-duration: 900ms;
+  animation-timing-function: ease-in;
+  animation-fill-mode: both;
 }
 
-@keyframes battle-distort-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.15) rotate(-25deg);
-  }
+.reveal {
+  /* Must match BattleTransition/timing.ts's DISTORT_OUT_MS. */
+  animation-duration: 600ms;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
 
-  100% {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-  }
+.cover.radial {
+  animation-name: battle-cover-radial;
+}
+
+.reveal.radial {
+  animation-name: battle-reveal-radial;
 }
 
 /*
- * Reverses course past where "cover" left off - rather than just shrinking
- * back down the way it grew, this keeps expanding outward while fading, so
- * the pattern reads as flying past the camera on its way out rather than
- * retreating back into the center it grew from.
+ * A spinning wedge pattern - repeating-conic-gradient's own period never
+ * changes (18deg: a black wedge plus the transparent gap after it), only
+ * how much of that period is black (1deg at the thinnest, 18deg - the
+ * whole period - once solid) does.
  */
-.reveal {
-  /* Must match BattleTransition/timing.ts's DISTORT_OUT_MS. */
-  animation: battle-distort-out 600ms ease-out both;
+@keyframes battle-cover-radial {
+  0% {
+    transform: scale(0.15) rotate(-25deg);
+    background: repeating-conic-gradient(from 0deg, #000 0deg 1deg, transparent 1deg 18deg);
+  }
+
+  20% {
+    transform: scale(0.35) rotate(-18deg);
+    background: repeating-conic-gradient(from 0deg, #000 0deg 4deg, transparent 4deg 18deg);
+  }
+
+  40% {
+    transform: scale(0.55) rotate(-12deg);
+    background: repeating-conic-gradient(from 0deg, #000 0deg 7deg, transparent 7deg 18deg);
+  }
+
+  60% {
+    transform: scale(0.75) rotate(-7deg);
+    background: repeating-conic-gradient(from 0deg, #000 0deg 10deg, transparent 10deg 18deg);
+  }
+
+  80% {
+    transform: scale(0.9) rotate(-3deg);
+    background: repeating-conic-gradient(from 0deg, #000 0deg 14deg, transparent 14deg 18deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    background: #000;
+  }
 }
 
-@keyframes battle-distort-out {
+@keyframes battle-reveal-radial {
   0% {
     opacity: 1;
     transform: scale(1) rotate(0deg);
+    background: #000;
+  }
+
+  20% {
+    transform: scale(1.1) rotate(3deg);
+    background: repeating-conic-gradient(from 0deg, #000 0deg 14deg, transparent 14deg 18deg);
+  }
+
+  40% {
+    transform: scale(1.2) rotate(6deg);
+    background: repeating-conic-gradient(from 0deg, #000 0deg 10deg, transparent 10deg 18deg);
+  }
+
+  60% {
+    transform: scale(1.35) rotate(8deg);
+    background: repeating-conic-gradient(from 0deg, #000 0deg 7deg, transparent 7deg 18deg);
+  }
+
+  80% {
+    opacity: 0.6;
+    transform: scale(1.5) rotate(9deg);
+    background: repeating-conic-gradient(from 0deg, #000 0deg 4deg, transparent 4deg 18deg);
   }
 
   100% {
     opacity: 0;
     transform: scale(1.6) rotate(10deg);
+    background: repeating-conic-gradient(from 0deg, #000 0deg 1deg, transparent 1deg 18deg);
   }
 }
 
-.radial {
-  background:
-    repeating-conic-gradient(
-      from 0deg,
-      #14142b 0deg 9deg,
-      #f4f4f4 9deg 18deg
-    );
+.cover.stripes {
+  animation-name: battle-cover-stripes;
 }
 
-/* Horizontal bands (stacked top-to-bottom), not vertical columns. */
-.stripes {
-  background:
-    repeating-linear-gradient(
-      180deg,
-      #14142b 0 18px,
-      #f4f4f4 18px 36px
-    );
+.reveal.stripes {
+  animation-name: battle-reveal-stripes;
 }
 
+/*
+ * Horizontal bands (stacked top-to-bottom, not vertical columns) - same
+ * "grow the black share of a fixed period" idea as .radial above, just
+ * with repeating-linear-gradient's own band height (36px) in place of the
+ * conic gradient's angle.
+ */
+@keyframes battle-cover-stripes {
+  0% {
+    transform: scale(0.15) rotate(-25deg);
+    background: repeating-linear-gradient(180deg, #000 0 2px, transparent 2px 36px);
+  }
+
+  20% {
+    transform: scale(0.35) rotate(-18deg);
+    background: repeating-linear-gradient(180deg, #000 0 8px, transparent 8px 36px);
+  }
+
+  40% {
+    transform: scale(0.55) rotate(-12deg);
+    background: repeating-linear-gradient(180deg, #000 0 14px, transparent 14px 36px);
+  }
+
+  60% {
+    transform: scale(0.75) rotate(-7deg);
+    background: repeating-linear-gradient(180deg, #000 0 22px, transparent 22px 36px);
+  }
+
+  80% {
+    transform: scale(0.9) rotate(-3deg);
+    background: repeating-linear-gradient(180deg, #000 0 30px, transparent 30px 36px);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    background: #000;
+  }
+}
+
+@keyframes battle-reveal-stripes {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    background: #000;
+  }
+
+  20% {
+    transform: scale(1.1) rotate(3deg);
+    background: repeating-linear-gradient(180deg, #000 0 30px, transparent 30px 36px);
+  }
+
+  40% {
+    transform: scale(1.2) rotate(6deg);
+    background: repeating-linear-gradient(180deg, #000 0 22px, transparent 22px 36px);
+  }
+
+  60% {
+    transform: scale(1.35) rotate(8deg);
+    background: repeating-linear-gradient(180deg, #000 0 14px, transparent 14px 36px);
+  }
+
+  80% {
+    opacity: 0.6;
+    transform: scale(1.5) rotate(9deg);
+    background: repeating-linear-gradient(180deg, #000 0 8px, transparent 8px 36px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6) rotate(10deg);
+    background: repeating-linear-gradient(180deg, #000 0 2px, transparent 2px 36px);
+  }
+}
+
+.cover.particles {
+  animation-name: battle-cover-particles;
+}
+
+.reveal.particles {
+  animation-name: battle-reveal-particles;
+}
+
+/*
+ * Two dot layers tiled in a quincunx (offset by half the tile in both
+ * directions, see background-position below) - background-size/position
+ * live on the always-applied .particles class (never touched by either
+ * keyframe rule below) rather than being repeated inside every single
+ * keyframe, so there's no risk of them drifting toward some unintended
+ * "neutral" value the way an animated property only partially specified
+ * across keyframes could. Only each dot's own radius (3px at the smallest,
+ * 30px at the largest - well past the point the two offset layers already
+ * overlap solid) animates; 100% still drops to a flat #000 same as the
+ * other two variants, so coverage is exact regardless of how the growing
+ * circles actually tile.
+ */
 .particles {
-  background-color: #14142b;
-  background-image:
-    radial-gradient(
-      circle,
-      #f4f4f4 3px,
-      transparent 3.5px
-    ),
-    radial-gradient(circle, #f4f4f4 2px, transparent 2.5px);
   background-size: 48px 48px, 48px 48px;
   background-position: 0 0, 24px 24px;
+}
+
+@keyframes battle-cover-particles {
+  0% {
+    transform: scale(0.15) rotate(-25deg);
+    background-color: transparent;
+    background-image:
+      radial-gradient(circle, #000 3px, transparent 3.5px),
+      radial-gradient(circle, #000 3px, transparent 3.5px);
+  }
+
+  20% {
+    transform: scale(0.35) rotate(-18deg);
+    background-image:
+      radial-gradient(circle, #000 10px, transparent 10.5px),
+      radial-gradient(circle, #000 10px, transparent 10.5px);
+  }
+
+  40% {
+    transform: scale(0.55) rotate(-12deg);
+    background-image:
+      radial-gradient(circle, #000 16px, transparent 16.5px),
+      radial-gradient(circle, #000 16px, transparent 16.5px);
+  }
+
+  60% {
+    transform: scale(0.75) rotate(-7deg);
+    background-image:
+      radial-gradient(circle, #000 22px, transparent 22.5px),
+      radial-gradient(circle, #000 22px, transparent 22.5px);
+  }
+
+  80% {
+    transform: scale(0.9) rotate(-3deg);
+    background-image:
+      radial-gradient(circle, #000 30px, transparent 30.5px),
+      radial-gradient(circle, #000 30px, transparent 30.5px);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    background-image: none;
+    background-color: #000;
+  }
+}
+
+@keyframes battle-reveal-particles {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    background-image: none;
+    background-color: #000;
+  }
+
+  20% {
+    transform: scale(1.1) rotate(3deg);
+    background-color: transparent;
+    background-image:
+      radial-gradient(circle, #000 30px, transparent 30.5px),
+      radial-gradient(circle, #000 30px, transparent 30.5px);
+  }
+
+  40% {
+    transform: scale(1.2) rotate(6deg);
+    background-image:
+      radial-gradient(circle, #000 22px, transparent 22.5px),
+      radial-gradient(circle, #000 22px, transparent 22.5px);
+  }
+
+  60% {
+    transform: scale(1.35) rotate(8deg);
+    background-image:
+      radial-gradient(circle, #000 16px, transparent 16.5px),
+      radial-gradient(circle, #000 16px, transparent 16.5px);
+  }
+
+  80% {
+    opacity: 0.6;
+    transform: scale(1.5) rotate(9deg);
+    background-image:
+      radial-gradient(circle, #000 10px, transparent 10.5px),
+      radial-gradient(circle, #000 10px, transparent 10.5px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6) rotate(10deg);
+    background-image:
+      radial-gradient(circle, #000 3px, transparent 3.5px),
+      radial-gradient(circle, #000 3px, transparent 3.5px);
+  }
 }
