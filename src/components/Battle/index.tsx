@@ -48,19 +48,17 @@ const Battle = () => {
   const wildHp = useFlowStore((state) => state.wildHp);
   const wildMaxHp = useFlowStore((state) => state.wildMaxHp);
   const protagonistHp = useFlowStore((state) => state.protagonistHp);
+  // Also read directly inside useAttackGrid (it needs its own copy either
+  // way) - kept here too since the dev/skip buttons below call it
+  // independently of anything useAttackGrid does.
   const damageWild = useFlowStore((state) => state.damageWild);
   const healWild = useFlowStore((state) => state.healWild);
   const damageProtagonist = useFlowStore((state) => state.damageProtagonist);
-  const healProtagonist = useFlowStore((state) => state.healProtagonist);
   const concludeBattle = useFlowStore((state) => state.concludeBattle);
   const setIsFirstGoalWin = useFlowStore((state) => state.setIsFirstGoalWin);
 
   const stateKey = useGameStore((state) => state.stateKey);
   const isDevMode = isDevStateKey(stateKey);
-  const monsterOrder = useGameStore((state) => state.monsterOrder);
-  const reorderMonsters = useGameStore((state) => state.reorderMonsters);
-  const cooldowns = useGameStore((state) => state.cooldowns);
-  const setCooldown = useGameStore((state) => state.setCooldown);
   const setBattleCooldown = useGameStore((state) => state.setBattleCooldown);
   const captureMonster = useGameStore((state) => state.captureMonster);
   const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
@@ -137,6 +135,7 @@ const Battle = () => {
 
   const {
     line,
+    cooldowns,
     attackGroups,
     attackGridRef,
     buttonRefs,
@@ -147,17 +146,11 @@ const Battle = () => {
     enteringKeys,
     handleAttack,
   } = useAttackGrid({
-    monsterOrder,
-    cooldowns,
-    setCooldown,
-    reorderMonsters,
     pendingOutcome,
     isEntering,
     playerSpriteRef,
     enemySpriteRef,
     getTrajectory,
-    healProtagonist,
-    damageWild,
     triggerPlayerHeal,
     triggerThrow,
     triggerSpit,

@@ -6,6 +6,8 @@ import {
   useRef,
   useState,
 } from "react";
+import { useFlowStore } from "../../store/flowStore";
+import { useGameStore } from "../../store/gameStore";
 import {
   ATTACK_COOLDOWN_MS,
   ATTACK_DAMAGE,
@@ -38,10 +40,6 @@ const SCROLL_COMPENSATION_SAFETY_MS = 1000;
 const GROUP_THROW_STAGGER_MS = 300;
 
 interface UseAttackGridParams {
-  monsterOrder: number[];
-  cooldowns: Record<string, number>;
-  setCooldown: (key: string, until: number) => void;
-  reorderMonsters: (order: number[]) => void;
   pendingOutcome: PendingOutcome;
   isEntering: boolean;
   playerSpriteRef: RefObject<HTMLElement>;
@@ -49,8 +47,6 @@ interface UseAttackGridParams {
   getTrajectory: (
     target?: "toEnemy" | "toPlayer" | "selfPlayer"
   ) => { from: Point; to: Point; angleDeg: number } | null;
-  healProtagonist: (amount: number) => void;
-  damageWild: (amount: number) => void;
   triggerPlayerHeal: (effect: "heal" | null, durationMs?: number) => void;
   triggerThrow: (
     icon: string,
@@ -71,6 +67,11 @@ export interface GroupableAttackOption extends AttackOption {
 
 interface UseAttackGridResult {
   line: AttackOption[];
+  // Returned rather than also required as a param - Battle/index.tsx's own
+  // render needs this too (the per-button cooldown-overlay percentage), so
+  // this saves it a second, redundant useGameStore subscription for the
+  // exact same slice this hook already needs internally anyway.
+  cooldowns: Record<string, number>;
   attackGroups: GroupableAttackOption[][];
   attackGridRef: RefObject<HTMLDivElement>;
   buttonRefs: MutableRefObject<Record<string, HTMLButtonElement | null>>;
@@ -88,24 +89,31 @@ interface UseAttackGridResult {
 // together), the horizontally-scrolling row's own scroll hints, the
 // leave/enter reorder animation, and handleAttack itself, which ties all
 // of the above together with the throw/heal/toast effects a tap actually
-// triggers.
+// triggers. Reads/writes gameStore's cooldowns/monsterOrder and
+// flowStore's healProtagonist/damageWild directly rather than taking them
+// as params - a Zustand store hook can be called from anywhere and always
+// reads/writes the one shared store, so there's nothing to gain by having
+// Battle/index.tsx fetch these itself just to hand them back down; only
+// genuinely local values (refs, sibling hooks' own state/trigger
+// functions) actually need to be threaded through as params.
 export const useAttackGrid = ({
-  monsterOrder,
-  cooldowns,
-  setCooldown,
-  reorderMonsters,
   pendingOutcome,
   isEntering,
   playerSpriteRef,
   enemySpriteRef,
   getTrajectory,
-  healProtagonist,
-  damageWild,
   triggerPlayerHeal,
   triggerThrow,
   triggerSpit,
   triggerToast,
 }: UseAttackGridParams): UseAttackGridResult => {
+  const monsterOrder = useGameStore((state) => state.monsterOrder);
+  const cooldowns = useGameStore((state) => state.cooldowns);
+  const setCooldown = useGameStore((state) => state.setCooldown);
+  const reorderMonsters = useGameStore((state) => state.reorderMonsters);
+  const healProtagonist = useFlowStore((state) => state.healProtagonist);
+  const damageWild = useFlowStore((state) => state.damageWild);
+
   const [line, setLine] = useAttackLine(monsterOrder);
 
   // Attack buttons currently mid-reorder animation - leaving their old spot
@@ -462,6 +470,7 @@ export const useAttackGrid = ({
 
   return {
     line,
+    cooldowns,
     attackGroups,
     attackGridRef,
     buttonRefs,

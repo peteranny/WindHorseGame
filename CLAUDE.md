@@ -70,7 +70,12 @@ src/
                           # handleAttack itself, all bundled together since they're one inseparable concern:
                           # reordering `line` on a throw is tangled up with the very same attackGridRef/
                           # buttonRefs scroll-compensation math that also needs to know the tapped group in
-                          # the first place), useEntranceSequence.ts (the battle-start sequence and its own
+                          # the first place - reads/writes gameStore's cooldowns/monsterOrder and
+                          # flowStore's healProtagonist/damageWild directly rather than taking them as
+                          # params, since a Zustand store hook can be called from anywhere and always
+                          # reads/writes the one shared store; only genuinely local values (refs, sibling
+                          # hooks' own state/trigger functions) actually need threading through as params),
+                          # useEntranceSequence.ts (the battle-start sequence and its own
                           # timing constants - see "Entering a battle: the screen transition" below),
                           # useWildAttackClock.ts (the wild monster's own attack timer, telegraph marks, and
                           # the goal battle's coldnoodle self-heal), and useBattleOutcome.ts (deciding win/lose,
