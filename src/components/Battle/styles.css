@@ -13,8 +13,11 @@
  * at 0 opacity for the whole sink sequence (lead-in beat, the sink itself,
  * then a hold on the sunk pose - see Battle/index.tsx's SINK_LEAD_MS/
  * SINK_DURATION_MS/SINK_HOLD_MS) so that's fully seen before the fade to
- * white (win) or black (lose) covers it, right before concludeBattle swaps
- * this screen out.
+ * white (win) or black (lose/escape) covers it, right before concludeBattle
+ * swaps this screen out. An escape has no sink to hold for (isPlayerSinking/
+ * isEnemySinking are both false for it), so this just plays as a bare pause
+ * then fade - same timing, same turning-black color as a loss, since
+ * fleeing shouldn't read as a *win* but isn't a defeat either.
  */
 .outcomeFade {
   position: absolute;
@@ -28,7 +31,8 @@
   background: white;
 }
 
-.outcomeFadeLose {
+.outcomeFadeLose,
+.outcomeFadeEscape {
   background: black;
 }
 

@@ -164,7 +164,7 @@ const TOAST_START_DELAY_MS = ENTRANCE_LOCK_MS + ACTION_BAR_REVEAL_MS;
 // "heal" is the only sprite effect still driven by React state/CSS class -
 // see useHealEffect and playBump below for why attack/hit moved off this.
 type HealEffect = "heal" | null;
-type PendingOutcome = "win" | "lose" | null;
+type PendingOutcome = "win" | "lose" | "escape" | null;
 
 interface AttackOption {
   key: string;
@@ -648,9 +648,12 @@ const Battle = () => {
     wildMaxHp,
   ]);
 
-  // Defeat pauses on the battlefield with a fade overlay before actually
+  // A win/loss pauses on the battlefield with a fade overlay before actually
   // leaving - concludeBattle (which swaps this whole screen out) only
-  // fires once that fade has had time to play.
+  // fires once that fade has had time to play. An escape (see the 逃跑
+  // button below) sets pendingOutcome directly rather than going through
+  // this effect, but from here on out it's driven by the exact same
+  // isSinking/fade machinery.
   useEffect(() => {
     if (
       (activeMonsterId === null && !isGoalEncounter) ||
@@ -666,7 +669,10 @@ const Battle = () => {
 
   // Holds off the sink/fade sequence until every already-thrown attack has
   // actually landed, so a slow throw never gets visually cut off mid-flight
-  // by the losing sprite sinking or the screen fading out under it.
+  // by the losing sprite sinking or the screen fading out under it - an
+  // escape has nothing to sink (see isPlayerSinking/isEnemySinking below,
+  // both false for "escape"), but still waits here the same way before its
+  // own fade, for the same reason.
   useEffect(() => {
     if (pendingOutcome === null || isSinking) return;
     if (
@@ -1323,10 +1329,13 @@ const Battle = () => {
               // animation, battle-loss cooldown, and "lose" outcome
               // conversation as actually being knocked out) - otherwise a
               // player could always bail out right before defeat to dodge
-              // the cooldown lock entirely, defeating its whole purpose.
+              // the cooldown lock entirely, defeating its whole purpose. A
+              // real escape still plays the same turning-black fade a loss
+              // does (isSinking/.outcomeFade below) - just without either
+              // sprite actually sinking, since nothing was defeated.
               protagonistHp < PROTAGONIST_MAX_HP / 2
                 ? setPendingOutcome("lose")
-                : concludeBattle("escape")
+                : setPendingOutcome("escape")
             }
           >
             逃跑
