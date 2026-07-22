@@ -110,20 +110,20 @@ const OUTCOME_FADE_MS = 700;
 const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 
 // The entrance sequence that plays once per fresh battle mount, as one
-// strictly sequential chain - each step below only starts once the
-// previous one has entirely finished, never overlapping:
+// strictly sequential chain through step 6 - each step below only starts
+// once the previous one has entirely finished, never overlapping:
 //   1. the enemy sprite + its own ground shadow slide in together
 //   2. the player sprite slides in
 //   3. a toast names the encounter ("遇到野生的X！", TOAST_MS)
 //   4. the enemy HP box reveals (drop-and-settle, like the attack cells)
 //   5. the player HP box reveals, the same way
 //   6. the action bar's actual content (escape/skip/dev buttons, the
-//      attack grid) reveals - isEntering flips false at this exact
-//      instant, so the cells are already tappable while their own reveal
-//      animation (.attackButtonReveal) is still playing over them
-//   7. a second toast ("開始！", also TOAST_MS - both toasts share the
-//      one length) plays on top of the now-already-interactive battle,
-//      purely cosmetic
+//      attack grid) reveals AND a second toast ("開始！", also TOAST_MS)
+//      appears, together in the same instant - isEntering flips false
+//      right then too, so interaction unlocks exactly as "開始！" shows
+//      up rather than only once that toast is done fading, and the cells
+//      are already tappable while their own reveal animation
+//      (.attackButtonReveal) is still playing over them
 //
 // This component only ever mounts right as BattleTransition's own
 // black-screen hold begins (see its index.tsx - the distortion is fully,
@@ -156,10 +156,11 @@ const PLAYER_ENTER_DELAY_MS = ENEMY_ENTER_DELAY_MS + ENTER_ENEMY_MS;
 const TOAST_ENCOUNTER_DELAY_MS = PLAYER_ENTER_DELAY_MS + ENTER_PLAYER_MS;
 const ENEMY_INFO_DELAY_MS = TOAST_ENCOUNTER_DELAY_MS + TOAST_MS;
 const PLAYER_INFO_DELAY_MS = ENEMY_INFO_DELAY_MS + INFO_REVEAL_MS;
-// The same instant the action bar's own reveal starts - see isEntering/
-// isActionBarRevealing below, both flipped together in one setTimeout.
+// The same instant the action bar's own reveal starts AND the "開始！"
+// toast triggers - see isEntering/isActionBarRevealing/triggerToast below,
+// all three fired together in one setTimeout, so interaction unlocks
+// exactly as the toast appears rather than only once it's done showing.
 const ENTRANCE_LOCK_MS = PLAYER_INFO_DELAY_MS + INFO_REVEAL_MS;
-const TOAST_START_DELAY_MS = ENTRANCE_LOCK_MS + ACTION_BAR_REVEAL_MS;
 
 // "heal" is the only sprite effect still driven by React state/CSS class -
 // see useHealEffect and playBump below for why attack/hit moved off this.
@@ -484,9 +485,13 @@ const Battle = () => {
   const [isActionBarRevealing, setIsActionBarRevealing] = useState(false);
   useEffect(() => {
     let revealTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    // Step 6 - the action bar unlocks and "開始！" appears in the exact
+    // same instant, rather than the toast trailing behind an already-
+    // interactive battle.
     const lockTimeoutId = setTimeout(() => {
       setIsEntering(false);
       setIsActionBarRevealing(true);
+      triggerToast("開始！", TOAST_MS);
       revealTimeoutId = setTimeout(
         () => setIsActionBarRevealing(false),
         ACTION_BAR_REVEAL_MS
@@ -495,8 +500,8 @@ const Battle = () => {
     // Step 3 - both toasts just append to the shared stack (see
     // useToastStack above) like any other trigger call, so either one
     // overlapping with a later family-bonus/heal toast (e.g. the player
-    // attacks the instant step 6 unlocks the action bar, right as step 7's
-    // "開始！" is still fading) stacks rather than clobbering it.
+    // attacks the instant step 6 unlocks the action bar and shows "開始！")
+    // stacks rather than clobbering it.
     const encounterName = isGoalEncounter
       ? GOAL_NAME
       : activeMonsterId !== null
@@ -505,16 +510,10 @@ const Battle = () => {
     const encounterToastTimeoutId = setTimeout(() => {
       triggerToast(`遇到野生的${encounterName}！`, TOAST_MS);
     }, TOAST_ENCOUNTER_DELAY_MS);
-    // Step 7 - unlike steps 1-6, this plays entirely *after* isEntering has
-    // already flipped false (the battle is already interactive throughout).
-    const startToastTimeoutId = setTimeout(() => {
-      triggerToast("開始！", TOAST_MS);
-    }, TOAST_START_DELAY_MS);
     return () => {
       clearTimeout(lockTimeoutId);
       if (revealTimeoutId) clearTimeout(revealTimeoutId);
       clearTimeout(encounterToastTimeoutId);
-      clearTimeout(startToastTimeoutId);
     };
     // isGoalEncounter/activeMonsterId never change within one Battle mount
     // (a fresh instance mounts per battle) - included for correctness, not
