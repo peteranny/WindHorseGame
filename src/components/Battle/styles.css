@@ -283,10 +283,13 @@
   animation: toast-fade var(--toast-duration, 1800ms) ease-in-out;
 }
 
+/* Entrance is a plain fade-in - no shift, so it doesn't fight the initial
+   position .toastItem places this toast at. Only the exit shifts upward
+   while fading, same as before. */
 @keyframes toast-fade {
   0% {
     opacity: 0;
-    transform: translateY(calc(-8px * var(--scale)));
+    transform: translateY(0);
   }
 
   15%,
