@@ -121,7 +121,7 @@ const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 //      attack grid) reveals - isEntering flips false at this exact
 //      instant, so the cells are already tappable while their own reveal
 //      animation (.attackButtonReveal) is still playing over them
-//   7. a second toast ("開始戰鬥！", also TOAST_MS - both toasts share the
+//   7. a second toast ("開始！", also TOAST_MS - both toasts share the
 //      one length) plays on top of the now-already-interactive battle,
 //      purely cosmetic
 //
@@ -137,7 +137,7 @@ const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 // from behind the (by-then-gone) overlay.
 const ENTER_ENEMY_MS = 1050;
 const ENTER_PLAYER_MS = 1050;
-// Both toasts (step 3's "遇到野生的X！" and step 7's "開始戰鬥！") share this
+// Both toasts (step 3's "遇到野生的X！" and step 7's "開始！") share this
 // one length - unified rather than each having its own, so a toast always
 // reads the same regardless of which one is showing.
 // Its fade fraction is fixed by .toast's own shared keyframe (styles.css),
@@ -404,7 +404,7 @@ interface ToastEntry {
 // The battlefield's callout stack - "X 系列加成，效果卓越" for a real family
 // group throw, a healing-specific message whenever a healer (solo or
 // grouped) is tapped, and the two entrance banners ("遇到野生的X！",
-// "開始戰鬥！"). Every trigger appends its own entry rather than replacing
+// "開始！"). Every trigger appends its own entry rather than replacing
 // whatever's currently showing (the single-slot version this used to be
 // let a second trigger silently cut the first one's banner short) - each
 // entry then removes only itself, by id, once its own durationMs elapses,
@@ -412,7 +412,7 @@ interface ToastEntry {
 // .toastStack renders whatever's still in this array as a vertically
 // stacked column (with a gap), so two toasts that happen to overlap in
 // time - e.g. attacking the instant the action bar unlocks, right as
-// "開始戰鬥！" is still fading - both stay fully visible side by side
+// "開始！" is still fading - both stay fully visible side by side
 // rather than one clobbering the other.
 const useToastStack = (): [
   ToastEntry[],
@@ -496,7 +496,7 @@ const Battle = () => {
     // useToastStack above) like any other trigger call, so either one
     // overlapping with a later family-bonus/heal toast (e.g. the player
     // attacks the instant step 6 unlocks the action bar, right as step 7's
-    // "開始戰鬥！" is still fading) stacks rather than clobbering it.
+    // "開始！" is still fading) stacks rather than clobbering it.
     const encounterName = isGoalEncounter
       ? GOAL_NAME
       : activeMonsterId !== null
@@ -508,7 +508,7 @@ const Battle = () => {
     // Step 7 - unlike steps 1-6, this plays entirely *after* isEntering has
     // already flipped false (the battle is already interactive throughout).
     const startToastTimeoutId = setTimeout(() => {
-      triggerToast("開始戰鬥！", TOAST_MS);
+      triggerToast("開始！", TOAST_MS);
     }, TOAST_START_DELAY_MS);
     return () => {
       clearTimeout(lockTimeoutId);

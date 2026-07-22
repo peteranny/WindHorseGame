@@ -749,10 +749,18 @@
  * moment BattleTransition's own distortion overlay finishes clearing, see
  * BattleTransition/timing.ts). Deliberately opacity: 1 throughout - no
  * fade at all - since each sprite already sits fully off past the
- * battlefield's own edge (110%, well past the 100% a sprite's own width
- * would put it exactly at the edge) for the entire delay, so there's
- * nothing to reveal by fading; only the position itself (a plain
- * translateX slide back to 0) actually changes once the delay elapses.
+ * battlefield's own edge (a fixed calc(110px * var(--scale)), well past
+ * .enemySpriteWrap's own ~100px*scale width) for the entire delay, so
+ * there's nothing to reveal by fading; only the position itself (a plain
+ * translateX slide back to 0) actually changes once the delay elapses. A
+ * *fixed* pixel distance rather than a percentage is deliberate here -
+ * percentages in `transform: translateX()` resolve against the animated
+ * element's own width, so .enemyShadowEnter below (a much narrower
+ * element than .enemySprite, see .enemyShadow's own width: 55%) reusing
+ * this exact same keyframe at some percentage would travel a visibly
+ * shorter distance than the sprite despite the "same" number - a fixed
+ * distance travels identically regardless of either element's own size,
+ * which is what actually keeps the shadow in lockstep with its sprite.
  * Player and enemy use the same keyframes mirrored (opposite translateX
  * sign), just staggered by ENTER_PLAYER_DELAY_MS so the enemy arrives a
  * beat first.
@@ -771,7 +779,7 @@
 
 @keyframes battle-sprite-enter {
   0% {
-    transform: translateX(110%);
+    transform: translateX(calc(110px * var(--scale)));
   }
 
   100% {
@@ -781,7 +789,7 @@
 
 @keyframes battle-sprite-enter-reverse {
   0% {
-    transform: translateX(-110%);
+    transform: translateX(calc(-110px * var(--scale)));
   }
 
   100% {
