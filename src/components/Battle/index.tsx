@@ -114,15 +114,16 @@ const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 // previous one has entirely finished, never overlapping:
 //   1. the enemy sprite + its own ground shadow slide in together
 //   2. the player sprite slides in
-//   3. a toast names the encounter ("遇到野生的X！", TOAST_ENCOUNTER_MS)
+//   3. a toast names the encounter ("遇到野生的X！", TOAST_MS)
 //   4. the enemy HP box reveals (drop-and-settle, like the attack cells)
 //   5. the player HP box reveals, the same way
 //   6. the action bar's actual content (escape/skip/dev buttons, the
 //      attack grid) reveals - isEntering flips false at this exact
 //      instant, so the cells are already tappable while their own reveal
 //      animation (.attackButtonReveal) is still playing over them
-//   7. a second toast ("開始戰鬥！", TOAST_START_MS) plays on top of the
-//      now-already-interactive battle, purely cosmetic
+//   7. a second toast ("開始戰鬥！", also TOAST_MS - both toasts share the
+//      one length) plays on top of the now-already-interactive battle,
+//      purely cosmetic
 //
 // This component only ever mounts right as BattleTransition's own
 // black-screen hold begins (see its index.tsx - the distortion is fully,
@@ -136,9 +137,12 @@ const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 // from behind the (by-then-gone) overlay.
 const ENTER_ENEMY_MS = 1050;
 const ENTER_PLAYER_MS = 1050;
-const TOAST_ENCOUNTER_FADE_MS = 150;
-const TOAST_ENCOUNTER_HOLD_MS = 1200;
-const TOAST_ENCOUNTER_MS = TOAST_ENCOUNTER_FADE_MS * 2 + TOAST_ENCOUNTER_HOLD_MS;
+// Both toasts (step 3's "遇到野生的X！" and step 7's "開始戰鬥！") share this
+// one length - unified rather than each having its own, so a toast always
+// reads the same regardless of which one is showing.
+// Its fade fraction is fixed by .toast's own shared keyframe (styles.css),
+// not derived from a separate fade/hold breakdown here.
+const TOAST_MS = 2000;
 // How long each HP block's own drop-and-settle reveal takes, once it
 // starts - short and snappy, unrelated to how long a sprite itself took to
 // slide in.
@@ -146,14 +150,11 @@ const INFO_REVEAL_MS = 450;
 // How long the action bar's own drop-and-settle reveal takes, once it
 // starts - .attackButtonReveal's own animation duration.
 const ACTION_BAR_REVEAL_MS = 450;
-const TOAST_START_FADE_MS = 150;
-const TOAST_START_HOLD_MS = 700;
-const TOAST_START_MS = TOAST_START_FADE_MS * 2 + TOAST_START_HOLD_MS;
 
 const ENEMY_ENTER_DELAY_MS = REMAINING_OVERLAY_MS;
 const PLAYER_ENTER_DELAY_MS = ENEMY_ENTER_DELAY_MS + ENTER_ENEMY_MS;
 const TOAST_ENCOUNTER_DELAY_MS = PLAYER_ENTER_DELAY_MS + ENTER_PLAYER_MS;
-const ENEMY_INFO_DELAY_MS = TOAST_ENCOUNTER_DELAY_MS + TOAST_ENCOUNTER_MS;
+const ENEMY_INFO_DELAY_MS = TOAST_ENCOUNTER_DELAY_MS + TOAST_MS;
 const PLAYER_INFO_DELAY_MS = ENEMY_INFO_DELAY_MS + INFO_REVEAL_MS;
 // The same instant the action bar's own reveal starts - see isEntering/
 // isActionBarRevealing below, both flipped together in one setTimeout.
@@ -394,30 +395,40 @@ const useSpitEffect = (): [
   return [effect, trigger, clear];
 };
 
-// The battlefield callout banner - "X 系列加成，效果卓越" for a real family
-// group throw, or a healing-specific message whenever a healer (solo or
-// grouped) is tapped - stays up for exactly as long as the triggering
-// action's own animation takes (durationMs), keyed by an incrementing id
-// (same reasoning as useThrowEffect) so a second trigger before the first
-// banner fades restarts its timer rather than being silently swallowed.
-const useFamilyToast = (): [
-  { id: number; text: string; durationMs: number } | null,
+interface ToastEntry {
+  id: number;
+  text: string;
+  durationMs: number;
+}
+
+// The battlefield's callout stack - "X 系列加成，效果卓越" for a real family
+// group throw, a healing-specific message whenever a healer (solo or
+// grouped) is tapped, and the two entrance banners ("遇到野生的X！",
+// "開始戰鬥！"). Every trigger appends its own entry rather than replacing
+// whatever's currently showing (the single-slot version this used to be
+// let a second trigger silently cut the first one's banner short) - each
+// entry then removes only itself, by id, once its own durationMs elapses,
+// same reasoning as useThrowEffect's per-id cleanup. Battle/styles.css's
+// .toastStack renders whatever's still in this array as a vertically
+// stacked column (with a gap), so two toasts that happen to overlap in
+// time - e.g. attacking the instant the action bar unlocks, right as
+// "開始戰鬥！" is still fading - both stay fully visible side by side
+// rather than one clobbering the other.
+const useToastStack = (): [
+  ToastEntry[],
   (text: string, durationMs: number) => void
 ] => {
-  const [toast, setToast] = useState<{
-    id: number;
-    text: string;
-    durationMs: number;
-  } | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [toasts, setToasts] = useState<ToastEntry[]>([]);
   const nextIdRef = useRef(0);
   const trigger = useCallback((text: string, durationMs: number) => {
     nextIdRef.current += 1;
-    setToast({ id: nextIdRef.current, text, durationMs });
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => setToast(null), durationMs);
+    const id = nextIdRef.current;
+    setToasts((current) => [...current, { id, text, durationMs }]);
+    setTimeout(() => {
+      setToasts((current) => current.filter((toast) => toast.id !== id));
+    }, durationMs);
   }, []);
-  return [toast, trigger];
+  return [toasts, trigger];
 };
 
 const Battle = () => {
@@ -453,7 +464,7 @@ const Battle = () => {
   const [throwEffects, triggerThrow, clearThrow] = useThrowEffect();
   const [spitEffect, triggerSpit, clearSpit] = useSpitEffect();
   const [enemySpitEffect, triggerEnemySpit, clearEnemySpit] = useSpitEffect();
-  const [familyToast, triggerFamilyToast] = useFamilyToast();
+  const [toasts, triggerToast] = useToastStack();
   const [pendingOutcome, setPendingOutcome] = useState<PendingOutcome>(null);
   // Becomes true once the battle is decided AND every in-flight throw/spit
   // has actually landed - only then does the loser's sprite sink and the
@@ -471,14 +482,8 @@ const Battle = () => {
   // drop-and-settle shake, then clears itself so a later re-render (a
   // cooldown tick, an attack) doesn't replay it.
   const [isActionBarRevealing, setIsActionBarRevealing] = useState(false);
-  // Step 7 - unlike steps 1-6, this plays entirely *after* isEntering has
-  // already flipped false (the battle is already interactive throughout),
-  // so it needs its own independent on/off timer rather than piggybacking
-  // on isEntering the way the first toast does.
-  const [isShowingStartToast, setIsShowingStartToast] = useState(false);
   useEffect(() => {
     let revealTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    let startToastEndTimeoutId: ReturnType<typeof setTimeout> | undefined;
     const lockTimeoutId = setTimeout(() => {
       setIsEntering(false);
       setIsActionBarRevealing(true);
@@ -487,20 +492,34 @@ const Battle = () => {
         ACTION_BAR_REVEAL_MS
       );
     }, ENTRANCE_LOCK_MS);
+    // Step 3 - both toasts just append to the shared stack (see
+    // useToastStack above) like any other trigger call, so either one
+    // overlapping with a later family-bonus/heal toast (e.g. the player
+    // attacks the instant step 6 unlocks the action bar, right as step 7's
+    // "開始戰鬥！" is still fading) stacks rather than clobbering it.
+    const encounterName = isGoalEncounter
+      ? GOAL_NAME
+      : activeMonsterId !== null
+      ? MONSTERS[activeMonsterId].name
+      : "";
+    const encounterToastTimeoutId = setTimeout(() => {
+      triggerToast(`遇到野生的${encounterName}！`, TOAST_MS);
+    }, TOAST_ENCOUNTER_DELAY_MS);
+    // Step 7 - unlike steps 1-6, this plays entirely *after* isEntering has
+    // already flipped false (the battle is already interactive throughout).
     const startToastTimeoutId = setTimeout(() => {
-      setIsShowingStartToast(true);
-      startToastEndTimeoutId = setTimeout(
-        () => setIsShowingStartToast(false),
-        TOAST_START_MS
-      );
+      triggerToast("開始戰鬥！", TOAST_MS);
     }, TOAST_START_DELAY_MS);
     return () => {
       clearTimeout(lockTimeoutId);
       if (revealTimeoutId) clearTimeout(revealTimeoutId);
+      clearTimeout(encounterToastTimeoutId);
       clearTimeout(startToastTimeoutId);
-      if (startToastEndTimeoutId) clearTimeout(startToastEndTimeoutId);
     };
-  }, []);
+    // isGoalEncounter/activeMonsterId never change within one Battle mount
+    // (a fresh instance mounts per battle) - included for correctness, not
+    // because this effect is expected to ever actually rerun.
+  }, [isGoalEncounter, activeMonsterId, triggerToast]);
 
   const battlefieldRef = useRef<HTMLDivElement>(null);
   const playerSpriteRef = useRef<HTMLImageElement>(null);
@@ -597,7 +616,7 @@ const Battle = () => {
           // only once that glow finishes does the HP actually recover.
           setTimeout(() => {
             triggerColdNoodle("heal", COLD_NOODLE_TOTAL_MS);
-            triggerFamilyToast(
+            triggerToast(
               `${GOAL_NAME}吃了涼麵，恢復了體力！`,
               COLD_NOODLE_HEAL_DELAY_MS + HEAL_ANIMATION_MS
             );
@@ -623,7 +642,7 @@ const Battle = () => {
     triggerEnemySpit,
     isGoalEncounter,
     triggerColdNoodle,
-    triggerFamilyToast,
+    triggerToast,
     triggerEnemyHeal,
     healWild,
     wildMaxHp,
@@ -872,7 +891,7 @@ const Battle = () => {
           group.length > 1 && group[0].family
             ? `${group[0].family} 系列治療，效果卓越！`
             : `${option.label} 進行治療！`;
-        triggerFamilyToast(healToastText, healLandMs + HEAL_ANIMATION_MS);
+        triggerToast(healToastText, healLandMs + HEAL_ANIMATION_MS);
         setTimeout(() => {
           triggerPlayerHeal("heal", HEAL_ANIMATION_MS);
           setTimeout(() => {
@@ -916,7 +935,7 @@ const Battle = () => {
         // attack (innate or otherwise) never shows one - and it stays up
         // for exactly as long as this whole throw takes to land.
         if (group.length > 1 && group[0].family) {
-          triggerFamilyToast(
+          triggerToast(
             `${group[0].family} 系列加成，效果卓越`,
             totalLandMs
           );
@@ -1090,7 +1109,7 @@ const Battle = () => {
       triggerPlayerHeal,
       triggerThrow,
       triggerSpit,
-      triggerFamilyToast,
+      triggerToast,
     ]
   );
 
@@ -1269,40 +1288,21 @@ const Battle = () => {
             💧
           </span>
         )}
-        {familyToast !== null && (
-          <div
-            key={familyToast.id}
-            className={styles.familyToast}
-            style={
-              {
-                "--toast-duration": `${familyToast.durationMs}ms`,
-              } as React.CSSProperties
-            }
-          >
-            {familyToast.text}
-          </div>
-        )}
-        {isEntering && (
-          <div
-            className={styles.introBanner}
-            style={
-              {
-                "--intro-delay": `${TOAST_ENCOUNTER_DELAY_MS}ms`,
-                "--intro-duration": `${TOAST_ENCOUNTER_MS}ms`,
-              } as React.CSSProperties
-            }
-          >
-            遇到野生的{enemyName}！
-          </div>
-        )}
-        {isShowingStartToast && (
-          <div
-            className={styles.introBanner}
-            style={
-              { "--intro-duration": `${TOAST_START_MS}ms` } as React.CSSProperties
-            }
-          >
-            開始戰鬥！
+        {toasts.length > 0 && (
+          <div className={styles.toastStack}>
+            {toasts.map((toast) => (
+              <div
+                key={toast.id}
+                className={styles.toast}
+                style={
+                  {
+                    "--toast-duration": `${toast.durationMs}ms`,
+                  } as React.CSSProperties
+                }
+              >
+                {toast.text}
+              </div>
+            ))}
           </div>
         )}
       </div>

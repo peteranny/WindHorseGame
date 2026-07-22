@@ -193,16 +193,30 @@
 }
 
 /*
- * The "X 系列加成，效果卓越" callout for a real (2+ member) family throw -
+ * The battlefield's toast stack (Battle/index.tsx's useToastStack) -
+ * "X 系列加成，效果卓越" for a family throw, healer-specific messages, and
+ * both entrance banners ("遇到野生的X！", "開始戰鬥！") all render here,
  * centered within .battlefield itself (the fight area above the action
- * bar/attack grid), not the screen as a whole, so it never covers the
- * buttons a player is about to tap next.
+ * bar/attack grid) so a toast never covers the buttons a player is about
+ * to tap next. A plain flex column with a gap - each toast no longer
+ * centers *itself* (no translate(-50%, -50%) on the individual pill) -
+ * so 2+ toasts visible at once (e.g. attacking the instant the action bar
+ * unlocks, right as "開始戰鬥！" is still fading) stack cleanly one above
+ * the other instead of literally overlapping at the same point.
  */
-.familyToast {
+.toastStack {
   position: absolute;
-  top: 50%;
+  top: 30%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(8px * var(--scale));
+  pointer-events: none;
+}
+
+.toast {
   background: rgba(0, 0, 0, 0.75);
   color: white;
   font-weight: bold;
@@ -210,28 +224,31 @@
   padding: calc(6px * var(--scale)) calc(14px * var(--scale));
   border-radius: calc(999px * var(--scale));
   white-space: nowrap;
-  pointer-events: none;
 
-  /* --toast-duration (set inline) matches how long this throw actually
-     takes to land, see Battle/index.tsx's totalLandMs. */
-  animation: family-toast-fade var(--toast-duration, 1800ms) ease-in-out;
+  /* --toast-duration (set inline) matches how long this particular toast
+     should stay up - a throw's own landing time, a heal's animation
+     length, or the fixed TOAST_MS both entrance banners share (see
+     Battle/index.tsx). The 15%/75% fade fraction below is only exact for
+     some of those - a fixed middle ground close enough for all of them
+     that the difference isn't visible. */
+  animation: toast-fade var(--toast-duration, 1800ms) ease-in-out;
 }
 
-@keyframes family-toast-fade {
+@keyframes toast-fade {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) translateY(calc(-8px * var(--scale)));
+    transform: translateY(calc(-8px * var(--scale)));
   }
 
   15%,
   75% {
     opacity: 1;
-    transform: translate(-50%, -50%);
+    transform: translateY(0);
   }
 
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) translateY(calc(-8px * var(--scale)));
+    transform: translateY(calc(-8px * var(--scale)));
   }
 }
 
@@ -811,52 +828,6 @@
   100% {
     opacity: 1;
     transform: translateY(0) rotate(0deg);
-  }
-}
-
-/*
- * "遇到野生的X！" - fades in once both sprites have actually landed (see
- * --intro-delay, Battle/index.tsx's INTRO_BANNER_DELAY_MS), holds briefly,
- * then fades back out - .actionBarLocked below stays disabled for exactly
- * as long as this whole sequence runs.
- */
-.introBanner {
-  position: absolute;
-  top: 30%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  font-weight: bold;
-  font-size: calc(14pt * var(--scale));
-  padding: calc(8px * var(--scale)) calc(20px * var(--scale));
-  border-radius: calc(999px * var(--scale));
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  z-index: 10;
-  animation:
-    battle-intro-banner-fade var(--intro-duration, 1500ms) ease-in-out
-    var(--intro-delay, 0ms) both;
-}
-
-/*
- * Shared by both toasts (Battle/index.tsx's "遇到野生的X！" and "開始戰鬥！"),
- * whose own fade-in/out share the same absolute length (150ms) but not the
- * same total duration (TOAST_ENCOUNTER_MS vs TOAST_START_MS) - so neither
- * toast's true fade fraction (10% and 15% respectively) is expressed
- * exactly here; 12%/88% is just a fixed middle ground close enough to both
- * that the few-ms difference isn't visible.
- */
-@keyframes battle-intro-banner-fade {
-  0%,
-  100% {
-    opacity: 0;
-  }
-
-  12%,
-  88% {
-    opacity: 1;
   }
 }
 
