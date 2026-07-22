@@ -9,22 +9,31 @@
 }
 
 /*
- * Sits on top of the whole battle screen once the fight is decided - stays
- * at 0 opacity for the whole sink sequence (lead-in beat, the sink itself,
- * then a hold on the sunk pose - see Battle/index.tsx's SINK_LEAD_MS/
- * SINK_DURATION_MS/SINK_HOLD_MS) so that's fully seen before the fade to
- * white (win) or black (lose/escape) covers it, right before concludeBattle
- * swaps this screen out. An escape has no sink to hold for (isPlayerSinking/
- * isEnemySinking are both false for it), so this just plays as a bare pause
- * then fade - same timing, same turning-black color as a loss, since
- * fleeing shouldn't read as a *win* but isn't a defeat either.
+ * Sits on top of the whole battle screen once the fight is decided, right
+ * before concludeBattle swaps this screen out - .outcomeFadeSinkTiming
+ * (win/lose) stays at 0 opacity for the whole sink sequence (lead-in beat,
+ * the sink itself, then a hold on the sunk pose - see Battle/index.tsx's
+ * SINK_LEAD_MS/SINK_DURATION_MS/SINK_HOLD_MS) so that's fully seen before
+ * the fade to white (win) or black (lose) covers it. An escape has nothing
+ * to sink for (isPlayerSinking/isEnemySinking are both false for it), so
+ * it uses .outcomeFadeQuickTiming instead - just OUTCOME_FADE_MS of fade,
+ * with no pause beforehand - rather than sitting through a multi-beat
+ * sink sequence for an animation that was never actually going to play.
  */
 .outcomeFade {
   position: absolute;
   inset: 0;
   opacity: 0;
   pointer-events: none;
-  animation: outcome-fade-out 1900ms ease-in forwards;
+}
+
+.outcomeFadeSinkTiming {
+  animation: outcome-fade-out-sink 1900ms ease-in forwards;
+}
+
+.outcomeFadeQuickTiming {
+  /* Must match Battle/index.tsx's OUTCOME_FADE_MS. */
+  animation: outcome-fade-out-quick 700ms ease-in forwards;
 }
 
 .outcomeFadeWin {
@@ -36,9 +45,19 @@
   background: black;
 }
 
-@keyframes outcome-fade-out {
+@keyframes outcome-fade-out-sink {
   0%,
   63% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes outcome-fade-out-quick {
+  0% {
     opacity: 0;
   }
 

@@ -103,8 +103,12 @@ const COLD_NOODLE_HEAL_DELAY_MS = COLD_NOODLE_ENTER_MS + COLD_NOODLE_WIGGLE_MS;
 const SINK_LEAD_MS = 300;
 const SINK_DURATION_MS = 500;
 const SINK_HOLD_MS = 400;
-// Must match outcome-fade-out's opacity-0 percentage in styles.css - the
-// fade only starts becoming visible once the whole sink sequence is done.
+// Must match outcome-fade-out-sink's opacity-0 percentage in styles.css -
+// the fade only starts becoming visible once the whole sink sequence is
+// done. Only win/loss actually wait through this pause (.outcomeFadeSinkTiming,
+// OUTCOME_TOTAL_MS) - an escape has no sink to hold for, so it skips
+// straight to just OUTCOME_FADE_MS of fade (.outcomeFadeQuickTiming) instead,
+// see the pendingOutcome === "escape" check below.
 const OUTCOME_PAUSE_MS = SINK_LEAD_MS + SINK_DURATION_MS + SINK_HOLD_MS;
 const OUTCOME_FADE_MS = 700;
 const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
@@ -651,8 +655,9 @@ const Battle = () => {
   // leaving - concludeBattle (which swaps this whole screen out) only
   // fires once that fade has had time to play. An escape (see the 逃跑
   // button below) sets pendingOutcome directly rather than going through
-  // this effect, but from here on out it's driven by the exact same
-  // isSinking/fade machinery.
+  // this effect, but from here on out it's driven by the same isSinking
+  // machinery either way - just with a shorter fade and no sink pause, see
+  // the pendingOutcome === "escape" check further down.
   useEffect(() => {
     if (
       (activeMonsterId === null && !isGoalEncounter) ||
@@ -685,6 +690,12 @@ const Battle = () => {
 
   useEffect(() => {
     if (!isSinking || pendingOutcome === null) return;
+    // Escape has no sink animation to hold for (see isPlayerSinking/
+    // isEnemySinking below, both false for it) - skip straight to just the
+    // fade portion instead of sitting through the same multi-beat pause a
+    // real win/loss's sink sequence needs.
+    const totalMs =
+      pendingOutcome === "escape" ? OUTCOME_FADE_MS : OUTCOME_TOTAL_MS;
     const id = setTimeout(() => {
       // Only actually captured/recorded once the fade finishes and we're
       // leaving this screen - otherwise the defeated monster would show up
@@ -712,7 +723,7 @@ const Battle = () => {
         setBattleCooldown(String(activeMonsterId), Date.now() + BATTLE_LOSS_COOLDOWN_MS);
       }
       concludeBattle(pendingOutcome);
-    }, OUTCOME_TOTAL_MS);
+    }, totalMs);
     return () => clearTimeout(id);
     // goalDefeatedAt is deliberately not a dependency here - this effect
     // must only read whatever value it had at the render where isSinking
@@ -1491,6 +1502,9 @@ const Battle = () => {
         <div
           className={cn(
             styles.outcomeFade,
+            pendingOutcome === "escape"
+              ? styles.outcomeFadeQuickTiming
+              : styles.outcomeFadeSinkTiming,
             styles[`outcomeFade${capitalize(pendingOutcome)}`]
           )}
         />
