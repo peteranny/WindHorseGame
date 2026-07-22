@@ -43,6 +43,7 @@ import {
 } from "./useEntranceSequence";
 import { useWildAttackClock, TELEGRAPH_MARK_DELAYS_MS } from "./useWildAttackClock";
 import { useBattleOutcome } from "./useBattleOutcome";
+import { useAttackLine, AttackOption, INNATE_KEY } from "./useAttackLine";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
 import COLD_NOODLE_SPRITE from "../../assets/coldNoodle.png";
@@ -57,7 +58,6 @@ const ALL_FAMILIES = Array.from(
   new Set(MONSTERS.map((monster) => monster.attackFamily))
 ).sort();
 
-const INNATE_KEY = "innate";
 const LEAVE_DURATION_MS = 250;
 const ENTER_DURATION_MS = 250;
 // Backstop for the scroll-compensation rAF loops further down (leaveStep/
@@ -69,18 +69,6 @@ const SCROLL_COMPENSATION_SAFETY_MS = 1000;
 // thrown together, so the group's throws read as a distinguishable volley
 // rather than one indistinct simultaneous blob.
 const GROUP_THROW_STAGGER_MS = 300;
-
-interface AttackOption {
-  key: string;
-  label: string;
-  icon: string;
-  isHealer: boolean;
-  healAmount: number;
-  // The battle-adjacency family/step (see data/monsters/attackFamily.ts) -
-  // null family for the innate attack, which never groups with a neighbor.
-  family: string | null;
-  step: number;
-}
 
 const Battle = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
@@ -207,44 +195,7 @@ const Battle = () => {
     healWild,
   });
 
-  const buildLine = useCallback((order: number[]): AttackOption[] => {
-    const options: AttackOption[] = [
-      {
-        key: INNATE_KEY,
-        label: "小風溥儀",
-        icon: PLAYER_SPRITE,
-        isHealer: false,
-        healAmount: 0,
-        family: null,
-        step: 0,
-      },
-    ];
-    order.forEach((id) => {
-      const monster = MONSTERS[id];
-      options.push({
-        key: String(id),
-        label: monster.name,
-        icon: monster.icon,
-        isHealer: monster.isHealer,
-        healAmount: monster.healAmount ?? 0,
-        family: monster.attackFamily,
-        step: monster.attackStep,
-      });
-    });
-    return options;
-  }, []);
-
-  // The attack line's order - starts as the innate attack first, then
-  // gameStore.monsterOrder (shared with, and reorderable from, the map's own
-  // duckling trail - see store/types.ts), but from here on the innate
-  // attack is just as reorderable as any captured monster (tapping it sends
-  // it to the back/front of the line same as anything else). Its own
-  // position is never persisted, though - a fresh battle always starts it
-  // back at the front, so this is local state, only the captured-monster
-  // portion syncs out to reorderMonsters on every reorder.
-  const [line, setLine] = useState<AttackOption[]>(() =>
-    buildLine(monsterOrder)
-  );
+  const [line, setLine] = useAttackLine(monsterOrder);
 
   // Attack buttons currently mid-reorder animation - leaving their old spot
   // (narrowing to nothing) before `line` actually reorders them, then

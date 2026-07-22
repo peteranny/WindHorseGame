@@ -53,16 +53,18 @@ src/
                           # paginateText.ts splits a page's full text into <=2-line, DOM-measured
                           # chunks (joined with "..."); useTypewriter.ts types out the current chunk.
     Battle/               # Full-screen real-time battle UI (replaces Maze/Dialog while mode === "battle").
-                          # index.tsx itself holds the render tree plus the one genuinely component-specific
-                          # concern (the attack line's reorder-on-throw state/handleAttack, tightly coupled to
-                          # attackGridRef/buttonRefs scroll-compensation) - everything else self-contained
-                          # enough to have its own clear inputs/outputs lives in its own module instead:
-                          # geometry.ts (Point + rectCenter/percentIn/angleBetween/pointStyle/spitStyle - the
-                          # throw/spit trajectory math), spriteEffects.ts (playBump's WAAPI attack/hit bump
-                          # keyframes, shared EFFECT_DURATION_MS), HpBar.tsx, and four generic "on/off with a
-                          # timeout" hooks - useHealEffect.ts (also exports HEAL_ANIMATION_MS),
+                          # index.tsx itself holds only the render tree plus handleAttack (tightly coupled to
+                          # attackGridRef/buttonRefs scroll-compensation, so it stays put) - everything else
+                          # self-contained enough to have its own clear inputs/outputs lives in its own module
+                          # instead: geometry.ts (Point + rectCenter/percentIn/angleBetween/pointStyle/
+                          # spitStyle - the throw/spit trajectory math), spriteEffects.ts (playBump's WAAPI
+                          # attack/hit bump keyframes, shared EFFECT_DURATION_MS), HpBar.tsx, and four generic
+                          # "on/off with a timeout" hooks - useHealEffect.ts (also exports HEAL_ANIMATION_MS),
                           # useThrowEffect.ts (THROW_DURATION_MS), useSpitEffect.ts (SPIT_DURATION_MS), and
-                          # useToastStack.ts. Three more own a whole cross-cutting concern each:
+                          # useToastStack.ts. Four more own a whole cross-cutting concern each:
+                          # useAttackLine.ts (AttackOption/INNATE_KEY/buildLine and the `line` state itself,
+                          # given gameStore.monsterOrder - handleAttack still owns actually *reordering* it,
+                          # since that's inseparable from the scroll-compensation math above),
                           # useEntranceSequence.ts (the battle-start sequence and its own timing constants -
                           # see "Entering a battle: the screen transition" below), useWildAttackClock.ts (the
                           # wild monster's own attack timer, telegraph marks, and the goal battle's coldnoodle
