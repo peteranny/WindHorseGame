@@ -1,0 +1,37 @@
+import { useCallback, useRef, useState } from "react";
+
+export interface ToastEntry {
+  id: number;
+  text: string;
+  durationMs: number;
+}
+
+// The battlefield's callout stack - "X 系列加成，效果卓越" for a real family
+// group throw, a healing-specific message whenever a healer (solo or
+// grouped) is tapped, and the two entrance banners ("遇到野生的X！",
+// "開始！"). Every trigger appends its own entry rather than replacing
+// whatever's currently showing (the single-slot version this used to be
+// let a second trigger silently cut the first one's banner short) - each
+// entry then removes only itself, by id, once its own durationMs elapses,
+// same reasoning as useThrowEffect's per-id cleanup. Battle/styles.css's
+// .toastStack renders whatever's still in this array as a vertically
+// stacked column (with a gap), so two toasts that happen to overlap in
+// time - e.g. attacking the instant the action bar unlocks, right as
+// "開始！" is still fading - both stay fully visible side by side
+// rather than one clobbering the other.
+export const useToastStack = (): [
+  ToastEntry[],
+  (text: string, durationMs: number) => void
+] => {
+  const [toasts, setToasts] = useState<ToastEntry[]>([]);
+  const nextIdRef = useRef(0);
+  const trigger = useCallback((text: string, durationMs: number) => {
+    nextIdRef.current += 1;
+    const id = nextIdRef.current;
+    setToasts((current) => [...current, { id, text, durationMs }]);
+    setTimeout(() => {
+      setToasts((current) => current.filter((toast) => toast.id !== id));
+    }, durationMs);
+  }, []);
+  return [toasts, trigger];
+};

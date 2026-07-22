@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useReducer,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
@@ -14,12 +8,7 @@ import MONSTERS from "../../data/monsters/monsters";
 import {
   ATTACK_COOLDOWN_MS,
   ATTACK_DAMAGE,
-  BATTLE_LOSS_COOLDOWN_MS,
-  GOAL_SELF_HEAL_INTERVAL_SPITS,
-  GOAL_SELF_HEAL_PERCENT,
   PROTAGONIST_MAX_HP,
-  WILD_ATTACK_DAMAGE,
-  WILD_ATTACK_INTERVAL_MS,
 } from "../../data/monsters/battleFormulas";
 import {
   findGroupContaining,
@@ -30,7 +19,30 @@ import {
   moveGroupToFront,
 } from "./attackGroups";
 import { GOAL_NAME } from "../../data/goalEncounter";
-import { REMAINING_OVERLAY_MS } from "../BattleTransition/timing";
+import { Point, rectCenter, percentIn, angleBetween, pointStyle, spitStyle } from "./geometry";
+import {
+  EFFECT_DURATION_MS,
+  attackBumpKeyframes,
+  hitBumpKeyframes,
+  playBump,
+} from "./spriteEffects";
+import { HpBar } from "./HpBar";
+import { useHealEffect, HEAL_ANIMATION_MS } from "./useHealEffect";
+import { useThrowEffect, THROW_DURATION_MS } from "./useThrowEffect";
+import { useSpitEffect, SPIT_DURATION_MS } from "./useSpitEffect";
+import { useToastStack } from "./useToastStack";
+import {
+  useEntranceSequence,
+  ENTER_ENEMY_MS,
+  ENTER_PLAYER_MS,
+  INFO_REVEAL_MS,
+  ENEMY_ENTER_DELAY_MS,
+  PLAYER_ENTER_DELAY_MS,
+  ENEMY_INFO_DELAY_MS,
+  PLAYER_INFO_DELAY_MS,
+} from "./useEntranceSequence";
+import { useWildAttackClock, TELEGRAPH_MARK_DELAYS_MS } from "./useWildAttackClock";
+import { useBattleOutcome } from "./useBattleOutcome";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
 import COLD_NOODLE_SPRITE from "../../assets/coldNoodle.png";
@@ -57,119 +69,6 @@ const SCROLL_COMPENSATION_SAFETY_MS = 1000;
 // thrown together, so the group's throws read as a distinguishable volley
 // rather than one indistinct simultaneous blob.
 const GROUP_THROW_STAGGER_MS = 300;
-// A heal's own glow builds, holds, and releases over this much longer span
-// (rather than EFFECT_DURATION_MS's quick attack/hit flash) - the protagonist's
-// HP only actually recovers once this whole animation finishes.
-const HEAL_ANIMATION_MS = 3000;
-// Drives forceTick() below, which forces a full re-render of this whole
-// component (re-grouping the attack line, re-rendering every attack
-// button) for as long as any battle lasts - kept as coarse as the
-// telegraph/cooldown displays can tolerate (see their own comments) rather
-// than tighter, since this runs continuously through every single battle.
-const TICK_MS = 1000;
-const EFFECT_DURATION_MS = 300;
-const WILD_ATTACK_TELEGRAPH_MS = 2000;
-// The 3 telegraph marks' own reveal delays, evenly spaced across the
-// telegraph window - driven entirely by CSS animation-delay (see
-// .telegraphMark) rather than by counting up on forceTick's 1s cadence,
-// since that cadence is coarser than this 2s window can show 3 distinct
-// steps through: only 2 of its renders ever land inside the window (the
-// render at the window's true end coincides with the attack already having
-// fired), so a tick-driven count could only ever reach 1, then 2, then
-// straight to the spit - never showing all 3 as the "imminent" cue the
-// marks are meant to be.
-const TELEGRAPH_MARK_DELAYS_MS = [0, 1, 2].map(
-  (i) => (i * WILD_ATTACK_TELEGRAPH_MS) / 3
-);
-const THROW_DURATION_MS = 2000;
-const SPIT_DURATION_MS = 500;
-// The goal battle's own coldnoodle self-heal (see wildSpitCountRef below) -
-// the noodle isn't thrown across the battlefield like a captured monster's
-// icon; it shifts in and fades in beside the enemy sprite like a side dish,
-// wiggles in place, then fades back out without moving. The glow+heal below
-// (triggerEnemyHeal/healWild) fires once the wiggle's done, right as the
-// noodle starts fading out.
-const COLD_NOODLE_ENTER_MS = 300;
-const COLD_NOODLE_WIGGLE_MS = 2000;
-const COLD_NOODLE_EXIT_MS = 300;
-const COLD_NOODLE_TOTAL_MS =
-  COLD_NOODLE_ENTER_MS + COLD_NOODLE_WIGGLE_MS + COLD_NOODLE_EXIT_MS;
-const COLD_NOODLE_HEAL_DELAY_MS = COLD_NOODLE_ENTER_MS + COLD_NOODLE_WIGGLE_MS;
-// A beat before the loser starts sinking (once every in-flight throw/spit
-// has actually landed), then the sink itself, then a further beat holding
-// the sunk pose before the white/black fade begins covering it - all three
-// must match .playerSink/.enemySink's own animation-delay/-duration in
-// styles.css, since that's what actually plays the sink visually.
-const SINK_LEAD_MS = 300;
-const SINK_DURATION_MS = 500;
-const SINK_HOLD_MS = 400;
-// Must match outcome-fade-out-sink's opacity-0 percentage in styles.css -
-// the fade only starts becoming visible once the whole sink sequence is
-// done. Only win/loss actually wait through this pause (.outcomeFadeSinkTiming,
-// OUTCOME_TOTAL_MS) - an escape has no sink to hold for, so it skips
-// straight to just OUTCOME_FADE_MS of fade (.outcomeFadeQuickTiming) instead,
-// see the pendingOutcome === "escape" check below.
-const OUTCOME_PAUSE_MS = SINK_LEAD_MS + SINK_DURATION_MS + SINK_HOLD_MS;
-const OUTCOME_FADE_MS = 700;
-const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
-
-// The entrance sequence that plays once per fresh battle mount, as one
-// strictly sequential chain through step 6 - each step below only starts
-// once the previous one has entirely finished, never overlapping:
-//   1. the enemy sprite + its own ground shadow slide in together
-//   2. the player sprite slides in
-//   3. a toast names the encounter ("遇到野生的X！", TOAST_MS)
-//   4. the enemy HP box reveals (drop-and-settle, like the attack cells)
-//   5. the player HP box reveals, the same way
-//   6. the action bar's actual content (escape/skip/dev buttons, the
-//      attack grid) reveals AND a second toast ("開始！", also TOAST_MS)
-//      appears, together in the same instant - isEntering flips false
-//      right then too, so interaction unlocks exactly as "開始！" shows
-//      up rather than only once that toast is done fading, and the cells
-//      are already tappable while their own reveal animation
-//      (.attackButtonReveal) is still playing over them
-//
-// This component only ever mounts right as BattleTransition's own
-// black-screen hold begins (see its index.tsx - the distortion is fully,
-// solidly opaque right then, and the map/battle content swap happens at
-// that exact instant), so REMAINING_OVERLAY_MS - everything still left of
-// the overlay at that point (the hold plus the final "reveal" clearing) -
-// is step 1's own base delay, not just the last stage's own duration.
-// Both sprites are a pure position slide (no fade - each sits at full
-// opacity throughout, just translated off past the battlefield's own edge
-// until its own delay elapses), so nothing here looks like it's fading in
-// from behind the (by-then-gone) overlay.
-const ENTER_ENEMY_MS = 1050;
-const ENTER_PLAYER_MS = 1050;
-// Both toasts (step 3's "遇到野生的X！" and step 7's "開始！") share this
-// one length - unified rather than each having its own, so a toast always
-// reads the same regardless of which one is showing.
-// Its fade fraction is fixed by .toast's own shared keyframe (styles.css),
-// not derived from a separate fade/hold breakdown here.
-const TOAST_MS = 2000;
-// How long each HP block's own drop-and-settle reveal takes, once it
-// starts - short and snappy, unrelated to how long a sprite itself took to
-// slide in.
-const INFO_REVEAL_MS = 450;
-// How long the action bar's own drop-and-settle reveal takes, once it
-// starts - .attackButtonReveal's own animation duration.
-const ACTION_BAR_REVEAL_MS = 450;
-
-const ENEMY_ENTER_DELAY_MS = REMAINING_OVERLAY_MS;
-const PLAYER_ENTER_DELAY_MS = ENEMY_ENTER_DELAY_MS + ENTER_ENEMY_MS;
-const TOAST_ENCOUNTER_DELAY_MS = PLAYER_ENTER_DELAY_MS + ENTER_PLAYER_MS;
-const ENEMY_INFO_DELAY_MS = TOAST_ENCOUNTER_DELAY_MS + TOAST_MS;
-const PLAYER_INFO_DELAY_MS = ENEMY_INFO_DELAY_MS + INFO_REVEAL_MS;
-// The same instant the action bar's own reveal starts AND the "開始！"
-// toast triggers - see isEntering/isActionBarRevealing/triggerToast below,
-// all three fired together in one setTimeout, so interaction unlocks
-// exactly as the toast appears rather than only once it's done showing.
-const ENTRANCE_LOCK_MS = PLAYER_INFO_DELAY_MS + INFO_REVEAL_MS;
-
-// "heal" is the only sprite effect still driven by React state/CSS class -
-// see useHealEffect and playBump below for why attack/hit moved off this.
-type HealEffect = "heal" | null;
-type PendingOutcome = "win" | "lose" | "escape" | null;
 
 interface AttackOption {
   key: string;
@@ -182,259 +81,6 @@ interface AttackOption {
   family: string | null;
   step: number;
 }
-
-// A point expressed as a percentage of .battlefield's own box, so throw/spit
-// trajectories stay correct no matter the viewport size or how the sprites
-// themselves are positioned/anchored within it.
-interface Point {
-  xPercent: number;
-  yPercent: number;
-}
-
-interface ThrowEffect {
-  id: number;
-  icon: string;
-  from: Point;
-  to: Point;
-  // A healer's own self-toss (selfPlayer - identical from/to, see
-  // getTrajectory) still arcs up and down in place, but shouldn't also
-  // shrink like a real cross-battlefield throw does - that shrink reads as
-  // "flying into the distance", which never happens here.
-  selfToss: boolean;
-}
-
-interface SpitEffect {
-  id: number;
-  from: Point;
-  to: Point;
-  angleDeg: number;
-}
-
-const rectCenter = (rect: DOMRect): { x: number; y: number } => ({
-  x: rect.left + rect.width / 2,
-  y: rect.top + rect.height / 2,
-});
-
-// `point`'s position as a percentage of `containerRect`'s box - measured
-// live rather than hardcoded, so it's always right regardless of how
-// either element is currently positioned/sized.
-const percentIn = (
-  point: { x: number; y: number },
-  containerRect: DOMRect
-): Point => ({
-  xPercent: ((point.x - containerRect.left) / containerRect.width) * 100,
-  yPercent: ((point.y - containerRect.top) / containerRect.height) * 100,
-});
-
-// The clockwise rotation (in degrees) that makes the spit glyph's rounded,
-// naturally-downward-facing end (see .spitDrop's base rotate(-90deg), its
-// own facing at --angle: 0deg) point from `from` toward `to`. Computed from
-// real pixel centers rather than the from/to percentages, since those are
-// relative to .battlefield's box and would skew the angle whenever it isn't
-// perfectly square.
-const angleBetween = (
-  from: { x: number; y: number },
-  to: { x: number; y: number }
-): number => (Math.atan2(to.y - from.y, to.x - from.x) * 180) / Math.PI - 90;
-
-const pointStyle = (from: Point, to: Point): React.CSSProperties =>
-  ({
-    "--start-x": `${from.xPercent}%`,
-    "--start-y": `${from.yPercent}%`,
-    "--end-x": `${to.xPercent}%`,
-    "--end-y": `${to.yPercent}%`,
-  } as React.CSSProperties);
-
-const spitStyle = (effect: SpitEffect): React.CSSProperties =>
-  ({
-    ...pointStyle(effect.from, effect.to),
-    "--angle": `${effect.angleDeg}deg`,
-  } as React.CSSProperties);
-
-const HpBar = ({ hp, maxHp }: { hp: number; maxHp: number }) => (
-  <div className={styles.hpBarOuter}>
-    <div
-      className={styles.hpBarInner}
-      style={{ width: `${maxHp > 0 ? (hp / maxHp) * 100 : 0}%` }}
-    />
-  </div>
-);
-
-const useHealEffect = (): [
-  HealEffect,
-  (effect: HealEffect, durationMs?: number) => void
-] => {
-  const [effect, setEffect] = useState<HealEffect>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const trigger = useCallback(
-    (next: HealEffect, durationMs: number = EFFECT_DURATION_MS) => {
-      setEffect(next);
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(() => setEffect(null), durationMs);
-    },
-    []
-  );
-  return [effect, trigger];
-};
-
-// The player's own filter-based heal glow (useHealEffect above) is the only
-// sprite effect still driven by React state/className - a quick attack/hit
-// bump instead plays via the Web Animations API, fired directly on the
-// sprite's DOM node. That keeps it independent of (and unable to cut short)
-// a concurrent heal glow: `animation`'s CSS shorthand can only ever resolve
-// to one value per element, so two className-driven animations fight over
-// the same slot and only the most recent wins - but a WAAPI animation and a
-// CSS-class animation are separate mechanisms entirely, and here they also
-// animate different properties (transform vs filter), so they can run at
-// the same time with no conflict at all.
-const attackBumpKeyframes = (directionPx: number): Keyframe[] => [
-  { transform: "translateX(0)" },
-  { transform: `translateX(calc(${directionPx}px * var(--scale)))`, offset: 0.3 },
-  { transform: "translateX(0)" },
-];
-
-const hitBumpKeyframes = (rotateDeg: number): Keyframe[] => [
-  { transform: "translateY(0) rotate(0deg)" },
-  {
-    transform: `translateY(calc(12px * var(--scale))) rotate(${rotateDeg}deg)`,
-    offset: 0.4,
-  },
-  { transform: "translateY(0) rotate(0deg)" },
-];
-
-const playBump = (
-  el: HTMLElement | null,
-  keyframes: Keyframe[],
-  durationMs: number
-): void => {
-  el?.animate(keyframes, { duration: durationMs, easing: "ease" });
-};
-
-// Every captured monster currently mid-throw at the wild monster (the
-// innate fist attack has nothing to throw, so it never uses this). Each
-// throw gets its own id, removed only by its own onAnimationEnd (see
-// .thrownIcon's render below) rather than a separately-tracked setTimeout -
-// a parallel JS timer has to be kept exactly in sync with the CSS
-// animation's own duration by convention, and any drift between the two
-// (rendering jank, batched updates) leaves a landed, no-longer-animating
-// icon frozen on screen (animation-fill-mode: forwards holds its last
-// frame) until the timer eventually catches up. Tying removal directly to
-// the browser's own animationend event can't drift, so throwing a second
-// monster before the first one lands still doesn't cut the first one's
-// animation short - they each run to completion and self-remove independently.
-//
-// onAnimationEnd can still silently fail to fire at all in rare cases (a
-// backgrounded/throttled tab pausing the CSS animation, a dropped event) -
-// and because effects is an array rather than a single nullable slot, a
-// throw that fails to clear this way doesn't just get replaced by the next
-// one the way a single-slot effect would - it's a genuine leak, sitting in
-// the array forever while later throws keep appending around it. trigger
-// arms a generous safety-net timeout well past the animation's own real
-// duration to guarantee eventual cleanup either way; clear(id) is already
-// idempotent (filters by id), so calling it again after onAnimationEnd
-// already did is a harmless no-op.
-const THROW_SAFETY_NET_MS = THROW_DURATION_MS + 1000;
-const useThrowEffect = (): [
-  ThrowEffect[],
-  (icon: string, from: Point, to: Point, selfToss?: boolean) => void,
-  (id: number) => void
-] => {
-  const [effects, setEffects] = useState<ThrowEffect[]>([]);
-  const nextIdRef = useRef(0);
-  const clear = useCallback((id: number) => {
-    setEffects((current) => current.filter((effect) => effect.id !== id));
-  }, []);
-  const trigger = useCallback(
-    (icon: string, from: Point, to: Point, selfToss: boolean = false) => {
-      nextIdRef.current += 1;
-      const id = nextIdRef.current;
-      setEffects((current) => [...current, { id, icon, from, to, selfToss }]);
-      setTimeout(() => clear(id), THROW_SAFETY_NET_MS);
-    },
-    [clear]
-  );
-  return [effects, trigger, clear];
-};
-
-// The innate attack's water-drop spit, shot straight from the player to the
-// wild monster. Same onAnimationEnd-driven cleanup as useThrowEffect above,
-// for the same reason - no separate timer that could drift out of sync with
-// the CSS animation it's meant to track. That primary path can still fail to
-// fire at all in rare cases (a backgrounded/throttled tab pausing the CSS
-// animation, a dropped animationend event) - since that leaves the spit
-// stuck on screen indefinitely with nothing left to clear it, trigger also
-// arms a generous safety-net timeout well past the animation's own real
-// duration, so it never fires under normal conditions (onAnimationEnd
-// already will have) and never fights the primary path - it only ever
-// rescues a spit onAnimationEnd already failed to clear on its own. Guarded
-// by id so a stale timeout from an earlier spit can't clear a newer one.
-//
-// Instantiated twice below (once for the player's own spit, once for the
-// wild monster's) - each keeps its own independent id counter starting at 1,
-// so the two can (and regularly do, since the wild monster auto-attacks on
-// its own timer) land on the same id at the same time. Both spans are still
-// siblings under the same .battlefield parent though, so a bare key={id}
-// on each was a real collision, not just a coincidence - React reconciles
-// keys across a fiber's whole child list, not per JSX call site. That let
-// the two spits get their DOM nodes/onAnimationEnd handlers crossed, which
-// is what was actually causing a spit to occasionally never disappear - the
-// render-site keys are namespaced (`player-spit-`/`enemy-spit-`) to rule
-// this out for good, on top of the safety-net timeout above.
-const SPIT_SAFETY_NET_MS = SPIT_DURATION_MS + 1000;
-const useSpitEffect = (): [
-  SpitEffect | null,
-  (from: Point, to: Point, angleDeg: number) => void,
-  () => void
-] => {
-  const [effect, setEffect] = useState<SpitEffect | null>(null);
-  const nextIdRef = useRef(0);
-  const trigger = useCallback((from: Point, to: Point, angleDeg: number) => {
-    nextIdRef.current += 1;
-    const id = nextIdRef.current;
-    setEffect({ id, from, to, angleDeg });
-    setTimeout(() => {
-      setEffect((current) => (current?.id === id ? null : current));
-    }, SPIT_SAFETY_NET_MS);
-  }, []);
-  const clear = useCallback(() => setEffect(null), []);
-  return [effect, trigger, clear];
-};
-
-interface ToastEntry {
-  id: number;
-  text: string;
-  durationMs: number;
-}
-
-// The battlefield's callout stack - "X 系列加成，效果卓越" for a real family
-// group throw, a healing-specific message whenever a healer (solo or
-// grouped) is tapped, and the two entrance banners ("遇到野生的X！",
-// "開始！"). Every trigger appends its own entry rather than replacing
-// whatever's currently showing (the single-slot version this used to be
-// let a second trigger silently cut the first one's banner short) - each
-// entry then removes only itself, by id, once its own durationMs elapses,
-// same reasoning as useThrowEffect's per-id cleanup. Battle/styles.css's
-// .toastStack renders whatever's still in this array as a vertically
-// stacked column (with a gap), so two toasts that happen to overlap in
-// time - e.g. attacking the instant the action bar unlocks, right as
-// "開始！" is still fading - both stay fully visible side by side
-// rather than one clobbering the other.
-const useToastStack = (): [
-  ToastEntry[],
-  (text: string, durationMs: number) => void
-] => {
-  const [toasts, setToasts] = useState<ToastEntry[]>([]);
-  const nextIdRef = useRef(0);
-  const trigger = useCallback((text: string, durationMs: number) => {
-    nextIdRef.current += 1;
-    const id = nextIdRef.current;
-    setToasts((current) => [...current, { id, text, durationMs }]);
-    setTimeout(() => {
-      setToasts((current) => current.filter((toast) => toast.id !== id));
-    }, durationMs);
-  }, []);
-  return [toasts, trigger];
-};
 
 const Battle = () => {
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
@@ -462,67 +108,41 @@ const Battle = () => {
 
   const [playerHealEffect, triggerPlayerHeal] = useHealEffect();
   const [enemyHealEffect, triggerEnemyHeal] = useHealEffect();
-  // The goal battle's own coldnoodle self-heal side dish (see
-  // COLD_NOODLE_TOTAL_MS above) - reuses this same generic "on/off with a
-  // timeout" hook rather than a bespoke one, same as the two heal glows.
+  // The goal battle's own coldnoodle self-heal side dish - reuses this same
+  // generic "on/off with a timeout" hook rather than a bespoke one, same as
+  // the two heal glows.
   const [coldNoodleEffect, triggerColdNoodle] = useHealEffect();
   const [throwEffects, triggerThrow, clearThrow] = useThrowEffect();
   const [spitEffect, triggerSpit, clearSpit] = useSpitEffect();
   const [enemySpitEffect, triggerEnemySpit, clearEnemySpit] = useSpitEffect();
   const [toasts, triggerToast] = useToastStack();
-  const [pendingOutcome, setPendingOutcome] = useState<PendingOutcome>(null);
-  // Becomes true once the battle is decided AND every in-flight throw/spit
-  // has actually landed - only then does the loser's sprite sink and the
-  // white/black fade begin, so a still-flying attack never gets cut short.
-  const [isSinking, setIsSinking] = useState(false);
 
-  // True for exactly ENTRANCE_LOCK_MS starting from this component's own
-  // mount (a fresh Battle instance mounts every time a new battle starts,
-  // see BattleTransition's own `displayed` swap) - drives steps 1-5 of the
-  // entrance sequence above, and locks the action bar (.actionBarLocked)
-  // until step 6 begins.
-  const [isEntering, setIsEntering] = useState(true);
-  // Flips true for exactly ACTION_BAR_REVEAL_MS the instant isEntering
-  // flips false - just long enough to play .actionBarReveal's one-shot
-  // drop-and-settle shake, then clears itself so a later re-render (a
-  // cooldown tick, an attack) doesn't replay it.
-  const [isActionBarRevealing, setIsActionBarRevealing] = useState(false);
-  useEffect(() => {
-    let revealTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    // Step 6 - the action bar unlocks and "開始！" appears in the exact
-    // same instant, rather than the toast trailing behind an already-
-    // interactive battle.
-    const lockTimeoutId = setTimeout(() => {
-      setIsEntering(false);
-      setIsActionBarRevealing(true);
-      triggerToast("開始！", TOAST_MS);
-      revealTimeoutId = setTimeout(
-        () => setIsActionBarRevealing(false),
-        ACTION_BAR_REVEAL_MS
-      );
-    }, ENTRANCE_LOCK_MS);
-    // Step 3 - both toasts just append to the shared stack (see
-    // useToastStack above) like any other trigger call, so either one
-    // overlapping with a later family-bonus/heal toast (e.g. the player
-    // attacks the instant step 6 unlocks the action bar and shows "開始！")
-    // stacks rather than clobbering it.
-    const encounterName = isGoalEncounter
-      ? GOAL_NAME
-      : activeMonsterId !== null
-      ? MONSTERS[activeMonsterId].name
-      : "";
-    const encounterToastTimeoutId = setTimeout(() => {
-      triggerToast(`遇到野生的${encounterName}！`, TOAST_MS);
-    }, TOAST_ENCOUNTER_DELAY_MS);
-    return () => {
-      clearTimeout(lockTimeoutId);
-      if (revealTimeoutId) clearTimeout(revealTimeoutId);
-      clearTimeout(encounterToastTimeoutId);
-    };
-    // isGoalEncounter/activeMonsterId never change within one Battle mount
-    // (a fresh instance mounts per battle) - included for correctness, not
-    // because this effect is expected to ever actually rerun.
-  }, [isGoalEncounter, activeMonsterId, triggerToast]);
+  const { isEntering, isActionBarRevealing } = useEntranceSequence({
+    isGoalEncounter,
+    activeMonsterId,
+    triggerToast,
+  });
+
+  const {
+    pendingOutcome,
+    setPendingOutcome,
+    isSinking,
+    isPlayerSinking,
+    isEnemySinking,
+  } = useBattleOutcome({
+    activeMonsterId,
+    isGoalEncounter,
+    wildHp,
+    protagonistHp,
+    hasInFlightAttacks:
+      throwEffects.length > 0 || spitEffect !== null || enemySpitEffect !== null,
+    goalDefeatedAt,
+    captureMonster,
+    setIsFirstGoalWin,
+    recordGoalWin,
+    setBattleCooldown,
+    concludeBattle,
+  });
 
   const battlefieldRef = useRef<HTMLDivElement>(null);
   const playerSpriteRef = useRef<HTMLImageElement>(null);
@@ -570,177 +190,22 @@ const Battle = () => {
     };
   }, []);
 
-  const [, forceTick] = useReducer((n: number) => n + 1, 0);
-  // Delayed past ENTRANCE_LOCK_MS (rather than starting to count down from
-  // the instant this component mounts) so the wild monster's own attack
-  // clock doesn't start running before the player can actually do anything
-  // back - the first attack lands WILD_ATTACK_INTERVAL_MS after the
-  // entrance sequence (and thus the action bar) actually unlocks, same as
-  // every attack after it.
-  const nextWildAttackAtRef = useRef(
-    Date.now() + ENTRANCE_LOCK_MS + WILD_ATTACK_INTERVAL_MS
-  );
-  // Goal-battle-only boss mechanic: counts every spit the wild side has
-  // thrown at the player so far this battle - every GOAL_SELF_HEAL_INTERVAL_SPITS-th
-  // one, a coldnoodle appears beside it as a self-heal (see
-  // COLD_NOODLE_TOTAL_MS above) instead of just spitting again.
-  const wildSpitCountRef = useRef(0);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (
-        pendingOutcome === null &&
-        !isEntering &&
-        Date.now() >= nextWildAttackAtRef.current
-      ) {
-        // Mirrors the innate attack: the enemy spits at the player, and the
-        // hit only lands once that spit actually arrives.
-        playBump(enemySpriteRef.current, attackBumpKeyframes(-20), EFFECT_DURATION_MS);
-        playBump(enemyShadowRef.current, attackBumpKeyframes(-20), EFFECT_DURATION_MS);
-        const trajectory = getTrajectory("toPlayer");
-        if (trajectory) {
-          triggerEnemySpit(trajectory.from, trajectory.to, trajectory.angleDeg);
-        }
-        setTimeout(() => {
-          damageProtagonist(WILD_ATTACK_DAMAGE);
-          playBump(playerSpriteRef.current, hitBumpKeyframes(-20), EFFECT_DURATION_MS);
-        }, SPIT_DURATION_MS);
-
-        wildSpitCountRef.current += 1;
-        if (
-          isGoalEncounter &&
-          wildSpitCountRef.current % GOAL_SELF_HEAL_INTERVAL_SPITS === 0
-        ) {
-          // Queued right after the regular spit lands, so the two never
-          // visually overlap - the coldnoodle shifts/fades in beside the
-          // enemy and wiggles (triggerColdNoodle, see COLD_NOODLE_TOTAL_MS
-          // above), then the same build/hold/release glow captured
-          // monsters' own heals use starts right as the wiggle ends, and
-          // only once that glow finishes does the HP actually recover.
-          setTimeout(() => {
-            triggerColdNoodle("heal", COLD_NOODLE_TOTAL_MS);
-            triggerToast(
-              `${GOAL_NAME}吃了涼麵，恢復了體力！`,
-              COLD_NOODLE_HEAL_DELAY_MS + HEAL_ANIMATION_MS
-            );
-            setTimeout(() => {
-              triggerEnemyHeal("heal", HEAL_ANIMATION_MS);
-              setTimeout(() => {
-                healWild(wildMaxHp * GOAL_SELF_HEAL_PERCENT);
-              }, HEAL_ANIMATION_MS);
-            }, COLD_NOODLE_HEAL_DELAY_MS);
-          }, SPIT_DURATION_MS);
-        }
-
-        nextWildAttackAtRef.current += WILD_ATTACK_INTERVAL_MS;
-      }
-      forceTick();
-    }, TICK_MS);
-    return () => clearInterval(id);
-  }, [
+  const { isWildTelegraphing } = useWildAttackClock({
     pendingOutcome,
     isEntering,
+    isGoalEncounter,
+    wildMaxHp,
+    enemySpriteRef,
+    enemyShadowRef,
+    playerSpriteRef,
     getTrajectory,
     damageProtagonist,
     triggerEnemySpit,
-    isGoalEncounter,
     triggerColdNoodle,
     triggerToast,
     triggerEnemyHeal,
     healWild,
-    wildMaxHp,
-  ]);
-
-  // A win/loss pauses on the battlefield with a fade overlay before actually
-  // leaving - concludeBattle (which swaps this whole screen out) only
-  // fires once that fade has had time to play. An escape (see the 逃跑
-  // button below) sets pendingOutcome directly rather than going through
-  // this effect, but from here on out it's driven by the same isSinking
-  // machinery either way - just with a shorter fade and no sink pause, see
-  // the pendingOutcome === "escape" check further down.
-  useEffect(() => {
-    if (
-      (activeMonsterId === null && !isGoalEncounter) ||
-      pendingOutcome !== null
-    )
-      return;
-    if (wildHp <= 0) {
-      setPendingOutcome("win");
-    } else if (protagonistHp <= 0) {
-      setPendingOutcome("lose");
-    }
-  }, [activeMonsterId, isGoalEncounter, wildHp, protagonistHp, pendingOutcome]);
-
-  // Holds off the sink/fade sequence until every already-thrown attack has
-  // actually landed, so a slow throw never gets visually cut off mid-flight
-  // by the losing sprite sinking or the screen fading out under it - an
-  // escape has nothing to sink (see isPlayerSinking/isEnemySinking below,
-  // both false for "escape"), but still waits here the same way before its
-  // own fade, for the same reason.
-  useEffect(() => {
-    if (pendingOutcome === null || isSinking) return;
-    if (
-      throwEffects.length > 0 ||
-      spitEffect !== null ||
-      enemySpitEffect !== null
-    )
-      return;
-    setIsSinking(true);
-  }, [pendingOutcome, isSinking, throwEffects, spitEffect, enemySpitEffect]);
-
-  useEffect(() => {
-    if (!isSinking || pendingOutcome === null) return;
-    // Escape has no sink animation to hold for (see isPlayerSinking/
-    // isEnemySinking below, both false for it) - skip straight to just the
-    // fade portion instead of sitting through the same multi-beat pause a
-    // real win/loss's sink sequence needs.
-    const totalMs =
-      pendingOutcome === "escape" ? OUTCOME_FADE_MS : OUTCOME_TOTAL_MS;
-    const id = setTimeout(() => {
-      // Only actually captured/recorded once the fade finishes and we're
-      // leaving this screen - otherwise the defeated monster would show up
-      // in the attack grid below while its own defeat is still playing out.
-      if (pendingOutcome === "win") {
-        if (activeMonsterId !== null) captureMonster(activeMonsterId);
-        // The player only actually "enters" the house (their cell becoming
-        // the goal's own, see Maze/houseState.ts) once the finale
-        // conversation this outcome leads into has been read all the way
-        // through - see ConversationView's own endEncounter call. Recorded
-        // before recordGoalWin so it still reflects goalDefeatedAt's value
-        // from *before* this win - recordGoalWin makes it non-null
-        // immediately, so reading it any later would always say "not first".
-        else if (isGoalEncounter) {
-          setIsFirstGoalWin(goalDefeatedAt === null);
-          recordGoalWin();
-        }
-      } else if (pendingOutcome === "lose" && !isGoalEncounter) {
-        // Locks this same monster out of being re-challenged for a while -
-        // ConversationView checks battleCooldowns before showing the normal
-        // script again. The goal battle is deliberately exempt (it's tough
-        // enough already - see its own loss hint below) - losing it still
-        // shows buildGoalLossConversation's tip, just without also locking
-        // the player out afterward.
-        setBattleCooldown(String(activeMonsterId), Date.now() + BATTLE_LOSS_COOLDOWN_MS);
-      }
-      concludeBattle(pendingOutcome);
-    }, totalMs);
-    return () => clearTimeout(id);
-    // goalDefeatedAt is deliberately not a dependency here - this effect
-    // must only read whatever value it had at the render where isSinking
-    // flipped true (i.e. from *before* this win), not re-run once
-    // recordGoalWin (called synchronously right below) makes it non-null.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    isSinking,
-    pendingOutcome,
-    activeMonsterId,
-    isGoalEncounter,
-    captureMonster,
-    setIsFirstGoalWin,
-    recordGoalWin,
-    setBattleCooldown,
-    concludeBattle,
-  ]);
+  });
 
   const buildLine = useCallback((order: number[]): AttackOption[] => {
     const options: AttackOption[] = [
@@ -1136,13 +601,6 @@ const Battle = () => {
   const enemyIcon = isGoalEncounter
     ? GOAL_SPRITE
     : MONSTERS[activeMonsterId!].icon;
-
-  const msUntilWildAttack = nextWildAttackAtRef.current - Date.now();
-  const isWildTelegraphing =
-    msUntilWildAttack > 0 && msUntilWildAttack <= WILD_ATTACK_TELEGRAPH_MS;
-
-  const isPlayerSinking = isSinking && pendingOutcome === "lose";
-  const isEnemySinking = isSinking && pendingOutcome === "win";
 
   return (
     <div className={styles.battle}>

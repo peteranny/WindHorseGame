@@ -53,12 +53,25 @@ src/
                           # paginateText.ts splits a page's full text into <=2-line, DOM-measured
                           # chunks (joined with "..."); useTypewriter.ts types out the current chunk.
     Battle/               # Full-screen real-time battle UI (replaces Maze/Dialog while mode === "battle").
-                          # attackGroups.ts: pure groupByAdjacentFamily/groupMultiplierAt/findGroupContaining/
-                          # moveGroupToBack/moveGroupToFront/hueForFamily helpers behind the family-adjacency
-                          # attack system - see "Family-adjacency attack bonuses" below. Its own entrance
-                          # sequence (isEntering - sprite pop-ins, HP block fade-ins, intro banner,
-                          # .actionBarLocked) is timed off BattleTransition/timing.ts's DISTORT_OUT_MS -
-                          # see "Entering a battle: the screen transition" below.
+                          # index.tsx itself holds the render tree plus the one genuinely component-specific
+                          # concern (the attack line's reorder-on-throw state/handleAttack, tightly coupled to
+                          # attackGridRef/buttonRefs scroll-compensation) - everything else self-contained
+                          # enough to have its own clear inputs/outputs lives in its own module instead:
+                          # geometry.ts (Point + rectCenter/percentIn/angleBetween/pointStyle/spitStyle - the
+                          # throw/spit trajectory math), spriteEffects.ts (playBump's WAAPI attack/hit bump
+                          # keyframes, shared EFFECT_DURATION_MS), HpBar.tsx, and four generic "on/off with a
+                          # timeout" hooks - useHealEffect.ts (also exports HEAL_ANIMATION_MS),
+                          # useThrowEffect.ts (THROW_DURATION_MS), useSpitEffect.ts (SPIT_DURATION_MS), and
+                          # useToastStack.ts. Three more own a whole cross-cutting concern each:
+                          # useEntranceSequence.ts (the battle-start sequence and its own timing constants -
+                          # see "Entering a battle: the screen transition" below), useWildAttackClock.ts (the
+                          # wild monster's own attack timer, telegraph marks, and the goal battle's coldnoodle
+                          # self-heal), and useBattleOutcome.ts (deciding win/lose, the sink-then-fade
+                          # sequence, and finalizing via concludeBattle - see "Losing locks that battle out
+                          # for a while" below). attackGroups.ts: pure groupByAdjacentFamily/
+                          # groupMultiplierAt/findGroupContaining/moveGroupToBack/moveGroupToFront/
+                          # hueForFamily helpers behind the family-adjacency attack system - see
+                          # "Family-adjacency attack bonuses" below.
     BattleTransition/     # Owns the actual map<->battle content swap (Game passes both branches into
                           # it as props, no longer via a separate crossfade component) plus the
                           # freeze/flash/distortion overlay that plays once, purely on the "entering
