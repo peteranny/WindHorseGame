@@ -272,15 +272,12 @@
   border-radius: calc(999px * var(--scale));
   white-space: nowrap;
 
-  /* --toast-duration (set inline) matches how long this particular toast
-     should stay up - a throw's own landing time, a heal's animation
-     length, or the fixed TOAST_MS both entrance banners share (see
-     Battle/index.tsx). The 15%/75% fade fraction below is only exact for
-     some of those - a fixed middle ground close enough for all of them
-     that the difference isn't visible. Only fades/bounces this pill's
-     own opacity/entrance - the stacking position above is .toastItem's
-     concern (a separate element), so the two transforms never conflict. */
-  animation: toast-fade var(--toast-duration, 1800ms) ease-in-out;
+  /* 2s matches useToastStack's own TOAST_DURATION_MS - every toast shares
+     this one duration now, so this can be a plain constant rather than a
+     per-toast inline custom property. Only fades/bounces this pill's own
+     opacity/entrance - the stacking position above is .toastItem's own
+     concern, so the two transforms never conflict. */
+  animation: toast-fade 2s ease-in-out;
 }
 
 /* Entrance is a plain fade-in - no shift, so it doesn't fight the initial

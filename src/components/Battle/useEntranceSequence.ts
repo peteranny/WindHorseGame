@@ -2,18 +2,20 @@ import { useEffect, useState } from "react";
 import MONSTERS from "../../data/monsters/monsters";
 import { GOAL_NAME } from "../../data/goalEncounter";
 import { REMAINING_OVERLAY_MS } from "../BattleTransition/timing";
+import { TOAST_DURATION_MS } from "./useToastStack";
 
 // The entrance sequence that plays once per fresh battle mount, as one
 // strictly sequential chain through step 6 - each step below only starts
 // once the previous one has entirely finished, never overlapping:
 //   1. the enemy sprite + its own ground shadow slide in together
 //   2. the player sprite slides in
-//   3. a toast names the encounter ("遇到野生的X！", TOAST_MS)
+//   3. a toast names the encounter ("遇到野生的X！", TOAST_DURATION_MS)
 //   4. the enemy HP box reveals (drop-and-settle, like the attack cells)
 //   5. the player HP box reveals, the same way
 //   6. the action bar's actual content (escape/skip/dev buttons, the
-//      attack grid) reveals AND a second toast ("開始！", also TOAST_MS)
-//      appears, together in the same instant - isEntering flips false
+//      attack grid) reveals AND a second toast ("開始！", also
+//      TOAST_DURATION_MS) appears, together in the same instant - isEntering
+//      flips false
 //      right then too, so interaction unlocks exactly as "開始！" shows
 //      up rather than only once that toast is done fading, and the cells
 //      are already tappable while their own reveal animation
@@ -31,12 +33,6 @@ import { REMAINING_OVERLAY_MS } from "../BattleTransition/timing";
 // looks like it's fading in from behind the (by-then-gone) overlay.
 export const ENTER_ENEMY_MS = 1050;
 export const ENTER_PLAYER_MS = 1050;
-// Both toasts (step 3's "遇到野生的X！" and step 7's "開始！") share this
-// one length - unified rather than each having its own, so a toast always
-// reads the same regardless of which one is showing.
-// Its fade fraction is fixed by .toast's own shared keyframe (styles.css),
-// not derived from a separate fade/hold breakdown here.
-export const TOAST_MS = 2000;
 // How long each HP block's own drop-and-settle reveal takes, once it
 // starts - short and snappy, unrelated to how long a sprite itself took to
 // slide in.
@@ -48,7 +44,8 @@ export const ACTION_BAR_REVEAL_MS = 450;
 export const ENEMY_ENTER_DELAY_MS = REMAINING_OVERLAY_MS;
 export const PLAYER_ENTER_DELAY_MS = ENEMY_ENTER_DELAY_MS + ENTER_ENEMY_MS;
 export const TOAST_ENCOUNTER_DELAY_MS = PLAYER_ENTER_DELAY_MS + ENTER_PLAYER_MS;
-export const ENEMY_INFO_DELAY_MS = TOAST_ENCOUNTER_DELAY_MS + TOAST_MS;
+export const ENEMY_INFO_DELAY_MS =
+  TOAST_ENCOUNTER_DELAY_MS + TOAST_DURATION_MS;
 export const PLAYER_INFO_DELAY_MS = ENEMY_INFO_DELAY_MS + INFO_REVEAL_MS;
 // The same instant the action bar's own reveal starts AND the "開始！"
 // toast triggers - see isEntering/isActionBarRevealing/triggerToast below,
@@ -59,7 +56,7 @@ export const ENTRANCE_LOCK_MS = PLAYER_INFO_DELAY_MS + INFO_REVEAL_MS;
 interface UseEntranceSequenceParams {
   isGoalEncounter: boolean;
   activeMonsterId: number | null;
-  triggerToast: (text: string, durationMs: number) => void;
+  triggerToast: (text: string) => void;
 }
 
 interface UseEntranceSequenceResult {
@@ -92,7 +89,7 @@ export const useEntranceSequence = ({
     const lockTimeoutId = setTimeout(() => {
       setIsEntering(false);
       setIsActionBarRevealing(true);
-      triggerToast("開始！", TOAST_MS);
+      triggerToast("開始！");
       revealTimeoutId = setTimeout(
         () => setIsActionBarRevealing(false),
         ACTION_BAR_REVEAL_MS
@@ -108,7 +105,7 @@ export const useEntranceSequence = ({
       ? MONSTERS[activeMonsterId].name
       : "";
     const encounterToastTimeoutId = setTimeout(() => {
-      triggerToast(`遇到野生的${encounterName}！`, TOAST_MS);
+      triggerToast(`遇到野生的${encounterName}！`);
     }, TOAST_ENCOUNTER_DELAY_MS);
     return () => {
       clearTimeout(lockTimeoutId);

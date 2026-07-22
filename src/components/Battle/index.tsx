@@ -337,16 +337,7 @@ const Battle = () => {
                   } as React.CSSProperties
                 }
               >
-                <div
-                  className={styles.toast}
-                  style={
-                    {
-                      "--toast-duration": `${toast.durationMs}ms`,
-                    } as React.CSSProperties
-                  }
-                >
-                  {toast.text}
-                </div>
+                <div className={styles.toast}>{toast.text}</div>
               </div>
             ))}
           </div>

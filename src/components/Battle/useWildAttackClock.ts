@@ -64,7 +64,7 @@ interface UseWildAttackClockParams {
   damageProtagonist: (amount: number) => void;
   triggerEnemySpit: (from: Point, to: Point, angleDeg: number) => void;
   triggerColdNoodle: (effect: "heal" | null, durationMs?: number) => void;
-  triggerToast: (text: string, durationMs: number) => void;
+  triggerToast: (text: string) => void;
   triggerEnemyHeal: (effect: "heal" | null, durationMs?: number) => void;
   healWild: (amount: number) => void;
 }
@@ -134,10 +134,7 @@ export const useWildAttackClock = ({
           // only once that glow finishes does the HP actually recover.
           setTimeout(() => {
             triggerColdNoodle("heal", COLD_NOODLE_TOTAL_MS);
-            triggerToast(
-              `${GOAL_NAME}吃了涼麵，恢復了體力！`,
-              COLD_NOODLE_HEAL_DELAY_MS + HEAL_ANIMATION_MS
-            );
+            triggerToast(`${GOAL_NAME}吃了涼麵，恢復了體力！`);
             setTimeout(() => {
               triggerEnemyHeal("heal", HEAL_ANIMATION_MS);
               setTimeout(() => {

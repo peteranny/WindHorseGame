@@ -55,7 +55,7 @@ interface UseAttackGridParams {
     selfToss?: boolean
   ) => void;
   triggerSpit: (from: Point, to: Point, angleDeg: number) => void;
-  triggerToast: (text: string, durationMs: number) => void;
+  triggerToast: (text: string) => void;
 }
 
 // What buildGroupableLine below actually produces - the family field
@@ -243,7 +243,7 @@ export const useAttackGrid = ({
           group.length > 1 && group[0].family
             ? `${group[0].family} 系列治療，效果卓越！`
             : `${option.label} 進行治療！`;
-        triggerToast(healToastText, healLandMs + HEAL_ANIMATION_MS);
+        triggerToast(healToastText);
         setTimeout(() => {
           triggerPlayerHeal("heal", HEAL_ANIMATION_MS);
           setTimeout(() => {
@@ -281,16 +281,10 @@ export const useAttackGrid = ({
             playBump(enemySpriteRef.current, hitBumpKeyframes(20), EFFECT_DURATION_MS);
           }, throwDelay + landMs);
         });
-        const totalLandMs =
-          (throwers.length - 1) * GROUP_THROW_STAGGER_MS + landMs;
         // Only a real multi-member family throw earns the callout - a lone
-        // attack (innate or otherwise) never shows one - and it stays up
-        // for exactly as long as this whole throw takes to land.
+        // attack (innate or otherwise) never shows one.
         if (group.length > 1 && group[0].family) {
-          triggerToast(
-            `${group[0].family} 系列加成，效果卓越`,
-            totalLandMs
-          );
+          triggerToast(`${group[0].family} 系列加成，效果卓越`);
         }
       }
 
