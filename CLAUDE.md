@@ -53,18 +53,20 @@ src/
                           # paginateText.ts splits a page's full text into <=2-line, DOM-measured
                           # chunks (joined with "..."); useTypewriter.ts types out the current chunk.
     Battle/               # Full-screen real-time battle UI (replaces Maze/Dialog while mode === "battle").
-                          # index.tsx itself holds only the render tree plus handleAttack (tightly coupled to
-                          # attackGridRef/buttonRefs scroll-compensation, so it stays put) - everything else
-                          # self-contained enough to have its own clear inputs/outputs lives in its own module
-                          # instead: geometry.ts (Point + rectCenter/percentIn/angleBetween/pointStyle/
-                          # spitStyle - the throw/spit trajectory math), spriteEffects.ts (playBump's WAAPI
-                          # attack/hit bump keyframes, shared EFFECT_DURATION_MS), HpBar.tsx, and four generic
-                          # "on/off with a timeout" hooks - useHealEffect.ts (also exports HEAL_ANIMATION_MS),
-                          # useThrowEffect.ts (THROW_DURATION_MS), useSpitEffect.ts (SPIT_DURATION_MS), and
-                          # useToastStack.ts. Four more own a whole cross-cutting concern each:
-                          # useAttackLine.ts (AttackOption/INNATE_KEY/buildLine and the `line` state itself,
-                          # given gameStore.monsterOrder - handleAttack still owns actually *reordering* it,
-                          # since that's inseparable from the scroll-compensation math above),
+                          # index.tsx itself holds just the render tree now - every stateful concern,
+                          # including the interactive ones, lives in its own module: geometry.ts (Point +
+                          # rectCenter/percentIn/angleBetween/pointStyle/spitStyle - the throw/spit
+                          # trajectory math), spriteEffects.ts (playBump's WAAPI attack/hit bump keyframes,
+                          # shared EFFECT_DURATION_MS), HpBar.tsx, and four generic "on/off with a timeout"
+                          # hooks - useHealEffect.ts (also exports HEAL_ANIMATION_MS), useThrowEffect.ts
+                          # (THROW_DURATION_MS), useSpitEffect.ts (SPIT_DURATION_MS), and useToastStack.ts.
+                          # Four more own a whole cross-cutting concern each: useAttackLine.ts (AttackOption/
+                          # INNATE_KEY/buildLine and the `line` state itself, given gameStore.monsterOrder),
+                          # useAttackGrid.ts (layers on top of useAttackLine - the cooldown-aware family
+                          # grouping, the scroll-hint/reorder-animation state, and handleAttack itself, all
+                          # bundled together since they're one inseparable concern: reordering `line` on a
+                          # throw is tangled up with the very same attackGridRef/buttonRefs scroll-
+                          # compensation math that also needs to know the tapped group in the first place),
                           # useEntranceSequence.ts (the battle-start sequence and its own timing constants -
                           # see "Entering a battle: the screen transition" below), useWildAttackClock.ts (the
                           # wild monster's own attack timer, telegraph marks, and the goal battle's coldnoodle
