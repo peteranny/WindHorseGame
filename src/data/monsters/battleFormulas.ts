@@ -17,8 +17,8 @@ export const GOAL_SELF_HEAL_PERCENT = 0.1;
 // enemy (before capture) - a much smaller, no-frills version of the goal's
 // own boss mechanic above (no coldnoodle side dish, just the plain heal
 // glow), since this applies to any healer monster's fight, not one boss.
-export const HEALER_ENEMY_SELF_HEAL_INTERVAL_SPITS = 3;
-export const HEALER_ENEMY_SELF_HEAL_PERCENT = 0.05;
+export const HEALER_ENEMY_SELF_HEAL_INTERVAL_SPITS = 1;
+export const HEALER_ENEMY_SELF_HEAL_PERCENT = 0.02;
 
 export const computeWildMaxHp = (capturedCount: number): number =>
   2 * (capturedCount + 1);
