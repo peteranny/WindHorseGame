@@ -92,91 +92,93 @@ const Game = () => {
                     {width > 0 && height > 0 && <Maze center={center} />}
                   </div>
                   <MiniMap />
-                  <div
-                    style={{
-                      position: "absolute",
-                      // Same reasoning as MiniMap's own z-index (see its
-                      // styles.css comment): this div's ancestors are all
-                      // position:relative/absolute with no explicit
-                      // z-index of their own, so Maze's .pin (the highest
-                      // explicit z-index on the map, 1000) would otherwise
-                      // escape upward and paint over these buttons despite
-                      // this div coming later in the DOM.
-                      zIndex: 2000,
-                      top: "calc(2px * var(--scale))",
-                      right: "calc(2px * var(--scale))",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "calc(4px * var(--scale))",
-                    }}
-                  >
-                    {isDevMode && (
-                      <>
-                        <button
-                          type="button"
-                          aria-label={
-                            devReleaseEnabled
-                              ? "停用點擊尾隨怪獸釋放捕獲"
-                              : "啟用點擊尾隨怪獸釋放捕獲"
-                          }
-                          className={cn(
-                            styles.devToggle,
-                            devReleaseEnabled && styles.devToggleActive
-                          )}
-                          onClick={() =>
-                            setDevReleaseEnabled(!devReleaseEnabled)
-                          }
-                        >
-                          ✕
-                        </button>
-                        {goalDefeatedAt !== null ? (
-                          <button
-                            type="button"
-                            aria-label="重置已通關紀錄"
-                            className={styles.devToggle}
-                            onClick={resetGoalDefeatedAt}
-                          >
-                            ♻️
-                          </button>
-                        ) : (
+                  {mode === "map" && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        // Same reasoning as MiniMap's own z-index (see its
+                        // styles.css comment): this div's ancestors are all
+                        // position:relative/absolute with no explicit
+                        // z-index of their own, so Maze's .pin (the highest
+                        // explicit z-index on the map, 1000) would otherwise
+                        // escape upward and paint over these buttons despite
+                        // this div coming later in the DOM.
+                        zIndex: 2000,
+                        top: "calc(2px * var(--scale))",
+                        right: "calc(2px * var(--scale))",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "calc(4px * var(--scale))",
+                      }}
+                    >
+                      {isDevMode && (
+                        <>
                           <button
                             type="button"
                             aria-label={
-                              devCooldownLockDisabled
-                                ? "啟用戰敗鎖定倒數"
-                                : "停用戰敗鎖定倒數"
+                              devReleaseEnabled
+                                ? "停用點擊尾隨怪獸釋放捕獲"
+                                : "啟用點擊尾隨怪獸釋放捕獲"
                             }
                             className={cn(
                               styles.devToggle,
-                              devCooldownLockDisabled && styles.devToggleActive
+                              devReleaseEnabled && styles.devToggleActive
                             )}
                             onClick={() =>
-                              setDevCooldownLockDisabled(
-                                !devCooldownLockDisabled
-                              )
+                              setDevReleaseEnabled(!devReleaseEnabled)
                             }
                           >
-                            🔓
+                            ✕
                           </button>
-                        )}
-                      </>
-                    )}
-                    <Link
-                      to={{ pathname: "/settings", search: window.location.search }}
-                      aria-label="設定"
-                      style={{
-                        fontSize: "calc(18pt * var(--scale))",
-                        lineHeight: 1,
-                        padding: "calc(4px * var(--scale))",
-                        background: "transparent",
-                        color: "black",
-                        opacity: 0.4,
-                        textDecoration: "none",
-                      }}
-                    >
-                      ⚙
-                    </Link>
-                  </div>
+                          {goalDefeatedAt !== null ? (
+                            <button
+                              type="button"
+                              aria-label="重置已通關紀錄"
+                              className={styles.devToggle}
+                              onClick={resetGoalDefeatedAt}
+                            >
+                              ♻️
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              aria-label={
+                                devCooldownLockDisabled
+                                  ? "啟用戰敗鎖定倒數"
+                                  : "停用戰敗鎖定倒數"
+                              }
+                              className={cn(
+                                styles.devToggle,
+                                devCooldownLockDisabled && styles.devToggleActive
+                              )}
+                              onClick={() =>
+                                setDevCooldownLockDisabled(
+                                  !devCooldownLockDisabled
+                                )
+                              }
+                            >
+                              🔓
+                            </button>
+                          )}
+                        </>
+                      )}
+                      <Link
+                        to={{ pathname: "/settings", search: window.location.search }}
+                        aria-label="設定"
+                        style={{
+                          fontSize: "calc(18pt * var(--scale))",
+                          lineHeight: 1,
+                          padding: "calc(4px * var(--scale))",
+                          background: "transparent",
+                          color: "black",
+                          opacity: 0.4,
+                          textDecoration: "none",
+                        }}
+                      >
+                        ⚙
+                      </Link>
+                    </div>
+                  )}
                 </div>
                 <Dialog />
               </>
