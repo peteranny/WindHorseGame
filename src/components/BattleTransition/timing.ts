@@ -27,3 +27,13 @@ export const DISTORT_OUT_MS = 600;
 // before its sprite-entrance/intro-text sequence starts, timed from
 // Battle's own mount rather than from this whole sequence's start.
 export const REMAINING_OVERLAY_MS = COVERED_HOLD_MS + DISTORT_OUT_MS;
+
+// Leaving battle (any outcome) plays the reverse of "entering" far more
+// simply: Battle's own outcome fade (see useBattleOutcome.ts) already leaves
+// the screen fully, solidly black (lose/escape) or white (win) by the time
+// concludeBattle fires, so there's no freeze/flash/cover build-up needed -
+// BattleTransition just picks that same flat color up, mounts the map/
+// dialog underneath it (invisible for the same reason "cover"'s own solid
+// frame hides Battle's mount above), and dissolves it away over this long,
+// revealing the map rather than cutting to it instantly.
+export const EXIT_RESOLVE_MS = 500;

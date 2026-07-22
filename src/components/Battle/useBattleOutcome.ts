@@ -25,7 +25,7 @@ const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 // already reached opacity 1, before concludeBattle actually swaps the
 // screen away - .outcomeFade's animation-fill-mode: forwards holds that
 // last frame for free, so this needs no matching change in styles.css.
-const OUTCOME_HOLD_MS = 1000;
+const OUTCOME_HOLD_MS = 500;
 
 interface UseBattleOutcomeParams {
   activeMonsterId: number | null;

@@ -86,6 +86,38 @@
  * variant's own last keyframe until the next phase - or unmount - takes
  * over.
  */
+
+/*
+ * Leaving battle: picks up the flat color Battle's own outcome fade already
+ * left the screen covered in (lose/escape black, win white - see
+ * BattleTransition/index.tsx's resolveColor) and dissolves it away, so the
+ * map/dialog scene mounted underneath (already fully opaque, no fade of its
+ * own - same as .cover's solid frame hiding Battle's mount) resolves into
+ * view instead of snapping in the instant Battle unmounts. No pattern/
+ * scale/rotate here unlike .cover/.reveal - a plain opacity fade is enough
+ * for the much shorter, simpler exit.
+ */
+.resolve {
+  background: #000;
+
+  /* Must match BattleTransition/timing.ts's EXIT_RESOLVE_MS. */
+  animation: battle-resolve-out 500ms ease-out forwards;
+}
+
+.resolveWhite {
+  background: #fff;
+}
+
+@keyframes battle-resolve-out {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
 .cover {
   /* Must match BattleTransition/timing.ts's DISTORT_IN_MS. */
   animation-duration: 900ms;
