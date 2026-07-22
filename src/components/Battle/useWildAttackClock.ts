@@ -77,8 +77,9 @@ interface UseWildAttackClockParams {
 // battle. The goal boss gets its own coldnoodle self-heal every
 // GOAL_SELF_HEAL_INTERVAL_SPITS-th one; any other healer monster
 // (Monster.isHealer) gets a plainer version of the same idea every
-// HEALER_ENEMY_SELF_HEAL_INTERVAL_SPITS-th one instead - no side dish, just
-// an immediate heal glow, since nothing is thrown for it to wait on.
+// HEALER_ENEMY_SELF_HEAL_INTERVAL_SPITS-th one instead - no side dish, and
+// the heal glow starts the instant that spit lands rather than after an
+// extra wiggle delay, since nothing of its own is thrown for it to wait on.
 export const useWildAttackClock = ({
   pendingOutcome,
   isEntering,
@@ -160,15 +161,21 @@ export const useWildAttackClock = ({
           healerEnemyName !== null &&
           wildSpitCountRef.current % HEALER_ENEMY_SELF_HEAL_INTERVAL_SPITS === 0
         ) {
-          // Unlike the goal's coldnoodle above, this is an immediate skill -
-          // nothing is thrown/travels first, so the toast and heal glow
-          // fire right away instead of being queued behind a spit's flight
-          // time. HP still only actually recovers once the glow finishes.
-          triggerToast(`${healerEnemyName}進行自我治療！`);
-          triggerEnemyHeal("heal", HEAL_ANIMATION_MS);
+          // Waits for the spit to actually land first, same as the goal's
+          // coldnoodle above - starting the glow any earlier would read as
+          // the enemy already healing while its own attack is still
+          // mid-flight. Unlike the coldnoodle, though, nothing of its own
+          // is thrown for this skill - once the spit lands, the toast and
+          // heal glow fire immediately rather than waiting through a wiggle
+          // that doesn't exist here. HP still only actually recovers once
+          // the glow finishes.
           setTimeout(() => {
-            healWild(wildMaxHp * HEALER_ENEMY_SELF_HEAL_PERCENT);
-          }, HEAL_ANIMATION_MS);
+            triggerToast(`${healerEnemyName}進行自我治療！`);
+            triggerEnemyHeal("heal", HEAL_ANIMATION_MS);
+            setTimeout(() => {
+              healWild(wildMaxHp * HEALER_ENEMY_SELF_HEAL_PERCENT);
+            }, HEAL_ANIMATION_MS);
+          }, SPIT_DURATION_MS);
         }
 
         nextWildAttackAtRef.current += WILD_ATTACK_INTERVAL_MS;
