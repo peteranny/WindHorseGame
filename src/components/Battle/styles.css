@@ -176,6 +176,23 @@
 }
 
 /*
+ * Reuses .enemySprite's own battle-sprite-enter keyframe (same
+ * --enter-delay/--enter-duration, set inline from Battle/index.tsx's
+ * ENEMY_ENTER_DELAY_MS/ENTER_ENEMY_MS) so the shadow slides in from the
+ * same edge in exact lockstep with the sprite casting it, rather than
+ * just sitting there fully visible underneath a sprite that hasn't
+ * arrived yet. Safe to animate `transform` here despite the WAAPI-only
+ * comment above - this class (and thus this animation) is entirely gone,
+ * removed by isEntering flipping false, well before any real attack could
+ * ever trigger playBump's own WAAPI transform on this same element.
+ */
+.enemyShadowEnter {
+  animation:
+    battle-sprite-enter var(--enter-duration, 1050ms) ease-out
+    var(--enter-delay, 0ms) both;
+}
+
+/*
  * The "X 系列加成，效果卓越" callout for a real (2+ member) family throw -
  * centered within .battlefield itself (the fight area above the action
  * bar/attack grid), not the screen as a whole, so it never covers the
@@ -819,15 +836,17 @@
   opacity: 0;
   z-index: 10;
   animation:
-    battle-intro-banner-fade var(--intro-duration, 6000ms) ease-in-out
+    battle-intro-banner-fade var(--intro-duration, 1500ms) ease-in-out
     var(--intro-delay, 0ms) both;
 }
 
 /*
- * The fade-in/out edges are each INTRO_BANNER_FADE_MS out of the whole
- * INTRO_BANNER_MS span (Battle/index.tsx) - expressed here as percentages
- * of --intro-duration so they stay proportionally correct regardless of
- * the exact constants.
+ * Shared by both toasts (Battle/index.tsx's "遇到野生的X！" and "開始戰鬥！"),
+ * whose own fade-in/out share the same absolute length (150ms) but not the
+ * same total duration (TOAST_ENCOUNTER_MS vs TOAST_START_MS) - so neither
+ * toast's true fade fraction (10% and 15% respectively) is expressed
+ * exactly here; 12%/88% is just a fixed middle ground close enough to both
+ * that the few-ms difference isn't visible.
  */
 @keyframes battle-intro-banner-fade {
   0%,
@@ -835,8 +854,8 @@
     opacity: 0;
   }
 
-  17%,
-  83% {
+  12%,
+  88% {
     opacity: 1;
   }
 }

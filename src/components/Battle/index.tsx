@@ -109,44 +109,56 @@ const OUTCOME_PAUSE_MS = SINK_LEAD_MS + SINK_DURATION_MS + SINK_HOLD_MS;
 const OUTCOME_FADE_MS = 700;
 const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 
-// The entrance sequence that plays once per fresh battle mount. This
-// component only ever mounts right as BattleTransition's own black-screen
-// hold begins (see its index.tsx - the distortion is fully, solidly opaque
-// right then, and the map/battle content swap happens at that exact
-// instant), so REMAINING_OVERLAY_MS - everything still left of the overlay
-// at that point (the hold plus the final "reveal" clearing) - is this
-// component's own base delay before anything below starts, not just the
-// last stage's own duration. Enemy leads, player follows a beat later (a
-// classic staggered arrival) - both are a pure position slide (no fade;
-// each sprite sits at full opacity throughout, just translated off past
-// the battlefield's own edge until its own delay elapses) so nothing here
-// looks like it's fading in from behind the (by-then-gone) overlay. Each
-// HP block then reveals itself right as its own sprite finishes landing
-// (see ENEMY_INFO_DELAY_MS/PLAYER_INFO_DELAY_MS, and .infoEnter's own
-// drop-and-settle style - matching .attackButtonReveal's, not a fade).
-// Finally the intro banner names the opponent - the action bar (see
-// .actionBarLocked) stays entirely blank (not just dimmed) for this whole
-// span so a player can't attack mid-entrance, then "drops in" with a brief
-// shake once it's ready (see isActionBarRevealing/.attackButtonReveal).
+// The entrance sequence that plays once per fresh battle mount, as one
+// strictly sequential chain - each step below only starts once the
+// previous one has entirely finished, never overlapping:
+//   1. the enemy sprite + its own ground shadow slide in together
+//   2. the player sprite slides in
+//   3. a toast names the encounter ("遇到野生的X！", TOAST_ENCOUNTER_MS)
+//   4. the enemy HP box reveals (drop-and-settle, like the attack cells)
+//   5. the player HP box reveals, the same way
+//   6. the action bar's actual content (escape/skip/dev buttons, the
+//      attack grid) reveals - isEntering flips false at this exact
+//      instant, so the cells are already tappable while their own reveal
+//      animation (.attackButtonReveal) is still playing over them
+//   7. a second toast ("開始戰鬥！", TOAST_START_MS) plays on top of the
+//      now-already-interactive battle, purely cosmetic
+//
+// This component only ever mounts right as BattleTransition's own
+// black-screen hold begins (see its index.tsx - the distortion is fully,
+// solidly opaque right then, and the map/battle content swap happens at
+// that exact instant), so REMAINING_OVERLAY_MS - everything still left of
+// the overlay at that point (the hold plus the final "reveal" clearing) -
+// is step 1's own base delay, not just the last stage's own duration.
+// Both sprites are a pure position slide (no fade - each sits at full
+// opacity throughout, just translated off past the battlefield's own edge
+// until its own delay elapses), so nothing here looks like it's fading in
+// from behind the (by-then-gone) overlay.
 const ENTER_ENEMY_MS = 1050;
-const ENTER_PLAYER_DELAY_MS = 360;
 const ENTER_PLAYER_MS = 1050;
-const ENTER_PLAYER_DELAY_TOTAL_MS = REMAINING_OVERLAY_MS + ENTER_PLAYER_DELAY_MS;
+const TOAST_ENCOUNTER_FADE_MS = 150;
+const TOAST_ENCOUNTER_HOLD_MS = 1200;
+const TOAST_ENCOUNTER_MS = TOAST_ENCOUNTER_FADE_MS * 2 + TOAST_ENCOUNTER_HOLD_MS;
 // How long each HP block's own drop-and-settle reveal takes, once it
-// starts (at its own sprite's landing time, see ENEMY_INFO_DELAY_MS/
-// PLAYER_INFO_DELAY_MS below) - short and snappy, unrelated to how long
-// the sprite itself took to slide in.
+// starts - short and snappy, unrelated to how long a sprite itself took to
+// slide in.
 const INFO_REVEAL_MS = 450;
-const ENEMY_INFO_DELAY_MS = REMAINING_OVERLAY_MS + ENTER_ENEMY_MS;
-const PLAYER_INFO_DELAY_MS = ENTER_PLAYER_DELAY_TOTAL_MS + ENTER_PLAYER_MS;
-const INTRO_BANNER_DELAY_MS = ENTER_PLAYER_DELAY_TOTAL_MS + ENTER_PLAYER_MS;
-const INTRO_BANNER_FADE_MS = 150;
-const INTRO_BANNER_HOLD_MS = 700;
-const INTRO_BANNER_MS = INTRO_BANNER_FADE_MS * 2 + INTRO_BANNER_HOLD_MS;
-const ENTRANCE_LOCK_MS = INTRO_BANNER_DELAY_MS + INTRO_BANNER_MS;
-// How long the drop-and-settle shake itself takes once the action bar
-// unlocks - purely cosmetic, .actionBarReveal's own animation duration.
+// How long the action bar's own drop-and-settle reveal takes, once it
+// starts - .attackButtonReveal's own animation duration.
 const ACTION_BAR_REVEAL_MS = 450;
+const TOAST_START_FADE_MS = 150;
+const TOAST_START_HOLD_MS = 700;
+const TOAST_START_MS = TOAST_START_FADE_MS * 2 + TOAST_START_HOLD_MS;
+
+const ENEMY_ENTER_DELAY_MS = REMAINING_OVERLAY_MS;
+const PLAYER_ENTER_DELAY_MS = ENEMY_ENTER_DELAY_MS + ENTER_ENEMY_MS;
+const TOAST_ENCOUNTER_DELAY_MS = PLAYER_ENTER_DELAY_MS + ENTER_PLAYER_MS;
+const ENEMY_INFO_DELAY_MS = TOAST_ENCOUNTER_DELAY_MS + TOAST_ENCOUNTER_MS;
+const PLAYER_INFO_DELAY_MS = ENEMY_INFO_DELAY_MS + INFO_REVEAL_MS;
+// The same instant the action bar's own reveal starts - see isEntering/
+// isActionBarRevealing below, both flipped together in one setTimeout.
+const ENTRANCE_LOCK_MS = PLAYER_INFO_DELAY_MS + INFO_REVEAL_MS;
+const TOAST_START_DELAY_MS = ENTRANCE_LOCK_MS + ACTION_BAR_REVEAL_MS;
 
 // "heal" is the only sprite effect still driven by React state/CSS class -
 // see useHealEffect and playBump below for why attack/hit moved off this.
@@ -450,17 +462,23 @@ const Battle = () => {
 
   // True for exactly ENTRANCE_LOCK_MS starting from this component's own
   // mount (a fresh Battle instance mounts every time a new battle starts,
-  // see BattleTransition's own `displayed` swap) - drives the sprite
-  // entrance animations, the intro banner, and locks the action bar
-  // (.actionBarLocked) until the whole sequence has played out.
+  // see BattleTransition's own `displayed` swap) - drives steps 1-5 of the
+  // entrance sequence above, and locks the action bar (.actionBarLocked)
+  // until step 6 begins.
   const [isEntering, setIsEntering] = useState(true);
   // Flips true for exactly ACTION_BAR_REVEAL_MS the instant isEntering
   // flips false - just long enough to play .actionBarReveal's one-shot
   // drop-and-settle shake, then clears itself so a later re-render (a
   // cooldown tick, an attack) doesn't replay it.
   const [isActionBarRevealing, setIsActionBarRevealing] = useState(false);
+  // Step 7 - unlike steps 1-6, this plays entirely *after* isEntering has
+  // already flipped false (the battle is already interactive throughout),
+  // so it needs its own independent on/off timer rather than piggybacking
+  // on isEntering the way the first toast does.
+  const [isShowingStartToast, setIsShowingStartToast] = useState(false);
   useEffect(() => {
     let revealTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    let startToastEndTimeoutId: ReturnType<typeof setTimeout> | undefined;
     const lockTimeoutId = setTimeout(() => {
       setIsEntering(false);
       setIsActionBarRevealing(true);
@@ -469,9 +487,18 @@ const Battle = () => {
         ACTION_BAR_REVEAL_MS
       );
     }, ENTRANCE_LOCK_MS);
+    const startToastTimeoutId = setTimeout(() => {
+      setIsShowingStartToast(true);
+      startToastEndTimeoutId = setTimeout(
+        () => setIsShowingStartToast(false),
+        TOAST_START_MS
+      );
+    }, TOAST_START_DELAY_MS);
     return () => {
       clearTimeout(lockTimeoutId);
       if (revealTimeoutId) clearTimeout(revealTimeoutId);
+      clearTimeout(startToastTimeoutId);
+      if (startToastEndTimeoutId) clearTimeout(startToastEndTimeoutId);
     };
   }, []);
 
@@ -1103,7 +1130,7 @@ const Battle = () => {
             )}
             style={
               {
-                "--enter-delay": `${ENTER_PLAYER_DELAY_TOTAL_MS}ms`,
+                "--enter-delay": `${PLAYER_ENTER_DELAY_MS}ms`,
                 "--enter-duration": `${ENTER_PLAYER_MS}ms`,
               } as React.CSSProperties
             }
@@ -1115,9 +1142,16 @@ const Battle = () => {
               ref={enemyShadowRef}
               className={cn(
                 styles.enemyShadow,
+                isEntering && styles.enemyShadowEnter,
                 isEnemySinking && styles.enemyShadowSink
               )}
               aria-hidden="true"
+              style={
+                {
+                  "--enter-delay": `${ENEMY_ENTER_DELAY_MS}ms`,
+                  "--enter-duration": `${ENTER_ENEMY_MS}ms`,
+                } as React.CSSProperties
+              }
             />
             <img
               ref={enemySpriteRef}
@@ -1132,7 +1166,7 @@ const Battle = () => {
               )}
               style={
                 {
-                  "--enter-delay": `${REMAINING_OVERLAY_MS}ms`,
+                  "--enter-delay": `${ENEMY_ENTER_DELAY_MS}ms`,
                   "--enter-duration": `${ENTER_ENEMY_MS}ms`,
                 } as React.CSSProperties
               }
@@ -1253,12 +1287,22 @@ const Battle = () => {
             className={styles.introBanner}
             style={
               {
-                "--intro-delay": `${INTRO_BANNER_DELAY_MS}ms`,
-                "--intro-duration": `${INTRO_BANNER_MS}ms`,
+                "--intro-delay": `${TOAST_ENCOUNTER_DELAY_MS}ms`,
+                "--intro-duration": `${TOAST_ENCOUNTER_MS}ms`,
               } as React.CSSProperties
             }
           >
             遇到野生的{enemyName}！
+          </div>
+        )}
+        {isShowingStartToast && (
+          <div
+            className={styles.introBanner}
+            style={
+              { "--intro-duration": `${TOAST_START_MS}ms` } as React.CSSProperties
+            }
+          >
+            開始戰鬥！
           </div>
         )}
       </div>
