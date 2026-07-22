@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from "react";
+import React, { useRef } from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
@@ -8,7 +8,7 @@ import MONSTERS from "../../data/monsters/monsters";
 import { ATTACK_COOLDOWN_MS, PROTAGONIST_MAX_HP } from "../../data/monsters/battleFormulas";
 import { hueForFamily } from "./attackGroups";
 import { GOAL_NAME } from "../../data/goalEncounter";
-import { Point, rectCenter, percentIn, angleBetween, pointStyle, spitStyle } from "./geometry";
+import { pointStyle, spitStyle } from "./geometry";
 import { HpBar } from "./HpBar";
 import { useHealEffect } from "./useHealEffect";
 import { useThrowEffect } from "./useThrowEffect";
@@ -27,6 +27,7 @@ import {
 import { useWildAttackClock, TELEGRAPH_MARK_DELAYS_MS } from "./useWildAttackClock";
 import { useBattleOutcome } from "./useBattleOutcome";
 import { useAttackGrid } from "./useAttackGrid";
+import { useTrajectory } from "./useTrajectory";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
 import COLD_NOODLE_SPRITE from "../../assets/coldNoodle.png";
@@ -103,7 +104,6 @@ const Battle = () => {
     concludeBattle,
   });
 
-  const battlefieldRef = useRef<HTMLDivElement>(null);
   const playerSpriteRef = useRef<HTMLImageElement>(null);
   const enemySpriteRef = useRef<HTMLImageElement>(null);
   // A ground shadow for the enemy, like the map's own .footShadow - bumped
@@ -113,41 +113,10 @@ const Battle = () => {
   // during the vertical hit-knockback (hitBumpKeyframes has no horizontal
   // component to follow, so there's nothing for the shadow to mirror there).
   const enemyShadowRef = useRef<HTMLDivElement>(null);
-  // Measured live off the actual rendered sprites rather than hardcoded, so
-  // the throw/spit trajectories stay pinned to their true centers - and the
-  // spit's rotation to their true angle - no matter how either sprite ends
-  // up positioned/sized.
-  const getTrajectory = useCallback((
-    target: "toEnemy" | "toPlayer" | "selfPlayer" = "toEnemy"
-  ): {
-    from: Point;
-    to: Point;
-    angleDeg: number;
-  } | null => {
-    const battlefield = battlefieldRef.current;
-    const playerSprite = playerSpriteRef.current;
-    const enemySprite = enemySpriteRef.current;
-    if (!battlefield || !playerSprite || !enemySprite) return null;
-    const battlefieldRect = battlefield.getBoundingClientRect();
-    const playerCenter = rectCenter(playerSprite.getBoundingClientRect());
-    const enemyCenter = rectCenter(enemySprite.getBoundingClientRect());
-    // selfPlayer (healers, thrown at the player rather than the wild
-    // monster) uses the player's own center for both ends - throw-arc's own
-    // keyframes (Battle/styles.css) still apply a fixed vertical arc
-    // percentage regardless of horizontal distance, so an identical
-    // from/to still reads as a real toss-up-and-catch, not a no-op.
-    const [fromCenter, toCenter] =
-      target === "toPlayer"
-        ? [enemyCenter, playerCenter]
-        : target === "selfPlayer"
-        ? [playerCenter, playerCenter]
-        : [playerCenter, enemyCenter];
-    return {
-      from: percentIn(fromCenter, battlefieldRect),
-      to: percentIn(toCenter, battlefieldRect),
-      angleDeg: angleBetween(fromCenter, toCenter),
-    };
-  }, []);
+  const { battlefieldRef, getTrajectory } = useTrajectory({
+    playerSpriteRef,
+    enemySpriteRef,
+  });
 
   const { isWildTelegraphing } = useWildAttackClock({
     pendingOutcome,

@@ -55,22 +55,26 @@ src/
     Battle/               # Full-screen real-time battle UI (replaces Maze/Dialog while mode === "battle").
                           # index.tsx itself holds just the render tree now - every stateful concern,
                           # including the interactive ones, lives in its own module: geometry.ts (Point +
-                          # rectCenter/percentIn/angleBetween/pointStyle/spitStyle - the throw/spit
-                          # trajectory math), spriteEffects.ts (playBump's WAAPI attack/hit bump keyframes,
-                          # shared EFFECT_DURATION_MS), HpBar.tsx, and four generic "on/off with a timeout"
-                          # hooks - useHealEffect.ts (also exports HEAL_ANIMATION_MS), useThrowEffect.ts
-                          # (THROW_DURATION_MS), useSpitEffect.ts (SPIT_DURATION_MS), and useToastStack.ts.
-                          # Four more own a whole cross-cutting concern each: useAttackLine.ts (AttackOption/
-                          # INNATE_KEY/buildLine and the `line` state itself, given gameStore.monsterOrder),
-                          # useAttackGrid.ts (layers on top of useAttackLine - the cooldown-aware family
-                          # grouping, the scroll-hint/reorder-animation state, and handleAttack itself, all
-                          # bundled together since they're one inseparable concern: reordering `line` on a
-                          # throw is tangled up with the very same attackGridRef/buttonRefs scroll-
-                          # compensation math that also needs to know the tapped group in the first place),
-                          # useEntranceSequence.ts (the battle-start sequence and its own timing constants -
-                          # see "Entering a battle: the screen transition" below), useWildAttackClock.ts (the
-                          # wild monster's own attack timer, telegraph marks, and the goal battle's coldnoodle
-                          # self-heal), and useBattleOutcome.ts (deciding win/lose, the sink-then-fade
+                          # rectCenter/percentIn/angleBetween/pointStyle/spitStyle - the underlying pure
+                          # trajectory math, with pointStyle/spitStyle also used directly by index.tsx's own
+                          # throw/spit rendering), spriteEffects.ts (playBump's WAAPI attack/hit bump
+                          # keyframes, shared EFFECT_DURATION_MS), HpBar.tsx, and four generic "on/off with a
+                          # timeout" hooks - useHealEffect.ts (also exports HEAL_ANIMATION_MS),
+                          # useThrowEffect.ts (THROW_DURATION_MS), useSpitEffect.ts (SPIT_DURATION_MS), and
+                          # useToastStack.ts. Five more own a whole cross-cutting concern each:
+                          # useTrajectory.ts (battlefieldRef + getTrajectory, built on top of geometry.ts -
+                          # measures the player/enemy sprites' own live positions, given their refs),
+                          # useAttackLine.ts (AttackOption/INNATE_KEY/buildLine and the `line` state itself,
+                          # given gameStore.monsterOrder), useAttackGrid.ts (layers on top of useAttackLine -
+                          # the cooldown-aware family grouping, the scroll-hint/reorder-animation state, and
+                          # handleAttack itself, all bundled together since they're one inseparable concern:
+                          # reordering `line` on a throw is tangled up with the very same attackGridRef/
+                          # buttonRefs scroll-compensation math that also needs to know the tapped group in
+                          # the first place), useEntranceSequence.ts (the battle-start sequence and its own
+                          # timing constants - see "Entering a battle: the screen transition" below),
+                          # useWildAttackClock.ts (the wild monster's own attack timer, telegraph marks, and
+                          # the goal battle's coldnoodle self-heal), and useBattleOutcome.ts (deciding win/lose,
+                          # the sink-then-fade
                           # sequence, and finalizing via concludeBattle - see "Losing locks that battle out
                           # for a while" below). attackGroups.ts: pure groupByAdjacentFamily/
                           # groupMultiplierAt/findGroupContaining/moveGroupToBack/moveGroupToFront/
