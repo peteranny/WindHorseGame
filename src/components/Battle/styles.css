@@ -717,13 +717,13 @@
  */
 .enemyEnter {
   animation:
-    battle-sprite-enter var(--enter-duration, 350ms) ease-out
+    battle-sprite-enter var(--enter-duration, 1750ms) ease-out
     var(--enter-delay, 0ms) both;
 }
 
 .playerEnter {
   animation:
-    battle-sprite-enter-reverse var(--enter-duration, 350ms) ease-out
+    battle-sprite-enter-reverse var(--enter-duration, 1750ms) ease-out
     var(--enter-delay, 0ms) both;
 }
 
@@ -773,7 +773,7 @@
   opacity: 0;
   z-index: 10;
   animation:
-    battle-intro-banner-fade var(--intro-duration, 1200ms) ease-in-out
+    battle-intro-banner-fade var(--intro-duration, 6000ms) ease-in-out
     var(--intro-delay, 0ms) both;
 }
 

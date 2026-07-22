@@ -117,13 +117,13 @@ const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 // classic staggered arrival), then the intro banner names the opponent once
 // both have actually landed - the action bar (see .actionBarLocked) stays
 // disabled for this whole span so a player can't attack mid-entrance.
-const ENTER_ENEMY_MS = 350;
-const ENTER_PLAYER_DELAY_MS = 120;
-const ENTER_PLAYER_MS = 350;
+const ENTER_ENEMY_MS = 1750;
+const ENTER_PLAYER_DELAY_MS = 600;
+const ENTER_PLAYER_MS = 1750;
 const ENTER_PLAYER_DELAY_TOTAL_MS = OVERLAY_TOTAL_MS + ENTER_PLAYER_DELAY_MS;
 const INTRO_BANNER_DELAY_MS = ENTER_PLAYER_DELAY_TOTAL_MS + ENTER_PLAYER_MS;
-const INTRO_BANNER_FADE_MS = 200;
-const INTRO_BANNER_HOLD_MS = 800;
+const INTRO_BANNER_FADE_MS = 1000;
+const INTRO_BANNER_HOLD_MS = 4000;
 const INTRO_BANNER_MS = INTRO_BANNER_FADE_MS * 2 + INTRO_BANNER_HOLD_MS;
 const ENTRANCE_LOCK_MS = INTRO_BANNER_DELAY_MS + INTRO_BANNER_MS;
 
