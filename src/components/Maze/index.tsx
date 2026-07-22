@@ -12,6 +12,7 @@ import { CELL_SIZE } from "./cellSize";
 import simpleMap from "./map.txt";
 import { useGameStore } from "../../store/gameStore";
 import { useFlowStore } from "../../store/flowStore";
+import { useLingeringMode } from "../../hooks/useLingeringMode";
 import MONSTERS from "../../data/monsters/monsters";
 import { CELL_TYPE, compileMap } from "./compileMap";
 import { computeMonsterIds } from "./monsterPositions";
@@ -89,6 +90,13 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
     [goalDefeatedAt, x, y, goalCell]
   );
   const flowMode = useFlowStore((state) => state.mode);
+  // Lingers on "conversation" through the entering-battle transition's own
+  // freeze/flash/cover-in delay (see useLingeringMode) - used only for
+  // isBeingTalkedTo below, so the talked-to monster's facing/bounce doesn't
+  // snap back to default the instant enterBattle() flips flowMode, well
+  // before the screen is actually covered. goto's own "if (flowMode !==
+  // 'map') return" gating still needs the real, current mode.
+  const talkingMode = useLingeringMode();
   const activeMonsterId = useFlowStore((state) => state.activeMonsterId);
   const isGoalEncounter = useFlowStore((state) => state.isGoalEncounter);
   const talkingSpeaker = useFlowStore((state) => state.talkingSpeaker);
@@ -357,7 +365,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
               goalCell !== null && c === goalCell[0] && r === goalCell[1];
             const cellClass = cell === CELL_TYPE.WALL ? "wall" : "road";
             const isBeingTalkedTo =
-              flowMode === "conversation" &&
+              talkingMode === "conversation" &&
               ((isMonsterCell && monster!.id === activeMonsterId) ||
                 (isGoalCell && isGoalEncounter));
             const isTalking = isBeingTalkedTo && talkingSpeaker === "monster";
