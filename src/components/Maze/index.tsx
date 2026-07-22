@@ -169,17 +169,25 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   // A mini-map tap teleports the player straight to a (non-adjacent, often
   // diagonal) cell rather than walking there - extendTrail only makes sense
   // for the single-step-at-a-time path goto itself produces, so this instead
-  // collapses the trail onto the new cell outright the moment
-  // isTeleportedInPlace flips true, exactly like entering the goal's house
-  // above. Ordinary walking right after just re-extends it from that single
-  // point same as it would fresh out of the house.
-  const previousIsTeleportedInPlaceRef = useRef(isTeleportedInPlace);
+  // collapses the trail onto the new cell outright, exactly like entering
+  // the goal's house above. Keyed off the trail not already starting at the
+  // current cell rather than an isTeleportedInPlace false->true edge - two
+  // teleports in a row (no walk in between) both leave isTeleportedInPlace
+  // true throughout, so an edge check would only catch the first one and
+  // leave the trail permanently anchored at that first destination, unable
+  // to ever extend again once the player starts walking from the second
+  // (extendTrail silently no-ops when its own fromX/fromY isn't on the
+  // walked line's row/column). Ordinary walking right after just
+  // re-extends the trail from that single point same as it would fresh out
+  // of the house.
   useEffect(() => {
-    if (isTeleportedInPlace && !previousIsTeleportedInPlaceRef.current) {
+    if (
+      isTeleportedInPlace &&
+      (trail.length !== 1 || trail[0][0] !== x || trail[0][1] !== y)
+    ) {
       setTrail([[x, y]]);
     }
-    previousIsTeleportedInPlaceRef.current = isTeleportedInPlace;
-  }, [isTeleportedInPlace, x, y]);
+  }, [isTeleportedInPlace, x, y, trail]);
 
   const isPassable = useCallback(
     (r: number, c: number): boolean =>

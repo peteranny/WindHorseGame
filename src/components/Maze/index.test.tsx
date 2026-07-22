@@ -46,15 +46,21 @@ const WALL_TARGET: [number, number] = [12, 1]; // behind (13,1) is a wall
 const PASSABLE_START: [number, number] = [10, 1];
 const PASSABLE_TARGET: [number, number] = [5, 1]; // behind (6,1) is a road
 
-const seedGameState = (position: [number, number], facing: Facing): void => {
+const seedGameState = (
+  position: [number, number],
+  facing: Facing,
+  monsterIds: number[] = [0]
+): void => {
   useGameStore.setState({
     hydrated: false,
     stateKey: null,
     position,
     previousPosition: null,
     facing,
-    captured: { 0: "2024-01-01T00:00:00.000Z" },
-    monsterOrder: [0],
+    captured: Object.fromEntries(
+      monsterIds.map((id) => [id, "2024-01-01T00:00:00.000Z"])
+    ),
+    monsterOrder: monsterIds,
     cooldowns: {},
     battleCooldowns: {},
     exploredCells: {},
@@ -77,12 +83,32 @@ const teleport = (x: number, y: number): void => {
 const findFollowerWrap = (
   renderer: TestRenderer.ReactTestRenderer
 ): TestRenderer.ReactTestInstance =>
+  findFollowerWraps(renderer)[0];
+
+const findFollowerWraps = (
+  renderer: TestRenderer.ReactTestRenderer
+): TestRenderer.ReactTestInstance[] =>
   renderer.root.findAll(
     (node) =>
       node.type === "div" &&
       typeof node.props.className === "string" &&
       node.props.className.split(" ").includes("followerWrap")
-  )[0];
+  );
+
+// Mirrors clicking a map cell (Maze's own onClick={() => goto(r, c)}).
+const clickCell = (
+  renderer: TestRenderer.ReactTestRenderer,
+  row: number,
+  col: number
+): void => {
+  const rows = renderer.root.findAll(
+    (node) => node.type === "div" && node.props.className === "row"
+  );
+  const cells = rows[row].findAll(
+    (node) => node.type === "div" && node.props.className === "cell"
+  );
+  cells[col].props.onClick();
+};
 
 describe("teleporting the player and the duckling follower", () => {
   let renderer: TestRenderer.ReactTestRenderer | null = null;
@@ -178,5 +204,80 @@ describe("teleporting the player and the duckling follower", () => {
       teleport(WALL_START[0], WALL_START[1]); // back to the right
     });
     expect(useGameStore.getState().facing).toBe("right");
+  });
+
+  // Row 9 (0-indexed): "X    M    X   M   X    M    X" - road at cols 1-9
+  // (M at 5), so (3,9)/(2,9) are both plain, adjacent, passable cells with
+  // no monster in between.
+  const OFF_ROW_TARGET: [number, number] = [3, 9];
+
+  it("re-anchors the trail on a second teleport landing off the first teleport's row/column, so a walk afterward still extends normally", () => {
+    seedGameState(WALL_START, "down", [0, 1]);
+    act(() => {
+      renderer = TestRenderer.create(<MazeContainer center={[400, 300]} />);
+    });
+
+    act(() => {
+      teleport(WALL_TARGET[0], WALL_TARGET[1]); // spot A
+    });
+    act(() => {
+      // Spot B, landing off A's row/column - teleportTo always sets
+      // previousPosition to match the new position, so isTeleportedInPlace
+      // stays true across both teleports with no walk in between. An
+      // edge-triggered reset (only on isTeleportedInPlace flipping
+      // false->true) would miss this second teleport entirely, leaving the
+      // trail anchored at A.
+      teleport(OFF_ROW_TARGET[0], OFF_ROW_TARGET[1]);
+    });
+    act(() => {
+      // One step left along B's own row - not on the same row/column as A,
+      // so a trail still stuck at A would fail to extend at all (extendTrail
+      // silently no-ops when its own start isn't collinear with the walked
+      // line), leaving every follower frozen at a single fallback point.
+      clickCell(renderer!, OFF_ROW_TARGET[1], OFF_ROW_TARGET[0] - 1);
+    });
+
+    const [wrap0, wrap1] = findFollowerWraps(renderer!);
+    // A real one-cell walk from B is long enough to place the two closest
+    // followers at distinct points along it - if the trail were still stuck
+    // at A (non-collinear with this walk), both would instead collapse onto
+    // the exact same fallback point.
+    expect(wrap0.props.style.left).not.toBe(wrap1.props.style.left);
+  });
+
+  // Row 1 (0-indexed), same road segment WALL_TARGET/WALL_START already sit
+  // in: cols 23-27 are plain road (M at 22, wall at 28) - SAME_ROW_TARGET is
+  // on the same row as WALL_TARGET (A) but a different column, so a walk
+  // afterward is (wrongly) collinear with A too if the trail never got
+  // re-anchored at B.
+  const SAME_ROW_TARGET: [number, number] = [25, 1];
+
+  it("does not extend the trail all the way back to an earlier teleport spot when the second teleport shares its row", () => {
+    seedGameState(WALL_START, "down", [0, 1, 2, 3, 4]);
+    act(() => {
+      renderer = TestRenderer.create(<MazeContainer center={[400, 300]} />);
+    });
+
+    act(() => {
+      teleport(WALL_TARGET[0], WALL_TARGET[1]); // spot A, col 12
+    });
+    act(() => {
+      teleport(SAME_ROW_TARGET[0], SAME_ROW_TARGET[1]); // spot B, col 25
+    });
+    act(() => {
+      // One step left from B (col 25 -> 24) - a real path of just one cell.
+      clickCell(renderer!, SAME_ROW_TARGET[1], SAME_ROW_TARGET[0] - 1);
+    });
+
+    // With only ~1 cell of real path, resamplePath can place at most 3 of
+    // the 5 followers individually - the rest clamp to that 3rd point (see
+    // followerTrail.ts's resamplePath/Maze/index.tsx's own followerPoints
+    // comment). If the trail were wrongly stitched all the way back to A
+    // (13 cells, col 12 to col 24) instead of stopping at B, there'd be
+    // plenty of path to place all 5 individually, and this last follower
+    // would sit at its own distinct point instead of sharing the 3rd one's.
+    const wraps = findFollowerWraps(renderer!);
+    expect(wraps[4].props.style.left).toBe(wraps[2].props.style.left);
+    expect(wraps[4].props.style.top).toBe(wraps[2].props.style.top);
   });
 });
