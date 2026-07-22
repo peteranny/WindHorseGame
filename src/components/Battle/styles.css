@@ -219,24 +219,48 @@
  * The battlefield's toast stack (Battle/index.tsx's useToastStack) -
  * "X 系列加成，效果卓越" for a family throw, healer-specific messages, and
  * both entrance banners ("遇到野生的X！", "開始戰鬥！") all render here,
- * centered within .battlefield itself (the fight area above the action
- * bar/attack grid) so a toast never covers the buttons a player is about
- * to tap next. A plain flex column with a gap - each toast no longer
- * centers *itself* (no translate(-50%, -50%) on the individual pill) -
- * so 2+ toasts visible at once (e.g. attacking the instant the action bar
- * unlocks, right as "開始戰鬥！" is still fading) stack cleanly one above
- * the other instead of literally overlapping at the same point.
+ * anchored to the dead center of .battlefield itself (the fight area
+ * above the action bar, i.e. the screen minus the bottom panel) so a
+ * toast never covers the buttons a player is about to tap next.
+ *
+ * .toastStack itself is a zero-size anchor point, not a real box - each
+ * .toastItem is absolutely positioned against that single point rather
+ * than laid out by flexbox, so the *latest* toast (last in the array)
+ * always sits right on the anchor and every older one is pushed upward
+ * above it as more accumulate - oldest at the top of the stack, newest
+ * pinned at the center. --toast-offset (set inline per item, counting
+ * down from the end of the array) drives that vertical position via
+ * transform, and since it's an explicit per-element value - not a
+ * flexbox reflow - .toastItem's own `transition` can smoothly animate a
+ * toast sliding to its new slot whenever an older one above it expires
+ * and everything still showing shifts up to close the gap.
+ *
+ * --toast-row-height is a fixed estimate (pill height + gap) rather than
+ * anything measured - fine since every toast is a single, non-wrapping
+ * line at a fixed font-size, so real row height barely varies.
  */
 .toastStack {
+  --toast-row-height:
+    calc(
+      (12pt * var(--scale) * 1.3) + (12px * var(--scale)) + (8px * var(--scale))
+    );
+
   position: absolute;
-  top: 30%;
+  bottom: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(8px * var(--scale));
   pointer-events: none;
+}
+
+.toastItem {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  transform:
+    translate(
+      -50%,
+      calc(var(--toast-offset, 0) * -1 * var(--toast-row-height))
+    );
+  transition: transform 0.3s ease;
 }
 
 .toast {
@@ -253,7 +277,9 @@
      length, or the fixed TOAST_MS both entrance banners share (see
      Battle/index.tsx). The 15%/75% fade fraction below is only exact for
      some of those - a fixed middle ground close enough for all of them
-     that the difference isn't visible. */
+     that the difference isn't visible. Only fades/bounces this pill's
+     own opacity/entrance - the stacking position above is .toastItem's
+     concern (a separate element), so the two transforms never conflict. */
   animation: toast-fade var(--toast-duration, 1800ms) ease-in-out;
 }
 

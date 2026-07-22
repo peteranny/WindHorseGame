@@ -14,11 +14,12 @@ export interface ToastEntry {
 // let a second trigger silently cut the first one's banner short) - each
 // entry then removes only itself, by id, once its own durationMs elapses,
 // same reasoning as useThrowEffect's per-id cleanup. Battle/styles.css's
-// .toastStack renders whatever's still in this array as a vertically
-// stacked column (with a gap), so two toasts that happen to overlap in
-// time - e.g. attacking the instant the action bar unlocks, right as
-// "開始！" is still fading - both stay fully visible side by side
-// rather than one clobbering the other.
+// .toastStack renders whatever's still in this array anchored at the
+// center of the battlefield, oldest on top and the latest (this array's
+// last entry) pinned at that center point, so two toasts that happen to
+// overlap in time - e.g. attacking the instant the action bar unlocks,
+// right as "開始！" is still fading - both stay fully visible, stacked
+// one above the other, rather than one clobbering the other.
 export const useToastStack = (): [
   ToastEntry[],
   (text: string, durationMs: number) => void

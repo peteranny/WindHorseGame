@@ -327,17 +327,26 @@ const Battle = () => {
         )}
         {toasts.length > 0 && (
           <div className={styles.toastStack}>
-            {toasts.map((toast) => (
+            {toasts.map((toast, index) => (
               <div
                 key={toast.id}
-                className={styles.toast}
+                className={styles.toastItem}
                 style={
                   {
-                    "--toast-duration": `${toast.durationMs}ms`,
+                    "--toast-offset": toasts.length - 1 - index,
                   } as React.CSSProperties
                 }
               >
-                {toast.text}
+                <div
+                  className={styles.toast}
+                  style={
+                    {
+                      "--toast-duration": `${toast.durationMs}ms`,
+                    } as React.CSSProperties
+                  }
+                >
+                  {toast.text}
+                </div>
               </div>
             ))}
           </div>
