@@ -39,7 +39,6 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const setFacing = useGameStore((state) => state.setFacing);
   const revealCells = useGameStore((state) => state.revealCells);
   const captured = useGameStore((state) => state.captured);
-  const releaseMonster = useGameStore((state) => state.releaseMonster);
   const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
   const houseState = useMemo(
     () => computeHouseState(goalDefeatedAt, [x, y], goalCell),
@@ -59,13 +58,6 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const startEncounter = useFlowStore((state) => state.startEncounter);
   const startGoalEncounter = useFlowStore((state) => state.startGoalEncounter);
   const replayGoalFinale = useFlowStore((state) => state.replayGoalFinale);
-  const devReleaseEnabled = useFlowStore((state) => state.devReleaseEnabled);
-  // Maze itself stays mounted (and visible behind Dialog) through a
-  // conversation, not just "map" - but the release-a-follower affordance
-  // should disappear right along with the map screen's own dev buttons
-  // (Game/index.tsx's `mode === "map"` gate), not stay clickable underneath
-  // an open conversation.
-  const releasable = devReleaseEnabled && flowMode === "map";
 
   const isPassable = useCallback(
     (r: number, c: number): boolean =>
@@ -221,8 +213,6 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
         followerPoints={followerPoints}
         noPathFollowerPoint={noPathFollowerPoint}
         facing={facing}
-        releasable={releasable}
-        onRelease={releaseMonster}
       />
     </div>
   );
@@ -238,7 +228,6 @@ const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
   const facing = useGameStore((state) => state.facing);
   const position = useGameStore((state) => state.position);
   const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
-  const talkingSpeaker = useFlowStore((state) => state.talkingSpeaker);
   // Once the player's own cell coincides with the goal's, Maze itself draws
   // the combined "occupied house" sprite in that cell - this standalone pin
   // (always centered on the player's current cell) would otherwise draw the
@@ -258,7 +247,6 @@ const MazeContainer = ({ center: [centerX, centerY] }: ContainerProps) => {
           centerY={centerY}
           facing={facing}
           isBehindHouse={isBehindHouse}
-          isTalking={talkingSpeaker === "protagonist"}
         />
       )}
     </div>
