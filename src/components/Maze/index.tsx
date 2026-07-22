@@ -104,6 +104,12 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const startGoalEncounter = useFlowStore((state) => state.startGoalEncounter);
   const replayGoalFinale = useFlowStore((state) => state.replayGoalFinale);
   const devReleaseEnabled = useFlowStore((state) => state.devReleaseEnabled);
+  // Maze itself stays mounted (and visible behind Dialog) through a
+  // conversation, not just "map" - but the release-a-follower affordance
+  // should disappear right along with the map screen's own dev buttons
+  // (Game/index.tsx's `mode === "map"` gate), not stay clickable underneath
+  // an open conversation.
+  const releasable = devReleaseEnabled && flowMode === "map";
 
   // previousPosition equal to the current position marks the one thing
   // that's never true of an ordinary walked step: a mini-map teleport (see
@@ -498,14 +504,14 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
               key={id}
               className={cn(
                 styles.followerWrap,
-                devReleaseEnabled && styles.releasable
+                releasable && styles.releasable
               )}
               style={{
                 left: px,
                 top: py,
                 zIndex: orderedFollowerIds.length - i,
               }}
-              onClick={devReleaseEnabled ? () => releaseMonster(id) : undefined}
+              onClick={releasable ? () => releaseMonster(id) : undefined}
             >
               <img
                 src={MONSTERS[id].icon}
@@ -519,7 +525,7 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
                   } as React.CSSProperties
                 }
               />
-              {devReleaseEnabled && (
+              {releasable && (
                 <span
                   className={styles.followerReleaseBadge}
                   aria-hidden="true"
