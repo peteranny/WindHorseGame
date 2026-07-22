@@ -705,6 +705,109 @@
   animation: enemy-shadow-sink 500ms ease-in 300ms forwards;
 }
 
+/*
+ * Played once on mount, delayed via --enter-delay (set inline from
+ * Battle/index.tsx's ENTER_PLAYER_DELAY_TOTAL_MS/OVERLAY_TOTAL_MS - the
+ * moment BattleTransition's own distortion overlay finishes clearing, see
+ * BattleTransition/timing.ts) so both sprites stay fully invisible for as
+ * long as that overlay is still covering the screen, then visibly slide +
+ * pop in together right as it lifts. Player and enemy use the same
+ * keyframes mirrored (opposite translateX sign), just staggered by
+ * ENTER_PLAYER_DELAY_MS so the enemy arrives a beat first.
+ */
+.enemyEnter {
+  animation:
+    battle-sprite-enter var(--enter-duration, 350ms) ease-out
+    var(--enter-delay, 0ms) both;
+}
+
+.playerEnter {
+  animation:
+    battle-sprite-enter-reverse var(--enter-duration, 350ms) ease-out
+    var(--enter-delay, 0ms) both;
+}
+
+@keyframes battle-sprite-enter {
+  0% {
+    opacity: 0;
+    transform: translateX(40%) scale(0.6);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes battle-sprite-enter-reverse {
+  0% {
+    opacity: 0;
+    transform: translateX(-40%) scale(0.6);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/*
+ * "遭遇了 X！" - fades in once both sprites have actually landed (see
+ * --intro-delay, Battle/index.tsx's INTRO_BANNER_DELAY_MS), holds briefly,
+ * then fades back out - .actionBarLocked below stays disabled for exactly
+ * as long as this whole sequence runs.
+ */
+.introBanner {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  font-weight: bold;
+  font-size: calc(14pt * var(--scale));
+  padding: calc(8px * var(--scale)) calc(20px * var(--scale));
+  border-radius: calc(999px * var(--scale));
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 10;
+  animation:
+    battle-intro-banner-fade var(--intro-duration, 1200ms) ease-in-out
+    var(--intro-delay, 0ms) both;
+}
+
+/*
+ * The fade-in/out edges are each INTRO_BANNER_FADE_MS out of the whole
+ * INTRO_BANNER_MS span (Battle/index.tsx) - expressed here as percentages
+ * of --intro-duration so they stay proportionally correct regardless of
+ * the exact constants.
+ */
+@keyframes battle-intro-banner-fade {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  17%,
+  83% {
+    opacity: 1;
+  }
+}
+
+/*
+ * Locks the whole action bar (escape/skip/dev buttons, the attack grid)
+ * during Battle/index.tsx's own entrance sequence (isEntering) - dimmed and
+ * unclickable as one unit rather than disabling every individual button,
+ * since nothing in here should be tappable until the enemy/player have
+ * actually finished walking on screen and the intro banner's played out.
+ */
+.actionBarLocked {
+  pointer-events: none;
+  opacity: 0.4;
+  transition: opacity 200ms ease-out;
+}
+
 .hpBarOuter {
   height: calc(8px * var(--scale));
   background: #ccc;

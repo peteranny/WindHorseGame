@@ -30,6 +30,7 @@ import {
   moveGroupToFront,
 } from "./attackGroups";
 import { GOAL_NAME } from "../../data/goalEncounter";
+import { OVERLAY_TOTAL_MS } from "../BattleTransition/timing";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
 import COLD_NOODLE_SPRITE from "../../assets/coldNoodle.png";
@@ -107,6 +108,24 @@ const SINK_HOLD_MS = 400;
 const OUTCOME_PAUSE_MS = SINK_LEAD_MS + SINK_DURATION_MS + SINK_HOLD_MS;
 const OUTCOME_FADE_MS = 700;
 const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
+
+// The entrance sequence that plays once per fresh battle mount, right as
+// BattleTransition's own distortion overlay (see its timing.ts) finishes
+// clearing - OVERLAY_TOTAL_MS is this component's own mount time, but the
+// overlay covers it for that long first, so every delay below counts from
+// there rather than from 0. Enemy leads, player follows a beat later (a
+// classic staggered arrival), then the intro banner names the opponent once
+// both have actually landed - the action bar (see .actionBarLocked) stays
+// disabled for this whole span so a player can't attack mid-entrance.
+const ENTER_ENEMY_MS = 350;
+const ENTER_PLAYER_DELAY_MS = 120;
+const ENTER_PLAYER_MS = 350;
+const ENTER_PLAYER_DELAY_TOTAL_MS = OVERLAY_TOTAL_MS + ENTER_PLAYER_DELAY_MS;
+const INTRO_BANNER_DELAY_MS = ENTER_PLAYER_DELAY_TOTAL_MS + ENTER_PLAYER_MS;
+const INTRO_BANNER_FADE_MS = 200;
+const INTRO_BANNER_HOLD_MS = 800;
+const INTRO_BANNER_MS = INTRO_BANNER_FADE_MS * 2 + INTRO_BANNER_HOLD_MS;
+const ENTRANCE_LOCK_MS = INTRO_BANNER_DELAY_MS + INTRO_BANNER_MS;
 
 // "heal" is the only sprite effect still driven by React state/CSS class -
 // see useHealEffect and playBump below for why attack/hit moved off this.
@@ -407,6 +426,17 @@ const Battle = () => {
   // has actually landed - only then does the loser's sprite sink and the
   // white/black fade begin, so a still-flying attack never gets cut short.
   const [isSinking, setIsSinking] = useState(false);
+
+  // True for exactly ENTRANCE_LOCK_MS starting from this component's own
+  // mount (a fresh Battle instance mounts every time a new battle starts,
+  // see ScreenTransition's own per-key layer cleanup) - drives the sprite
+  // entrance animations, the intro banner, and locks the action bar
+  // (.actionBarLocked) until the whole sequence has played out.
+  const [isEntering, setIsEntering] = useState(true);
+  useEffect(() => {
+    const id = setTimeout(() => setIsEntering(false), ENTRANCE_LOCK_MS);
+    return () => clearTimeout(id);
+  }, []);
 
   const battlefieldRef = useRef<HTMLDivElement>(null);
   const playerSpriteRef = useRef<HTMLImageElement>(null);
@@ -719,7 +749,7 @@ const Battle = () => {
 
   const handleAttack = useCallback(
     (option: AttackOption) => {
-      if (pendingOutcome !== null) return;
+      if (pendingOutcome !== null || isEntering) return;
       const now = Date.now();
       if ((cooldowns[option.key] ?? 0) > now) return;
 
@@ -973,6 +1003,7 @@ const Battle = () => {
     },
     [
       pendingOutcome,
+      isEntering,
       cooldowns,
       line,
       nextPlacement,
@@ -1018,10 +1049,17 @@ const Battle = () => {
             alt="小風"
             className={cn(
               styles.playerSprite,
+              isEntering && styles.playerEnter,
               isPlayerSinking
                 ? styles.playerSink
                 : playerHealEffect && styles.playerHeal
             )}
+            style={
+              {
+                "--enter-delay": `${ENTER_PLAYER_DELAY_TOTAL_MS}ms`,
+                "--enter-duration": `${ENTER_PLAYER_MS}ms`,
+              } as React.CSSProperties
+            }
           />
         </div>
         <div className={styles.enemySide}>
@@ -1040,10 +1078,17 @@ const Battle = () => {
               alt={enemyName}
               className={cn(
                 styles.enemySprite,
+                isEntering && styles.enemyEnter,
                 isEnemySinking
                   ? styles.enemySink
                   : enemyHealEffect && styles.enemyHeal
               )}
+              style={
+                {
+                  "--enter-delay": `${OVERLAY_TOTAL_MS}ms`,
+                  "--enter-duration": `${ENTER_ENEMY_MS}ms`,
+                } as React.CSSProperties
+              }
             />
             {isWildTelegraphing && (
               <div className={styles.telegraph} aria-hidden="true">
@@ -1140,8 +1185,21 @@ const Battle = () => {
             {familyToast.text}
           </div>
         )}
+        {isEntering && (
+          <div
+            className={styles.introBanner}
+            style={
+              {
+                "--intro-delay": `${INTRO_BANNER_DELAY_MS}ms`,
+                "--intro-duration": `${INTRO_BANNER_MS}ms`,
+              } as React.CSSProperties
+            }
+          >
+            遭遇了 {enemyName}！
+          </div>
+        )}
       </div>
-      <div className={styles.actionBar}>
+      <div className={cn(styles.actionBar, isEntering && styles.actionBarLocked)}>
         <div className={styles.buttonRow}>
           <button
             type="button"

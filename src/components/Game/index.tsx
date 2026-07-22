@@ -11,6 +11,7 @@ import Battle from "../Battle";
 import StateKeyGate from "../StateKeyGate";
 import MiniMap from "../MiniMap";
 import ScreenTransition from "../ScreenTransition";
+import BattleTransition from "../BattleTransition";
 import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
 import { isDevStateKey } from "../../store/devMode";
@@ -54,6 +55,7 @@ const Game = () => {
         onClick={handleMouseClick}
       >
         <StateKeyGate>
+          <BattleTransition mode={mode} />
           <ScreenTransition screenKey={screenKey}>
             {mode === "battle" ? (
               <Battle />

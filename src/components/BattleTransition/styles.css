@@ -1,0 +1,120 @@
+/*
+ * Sits on top of everything else in Screen (a positioned ancestor, so
+ * inset: 0 here fills the whole viewport regardless of Game's own flex
+ * layout underneath) for the full "freeze" -> "flash" -> "cover" ->
+ * "reveal" sequence - pointer-events stays "auto" throughout so the map/
+ * conversation screen genuinely can't be clicked again mid-transition,
+ * matching the "freeze" stage's own intent even once that stage itself
+ * has visually moved on to flash/distortion.
+ */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6000;
+  pointer-events: auto;
+  overflow: hidden;
+  background: transparent;
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+
+  /* Must match BattleTransition/timing.ts's FLASH_MS. */
+  animation: battle-flash-pulse 120ms ease-out forwards;
+}
+
+@keyframes battle-flash-pulse {
+  0% {
+    opacity: 0;
+  }
+
+  40% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/*
+ * Grows from a small dot at screen center out to fully cover the overlay -
+ * whichever of .radial/.stripes/.particles below supplies the actual
+ * pattern, this just handles the shared grow-in/warp-out motion. `both`
+ * holds the 100% frame once "cover" finishes, so the pattern stays fully
+ * covering (not snapping back) for however long "reveal" takes to start.
+ */
+.cover {
+  /* Must match BattleTransition/timing.ts's DISTORT_IN_MS. */
+  animation: battle-distort-in 300ms ease-in both;
+}
+
+@keyframes battle-distort-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.15) rotate(-25deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/*
+ * Reverses course past where "cover" left off - rather than just shrinking
+ * back down the way it grew, this keeps expanding outward while fading, so
+ * the pattern reads as flying past the camera on its way out rather than
+ * retreating back into the center it grew from.
+ */
+.reveal {
+  /* Must match BattleTransition/timing.ts's DISTORT_OUT_MS. */
+  animation: battle-distort-out 200ms ease-out both;
+}
+
+@keyframes battle-distort-out {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6) rotate(10deg);
+  }
+}
+
+.radial {
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      #14142b 0deg 9deg,
+      #f4f4f4 9deg 18deg
+    );
+}
+
+/* Horizontal bands (stacked top-to-bottom), not vertical columns. */
+.stripes {
+  background:
+    repeating-linear-gradient(
+      180deg,
+      #14142b 0 18px,
+      #f4f4f4 18px 36px
+    );
+}
+
+.particles {
+  background-color: #14142b;
+  background-image:
+    radial-gradient(
+      circle,
+      #f4f4f4 3px,
+      transparent 3.5px
+    ),
+    radial-gradient(circle, #f4f4f4 2px, transparent 2.5px);
+  background-size: 48px 48px, 48px 48px;
+  background-position: 0 0, 24px 24px;
+}
