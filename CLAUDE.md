@@ -31,24 +31,32 @@ src/
     App.tsx             # Router shell: "/" -> Game, "/settings" -> Settings.
     Game/                # The main screen: wires MouseContext, Screen, Maze, Dialog, Battle.
     Screen/              # Full-viewport container div. Sets base font-size via calc(13pt * var(--scale)).
-    Maze/                 # Core game logic. Grid rendering, click-to-move, monster/goal blocking/markers, player sprite.
+    Maze/                 # Core game logic. index.tsx itself holds just MazeContainer (the player pin's own
+                          # placement, via PlayerPin.tsx) and Maze (the grid + goto's click-to-move/monster-
+                          # goal-blocking logic) - the map's per-cell rendering (MazeCell.tsx) and the trailing
+                          # duckling train's own rendering (FollowerTrailView.tsx) are each their own component.
                           # compileMap.ts/monsterPositions.ts are shared with MiniMap. goalPosition.ts finds the
                           # map's single 'F' goal tile. exploration.ts: computeTraversedCells/revealCells for fog
                           # of war, cellBeforeTarget (the cell just before an obstacle) and findStoppingPoint (walks
                           # a tapped straight-line move as far as it actually can, stopping short of whatever
                           # blocks it first instead of refusing the whole move).
-                          # followerTrail.ts: pure helpers behind the trailing captured-monster followers - a
-                          # cell-by-cell history of the player's own path, itself not persisted but seeded on
-                          # load from gameStore.previousPosition (see "Game state & persistence"), and
-                          # resamplePath, which turns that into fine, evenly-spaced pixel points to render at.
-                          # orderByMostRecentlyCaptured/addToOrder/removeFromOrder are the pure helpers behind
-                          # gameStore.monsterOrder - see "Family-adjacency attack bonuses" below; the actual
-                          # front-to-back id order the followers render in comes straight from that store field.
-                          # Maze/index.tsx's fallbackFollowerPoint covers the rare case where that history is
-                          # still too short to resample at all (a brand new save's very first move) - it holds
+                          # useFollowerTrail.ts: the hook behind the trailing captured-monster followers' whole
+                          # layout - a cell-by-cell history of the player's own path (itself not persisted but
+                          # seeded on load from gameStore.previousPosition, see "Game state & persistence"),
+                          # resampled (resamplePath) into fine, evenly-spaced pixel points to render at, plus
+                          # the effects that collapse that history onto a single point on entering the house or
+                          # teleporting (see both below). followerTrail.ts itself stays pure helpers only -
+                          # resamplePath/extendTrail, plus orderByMostRecentlyCaptured/addToOrder/removeFromOrder
+                          # behind gameStore.monsterOrder (see "Family-adjacency attack bonuses" below; the actual
+                          # front-to-back id order the followers render in comes straight from that store field).
+                          # useFollowerTrail's own fallbackFollowerPoint covers the rare case where that history
+                          # is still too short to resample at all (a brand new save's very first move) - it holds
                           # at the last cell behind the player that was actually clear, rather than snapping
                           # the whole train onto the player's own cell the moment a facing change points it at
-                          # a wall or monster.
+                          # a wall or monster. GoalCelebration.tsx: the goal tile's standing "challenged and
+                          # defeated" marker once gameStore.goalDefeatedAt is set - rising heart emojis, a
+                          # pulsing neon "40" sign, and a few fireworks - rendered by MazeCell regardless of
+                          # houseState (see "The goal tile" below).
     Dialog/               # Bottom panel; renders ConversationView while a conversation is active.
                           # paginateText.ts splits a page's full text into <=2-line, DOM-measured
                           # chunks (joined with "..."); useTypewriter.ts types out the current chunk.
