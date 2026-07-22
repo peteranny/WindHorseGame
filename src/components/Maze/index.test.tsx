@@ -6,17 +6,10 @@
  * subscribes at all - fine for SSR, but it means a store-driven component
  * never re-renders on a later store update under the project's usual
  * `testEnvironment: "node"`. This file needs jsdom specifically so the
- * component under test actually reacts to teleportTo/notifyTeleported.
+ * component under test actually reacts to teleportTo.
  */
 import React from "react";
 import TestRenderer, { act } from "react-test-renderer";
-
-// @types/react-test-renderer doesn't declare unstable_batchedUpdates, even
-// though the real package exports it (same API react-dom exposes) - cast
-// through unknown rather than widening TestRenderer's whole import type.
-const unstable_batchedUpdates = ((TestRenderer as unknown) as {
-  unstable_batchedUpdates: (callback: () => void) => void;
-}).unstable_batchedUpdates;
 
 // scale.ts pokes document.documentElement at module-load time (to set the
 // --scale CSS var) - real under jsdom, but SCALE's actual value doesn't
@@ -76,15 +69,9 @@ const seedGameState = (position: [number, number], facing: Facing): void => {
   });
 };
 
-// Mirrors exactly what MiniMap's onClick handler does (teleportTo, then
-// notifyTeleported) - a real click handler is a React event, so both
-// updates land in one batch/render pass there; batchedUpdates makes this
-// direct call do the same instead of committing as two separate passes.
+// Mirrors exactly what MiniMap's onClick handler does.
 const teleport = (x: number, y: number): void => {
-  unstable_batchedUpdates(() => {
-    useGameStore.getState().teleportTo(x, y);
-    useFlowStore.getState().notifyTeleported();
-  });
+  useGameStore.getState().teleportTo(x, y);
 };
 
 const findFollowerWrap = (
@@ -131,7 +118,7 @@ describe("teleporting the player and the duckling follower", () => {
     );
   });
 
-  it("keeps the normal half-cell-behind offset when the behind-cell is passable", () => {
+  it("snaps the follower onto the player even when the behind-cell is passable", () => {
     seedGameState(PASSABLE_START, "down");
     act(() => {
       renderer = TestRenderer.create(<MazeContainer center={[400, 300]} />);
@@ -142,13 +129,38 @@ describe("teleporting the player and the duckling follower", () => {
     });
     expect(useGameStore.getState().facing).toBe("left");
 
+    // A teleport collapses the whole duckling train onto the player's own
+    // cell unconditionally (same as entering the goal's house) - unlike the
+    // usual walking fallback, whether the behind-cell happens to be clear
+    // doesn't matter here, since a teleport has no "direction arrived from"
+    // for a trailing offset to make sense of.
     const wrap = findFollowerWrap(renderer!);
-    const expectedCenterX = PASSABLE_TARGET[0] * CELL_SIZE + CELL_SIZE / 2;
-    const expectedCenterY = PASSABLE_TARGET[1] * CELL_SIZE + CELL_SIZE / 2;
-    // facing "left" -> behindFollowerPoint offsets +CELL_SIZE/2 on X (see
-    // Maze/index.tsx's own behindFollowerPoint ternary).
-    expect(wrap.props.style.left).toBe(expectedCenterX + CELL_SIZE / 2);
-    expect(wrap.props.style.top).toBe(expectedCenterY);
+    expect(wrap.props.style.left).toBe(
+      PASSABLE_TARGET[0] * CELL_SIZE + CELL_SIZE / 2
+    );
+    expect(wrap.props.style.top).toBe(
+      PASSABLE_TARGET[1] * CELL_SIZE + CELL_SIZE / 2
+    );
+  });
+
+  it("snaps the follower onto the player on a fresh load right after a teleport, without a live teleport call", () => {
+    // Mirrors reloading the page immediately after a mini-map teleport:
+    // gameStore.teleportTo persists previousPosition as the same cell as
+    // position, so a save carrying that signature must collapse the trail
+    // on mount too, not only when teleportTo is actually called live.
+    seedGameState(WALL_TARGET, "left");
+    useGameStore.setState({ previousPosition: WALL_TARGET });
+    act(() => {
+      renderer = TestRenderer.create(<MazeContainer center={[400, 300]} />);
+    });
+
+    const wrap = findFollowerWrap(renderer!);
+    expect(wrap.props.style.left).toBe(
+      WALL_TARGET[0] * CELL_SIZE + CELL_SIZE / 2
+    );
+    expect(wrap.props.style.top).toBe(
+      WALL_TARGET[1] * CELL_SIZE + CELL_SIZE / 2
+    );
   });
 
   it("teleporting leftward faces the player left, rightward faces right", () => {

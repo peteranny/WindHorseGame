@@ -97,6 +97,18 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   const replayGoalFinale = useFlowStore((state) => state.replayGoalFinale);
   const devReleaseEnabled = useFlowStore((state) => state.devReleaseEnabled);
 
+  // previousPosition equal to the current position marks the one thing
+  // that's never true of an ordinary walked step: a mini-map teleport (see
+  // gameStore.ts's teleportTo, the only action that sets previousPosition
+  // to the very cell it also moves to). A save loaded right after one
+  // carries that signature over as-is, so this doubles as a "was the
+  // player's last move here a teleport" check without needing any extra,
+  // separately-persisted state to tell the two apart.
+  const isTeleportedInPlace =
+    previousPosition !== null &&
+    previousPosition[0] === x &&
+    previousPosition[1] === y;
+
   // History of the player's own cell, most recent first - used purely to
   // lay out the trailing captured-monster followers. Only ever seeded (from
   // gameStore.previousPosition) with the one cell the player last moved
@@ -104,15 +116,18 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   // as before. Without that seed, every follower would stack on the single
   // fallbackFollowerPoint below until the player took their first step.
   //
-  // A save made while already "in the house" is the one exception: entering
-  // is a teleport (see the houseState effect below), so previousPosition
-  // there is still whatever cell the player last walked in from - a cell
-  // outside the house. Seeding the trail from it as usual would spread the
-  // duckling train between the goal cell and that outside cell on load,
-  // instead of every follower starting bunched at the goal cell like a live
-  // house-entry does - so this mirrors that single-cell reset up front.
+  // A save made while already "in the house", or right after a mini-map
+  // teleport, is the exception: entering the house is also a teleport-like
+  // jump (see the houseState effect below), so previousPosition there is
+  // still whatever cell the player last walked in from - a cell outside
+  // the house (or, for a teleport, the same cell, but extendTrail's
+  // single-step assumption doesn't apply to either). Seeding the trail as
+  // usual would spread the duckling train between that cell and the
+  // landing cell on load, instead of every follower starting bunched right
+  // there like a live entry/teleport does - so this mirrors that
+  // single-cell reset up front.
   const [trail, setTrail] = useState<Array<[number, number]>>(() =>
-    houseState === "occupied"
+    houseState === "occupied" || isTeleportedInPlace
       ? [[x, y]]
       : previousPosition
       ? [[x, y], previousPosition]
@@ -146,17 +161,17 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   // A mini-map tap teleports the player straight to a (non-adjacent, often
   // diagonal) cell rather than walking there - extendTrail only makes sense
   // for the single-step-at-a-time path goto itself produces, so this instead
-  // collapses the trail onto the new cell outright, exactly like entering
-  // the goal's house above. Ordinary walking right after just re-extends it
-  // from that single point same as it would fresh out of the house.
-  const teleportSeq = useFlowStore((state) => state.teleportSeq);
-  const previousTeleportSeqRef = useRef(teleportSeq);
+  // collapses the trail onto the new cell outright the moment
+  // isTeleportedInPlace flips true, exactly like entering the goal's house
+  // above. Ordinary walking right after just re-extends it from that single
+  // point same as it would fresh out of the house.
+  const previousIsTeleportedInPlaceRef = useRef(isTeleportedInPlace);
   useEffect(() => {
-    if (teleportSeq !== previousTeleportSeqRef.current) {
+    if (isTeleportedInPlace && !previousIsTeleportedInPlaceRef.current) {
       setTrail([[x, y]]);
     }
-    previousTeleportSeqRef.current = teleportSeq;
-  }, [teleportSeq, x, y]);
+    previousIsTeleportedInPlaceRef.current = isTeleportedInPlace;
+  }, [isTeleportedInPlace, x, y]);
 
   const isPassable = useCallback(
     (r: number, c: number): boolean =>
@@ -297,32 +312,17 @@ const Maze = ({ center: [centerX, centerY] }: MazeProps) => {
   if (isBehindPassable) {
     lastPassableFollowerPointRef.current = behindFollowerPoint;
   }
-  // A teleport can land somewhere whose behind-cell (opposite the player's
-  // current facing) is a wall - isBehindPassable would then stay false, so
-  // the render-time check above never gets to move the ref off wherever it
-  // last held before the jump, leaving the whole train stuck rendering at
-  // that stale, possibly far-off point instead of snapping to the new
-  // location. Only step in for exactly that case (a passable behind-cell is
-  // already handled correctly by the check above) and put the train at the
-  // player's own cell instead, same as the "occupied" case below does.
-  const previousTeleportSeqForFollowerRef = useRef(teleportSeq);
-  useEffect(() => {
-    if (
-      teleportSeq !== previousTeleportSeqForFollowerRef.current &&
-      !isBehindPassable
-    ) {
-      lastPassableFollowerPointRef.current = playerCenter;
-    }
-    previousTeleportSeqForFollowerRef.current = teleportSeq;
-  }, [teleportSeq, playerCenter, isBehindPassable]);
   const fallbackFollowerPoint = lastPassableFollowerPointRef.current;
-  // While occupied, the whole train collapses onto this same fallback
-  // point (see the trail-reset effect above) - dead center of the house's
-  // own cell reads better there than fallbackFollowerPoint's usual
-  // half-cell-behind offset, which would otherwise leave the train hugging
-  // the doorway edge instead of sitting inside with the player.
+  // While occupied (the house) or just teleported-in-place (the mini-map,
+  // see isTeleportedInPlace above), the whole train collapses onto this
+  // same player-center point instead of fallbackFollowerPoint's usual
+  // half-cell-behind offset - a teleport has no "direction arrived from"
+  // for that offset to trail behind, and hugging the doorway edge would
+  // look wrong for the house case specifically.
   const noPathFollowerPoint =
-    houseState === "occupied" ? playerCenter : fallbackFollowerPoint;
+    houseState === "occupied" || isTeleportedInPlace
+      ? playerCenter
+      : fallbackFollowerPoint;
   const centerRect = {
     left: x * CELL_SIZE,
     top: y * CELL_SIZE,

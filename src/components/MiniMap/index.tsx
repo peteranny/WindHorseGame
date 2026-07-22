@@ -19,7 +19,6 @@ const MiniMap = () => {
   const exploredCells = useGameStore((state) => state.exploredCells);
   const teleportTo = useGameStore((state) => state.teleportTo);
   const flowMode = useFlowStore((state) => state.mode);
-  const notifyTeleported = useFlowStore((state) => state.notifyTeleported);
 
   return (
     <div className={styles.miniMap}>
@@ -67,14 +66,7 @@ const MiniMap = () => {
                   markerClass && styles[markerClass],
                   isTeleportable && styles.teleportable
                 )}
-                onClick={
-                  isTeleportable
-                    ? () => {
-                        teleportTo(c, r);
-                        notifyTeleported();
-                      }
-                    : undefined
-                }
+                onClick={isTeleportable ? () => teleportTo(c, r) : undefined}
               />
             );
           })}
