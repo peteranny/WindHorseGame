@@ -707,13 +707,17 @@
 
 /*
  * Played once on mount, delayed via --enter-delay (set inline from
- * Battle/index.tsx's ENTER_PLAYER_DELAY_TOTAL_MS/DISTORT_OUT_MS - the
+ * Battle/index.tsx's ENTER_PLAYER_DELAY_TOTAL_MS/REMAINING_OVERLAY_MS - the
  * moment BattleTransition's own distortion overlay finishes clearing, see
- * BattleTransition/timing.ts) so both sprites stay fully invisible for as
- * long as that overlay is still covering the screen, then visibly slide +
- * pop in together right as it lifts. Player and enemy use the same
- * keyframes mirrored (opposite translateX sign), just staggered by
- * ENTER_PLAYER_DELAY_MS so the enemy arrives a beat first.
+ * BattleTransition/timing.ts). Deliberately opacity: 1 throughout - no
+ * fade at all - since each sprite already sits fully off past the
+ * battlefield's own edge (110%, well past the 100% a sprite's own width
+ * would put it exactly at the edge) for the entire delay, so there's
+ * nothing to reveal by fading; only the position itself (a plain
+ * translateX slide back to 0) actually changes once the delay elapses.
+ * Player and enemy use the same keyframes mirrored (opposite translateX
+ * sign), just staggered by ENTER_PLAYER_DELAY_MS so the enemy arrives a
+ * beat first.
  */
 .enemyEnter {
   animation:
@@ -729,56 +733,72 @@
 
 @keyframes battle-sprite-enter {
   0% {
-    opacity: 0;
-    transform: translateX(40%) scale(0.6);
+    transform: translateX(110%);
   }
 
   100% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translateX(0);
   }
 }
 
 @keyframes battle-sprite-enter-reverse {
   0% {
-    opacity: 0;
-    transform: translateX(-40%) scale(0.6);
+    transform: translateX(-110%);
   }
 
   100% {
-    opacity: 1;
-    transform: translateX(0) scale(1);
+    transform: translateX(0);
   }
 }
 
 /*
  * The enemyInfo/playerInfo HP blocks (each its own instance of this same
- * class - only --enter-delay/--enter-duration inline differ, matching
- * whichever sprite they belong to exactly, see Battle/index.tsx) fade in
- * rather than sliding, since they're pinned to a fixed corner (not
- * traveling across the battlefield like their sprite is) - but on the same
- * schedule, so a block never appears before (or noticeably after) its own
- * sprite has finished entering.
+ * class - only --enter-delay/--enter-duration inline differ, see
+ * Battle/index.tsx's ENEMY_INFO_DELAY_MS/PLAYER_INFO_DELAY_MS, each set to
+ * its own sprite's landing time) stay fully hidden (opacity: 0, held via
+ * animation-fill-mode: both during the delay) until that instant, then
+ * suddenly appear and play the same drop-and-settle wobble
+ * .attackButtonReveal gives the attack cells - not a fade, since these are
+ * pinned to a fixed corner rather than traveling across the battlefield
+ * the way their own sprite does.
  */
 .infoEnter {
-  opacity: 0;
   animation:
-    battle-info-fade var(--enter-duration, 1050ms) ease-out
+    battle-info-reveal var(--enter-duration, 450ms) ease-out
     var(--enter-delay, 0ms) both;
 }
 
-@keyframes battle-info-fade {
-  0% {
+@keyframes battle-info-reveal {
+  0%,
+  4% {
     opacity: 0;
+    transform: translateY(calc(-10px * var(--scale))) rotate(0deg);
+  }
+
+  5% {
+    opacity: 1;
+  }
+
+  40% {
+    transform: translateY(calc(2px * var(--scale))) rotate(-3deg);
+  }
+
+  60% {
+    transform: translateY(calc(-1px * var(--scale))) rotate(2deg);
+  }
+
+  80% {
+    transform: translateY(calc(1px * var(--scale))) rotate(-1deg);
   }
 
   100% {
     opacity: 1;
+    transform: translateY(0) rotate(0deg);
   }
 }
 
 /*
- * "遭遇了 X！" - fades in once both sprites have actually landed (see
+ * "遇到野生的X！" - fades in once both sprites have actually landed (see
  * --intro-delay, Battle/index.tsx's INTRO_BANNER_DELAY_MS), holds briefly,
  * then fades back out - .actionBarLocked below stays disabled for exactly
  * as long as this whole sequence runs.
@@ -822,12 +842,14 @@
 }
 
 /*
- * Locks the whole action bar (escape/skip/dev buttons, the attack grid)
- * during Battle/index.tsx's own entrance sequence (isEntering) - left
- * entirely blank (opacity: 0, not just dimmed) and unclickable as one unit
- * rather than disabling every individual button, since nothing in here
- * should even be visible, let alone tappable, until the enemy/player have
- * actually finished walking on screen and the intro banner's played out.
+ * Applied to .actionBarContent, NOT .actionBar itself - locks everything
+ * actually interactive (escape/skip/dev buttons, the attack grid) during
+ * Battle/index.tsx's own entrance sequence (isEntering), left entirely
+ * blank (opacity: 0, not just dimmed) and unclickable as one unit rather
+ * than disabling every individual button. .actionBar's own white
+ * background/border-top stay put throughout regardless - the bottom panel
+ * itself should read as "there, just empty," never as a gap that exposes
+ * whatever's behind Battle's own (otherwise transparent) background.
  * Snaps back to fully opaque the instant isEntering clears (no fade of its
  * own here) - .attackButtonReveal below is what actually plays the
  * cells' own drop-in-and-settle moment, not a transition on this class.
@@ -892,6 +914,23 @@
   background: white;
   border-top: 4px solid black;
   padding: calc(12px * var(--scale));
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * Everything actually interactive (buttonRow, the goal-win date, the whole
+ * attack grid) lives in here rather than directly in .actionBar, so
+ * Battle/index.tsx's isEntering can blank out just this wrapper's content
+ * (see .actionBarLocked) while leaving .actionBar's own white background/
+ * border-top genuinely showing throughout - hiding the *whole* bar (as an
+ * earlier version of this did) left nothing but Battle's own transparent
+ * background painting behind it, exposing Screen's brown backdrop through
+ * where the bar should have been.
+ */
+.actionBarContent {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: calc(8px * var(--scale));

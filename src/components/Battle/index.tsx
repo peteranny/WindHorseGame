@@ -30,7 +30,7 @@ import {
   moveGroupToFront,
 } from "./attackGroups";
 import { GOAL_NAME } from "../../data/goalEncounter";
-import { DISTORT_OUT_MS } from "../BattleTransition/timing";
+import { REMAINING_OVERLAY_MS } from "../BattleTransition/timing";
 import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
 import COLD_NOODLE_SPRITE from "../../assets/coldNoodle.png";
@@ -110,25 +110,38 @@ const OUTCOME_FADE_MS = 700;
 const OUTCOME_TOTAL_MS = OUTCOME_PAUSE_MS + OUTCOME_FADE_MS;
 
 // The entrance sequence that plays once per fresh battle mount. This
-// component only ever mounts right as BattleTransition's own "reveal" stage
-// starts (see its index.tsx - the distortion is fully opaque right then,
-// and the map/battle content swap happens at that exact instant), so
-// DISTORT_OUT_MS - the time that final stage itself takes to clear - is
-// this component's own base delay before anything below starts, not the
-// whole freeze/flash/cover sequence that already finished before this
-// component even mounted. Enemy leads, player follows a beat later (a
-// classic staggered arrival), then the intro banner names the opponent once
-// both have actually landed - the action bar (see .actionBarLocked) stays
-// entirely blank (not just dimmed) for this whole span so a player can't
-// attack mid-entrance, then "drops in" with a brief shake once it's ready
-// (see isActionBarRevealing/.actionBarReveal below).
+// component only ever mounts right as BattleTransition's own black-screen
+// hold begins (see its index.tsx - the distortion is fully, solidly opaque
+// right then, and the map/battle content swap happens at that exact
+// instant), so REMAINING_OVERLAY_MS - everything still left of the overlay
+// at that point (the hold plus the final "reveal" clearing) - is this
+// component's own base delay before anything below starts, not just the
+// last stage's own duration. Enemy leads, player follows a beat later (a
+// classic staggered arrival) - both are a pure position slide (no fade;
+// each sprite sits at full opacity throughout, just translated off past
+// the battlefield's own edge until its own delay elapses) so nothing here
+// looks like it's fading in from behind the (by-then-gone) overlay. Each
+// HP block then reveals itself right as its own sprite finishes landing
+// (see ENEMY_INFO_DELAY_MS/PLAYER_INFO_DELAY_MS, and .infoEnter's own
+// drop-and-settle style - matching .attackButtonReveal's, not a fade).
+// Finally the intro banner names the opponent - the action bar (see
+// .actionBarLocked) stays entirely blank (not just dimmed) for this whole
+// span so a player can't attack mid-entrance, then "drops in" with a brief
+// shake once it's ready (see isActionBarRevealing/.attackButtonReveal).
 const ENTER_ENEMY_MS = 1050;
 const ENTER_PLAYER_DELAY_MS = 360;
 const ENTER_PLAYER_MS = 1050;
-const ENTER_PLAYER_DELAY_TOTAL_MS = DISTORT_OUT_MS + ENTER_PLAYER_DELAY_MS;
+const ENTER_PLAYER_DELAY_TOTAL_MS = REMAINING_OVERLAY_MS + ENTER_PLAYER_DELAY_MS;
+// How long each HP block's own drop-and-settle reveal takes, once it
+// starts (at its own sprite's landing time, see ENEMY_INFO_DELAY_MS/
+// PLAYER_INFO_DELAY_MS below) - short and snappy, unrelated to how long
+// the sprite itself took to slide in.
+const INFO_REVEAL_MS = 450;
+const ENEMY_INFO_DELAY_MS = REMAINING_OVERLAY_MS + ENTER_ENEMY_MS;
+const PLAYER_INFO_DELAY_MS = ENTER_PLAYER_DELAY_TOTAL_MS + ENTER_PLAYER_MS;
 const INTRO_BANNER_DELAY_MS = ENTER_PLAYER_DELAY_TOTAL_MS + ENTER_PLAYER_MS;
-const INTRO_BANNER_FADE_MS = 600;
-const INTRO_BANNER_HOLD_MS = 2400;
+const INTRO_BANNER_FADE_MS = 150;
+const INTRO_BANNER_HOLD_MS = 700;
 const INTRO_BANNER_MS = INTRO_BANNER_FADE_MS * 2 + INTRO_BANNER_HOLD_MS;
 const ENTRANCE_LOCK_MS = INTRO_BANNER_DELAY_MS + INTRO_BANNER_MS;
 // How long the drop-and-settle shake itself takes once the action bar
@@ -1119,7 +1132,7 @@ const Battle = () => {
               )}
               style={
                 {
-                  "--enter-delay": `${DISTORT_OUT_MS}ms`,
+                  "--enter-delay": `${REMAINING_OVERLAY_MS}ms`,
                   "--enter-duration": `${ENTER_ENEMY_MS}ms`,
                 } as React.CSSProperties
               }
@@ -1153,8 +1166,8 @@ const Battle = () => {
           className={cn(styles.enemyInfo, isEntering && styles.infoEnter)}
           style={
             {
-              "--enter-delay": `${DISTORT_OUT_MS}ms`,
-              "--enter-duration": `${ENTER_ENEMY_MS}ms`,
+              "--enter-delay": `${ENEMY_INFO_DELAY_MS}ms`,
+              "--enter-duration": `${INFO_REVEAL_MS}ms`,
             } as React.CSSProperties
           }
         >
@@ -1170,8 +1183,8 @@ const Battle = () => {
           className={cn(styles.playerInfo, isEntering && styles.infoEnter)}
           style={
             {
-              "--enter-delay": `${ENTER_PLAYER_DELAY_TOTAL_MS}ms`,
-              "--enter-duration": `${ENTER_PLAYER_MS}ms`,
+              "--enter-delay": `${PLAYER_INFO_DELAY_MS}ms`,
+              "--enter-duration": `${INFO_REVEAL_MS}ms`,
             } as React.CSSProperties
           }
         >
@@ -1245,11 +1258,17 @@ const Battle = () => {
               } as React.CSSProperties
             }
           >
-            遭遇了 {enemyName}！
+            遇到野生的{enemyName}！
           </div>
         )}
       </div>
-      <div className={cn(styles.actionBar, isEntering && styles.actionBarLocked)}>
+      <div className={styles.actionBar}>
+        <div
+          className={cn(
+            styles.actionBarContent,
+            isEntering && styles.actionBarLocked
+          )}
+        >
         <div className={styles.buttonRow}>
           <button
             type="button"
@@ -1413,6 +1432,7 @@ const Battle = () => {
               <span className={styles.scrollHintArrow}>›</span>
             </div>
           )}
+        </div>
         </div>
       </div>
       {isSinking && pendingOutcome !== null && (
