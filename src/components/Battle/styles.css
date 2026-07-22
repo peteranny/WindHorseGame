@@ -749,21 +749,25 @@
  * moment BattleTransition's own distortion overlay finishes clearing, see
  * BattleTransition/timing.ts). Deliberately opacity: 1 throughout - no
  * fade at all - since each sprite already sits fully off past the
- * battlefield's own edge (a fixed calc(110px * var(--scale)), well past
- * .enemySpriteWrap's own ~100px*scale width) for the entire delay, so
- * there's nothing to reveal by fading; only the position itself (a plain
+ * battlefield's own edge (a fixed calc(220px * var(--scale)) - comfortably
+ * past .playerSprite's own 160px*scale width, the widest of anything this
+ * moves, with real margin to spare) for the entire delay, so there's
+ * nothing to reveal by fading; only the position itself (a plain
  * translateX slide back to 0) actually changes once the delay elapses. A
  * *fixed* pixel distance rather than a percentage is deliberate here -
  * percentages in `transform: translateX()` resolve against the animated
- * element's own width, so .enemyShadowEnter below (a much narrower
- * element than .enemySprite, see .enemyShadow's own width: 55%) reusing
- * this exact same keyframe at some percentage would travel a visibly
- * shorter distance than the sprite despite the "same" number - a fixed
- * distance travels identically regardless of either element's own size,
- * which is what actually keeps the shadow in lockstep with its sprite.
- * Player and enemy use the same keyframes mirrored (opposite translateX
- * sign), just staggered by ENTER_PLAYER_DELAY_MS so the enemy arrives a
- * beat first.
+ * element's own width, so a narrower element (.enemyShadowEnter below is
+ * only 55% as wide as .enemySprite, see .enemyShadow's own width: 55%)
+ * reusing this same keyframe at some percentage would travel a visibly
+ * shorter distance than the sprite despite the "same" number, and .playerSprite's
+ * own 160px width left it only barely clipped rather than genuinely
+ * off-screen at the smaller distance this used to be - a fixed distance
+ * travels identically regardless of any element's own size, comfortably
+ * clearing the widest of them, which is what actually keeps every sprite
+ * (and the shadow) starting genuinely off-screen rather than stuck
+ * visible at the edge. Player and enemy use the same keyframes mirrored
+ * (opposite translateX sign), just staggered by ENTER_PLAYER_DELAY_MS so
+ * the enemy arrives a beat first.
  */
 .enemyEnter {
   animation:
@@ -779,7 +783,7 @@
 
 @keyframes battle-sprite-enter {
   0% {
-    transform: translateX(calc(110px * var(--scale)));
+    transform: translateX(calc(220px * var(--scale)));
   }
 
   100% {
@@ -789,7 +793,7 @@
 
 @keyframes battle-sprite-enter-reverse {
   0% {
-    transform: translateX(calc(-110px * var(--scale)));
+    transform: translateX(calc(-220px * var(--scale)));
   }
 
   100% {
