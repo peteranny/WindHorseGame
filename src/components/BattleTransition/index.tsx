@@ -3,6 +3,9 @@ import cn from "classnames";
 import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
 import { Variant, VARIANTS } from "../../store/battleTransitionVariants";
+import { Phase } from "./types";
+import FireworkOverlay from "./variants/firework";
+import HeartOverlay from "./variants/heart";
 import {
   FREEZE_MS,
   FLASH_MS,
@@ -19,62 +22,10 @@ import {
 // plays the much simpler "resolve" instead - see the leavingBattle branch
 // below. The variant catalog itself lives in store/battleTransitionVariants
 // (not here) since flowStore's own devForcedTransitionVariant and Game's dev
-// toggle button need it too.
-type Phase = "idle" | "freeze" | "flash" | "cover" | "reveal" | "resolve";
-
-// "firework" is the one variant that isn't a pure CSS gradient pattern - its
-// "cover" half pops real spark bursts (DOM elements, not a background
-// pattern) over a plain fading-black backdrop (styles.css's
-// battle-cover-firework-backdrop, opacity only - same technique the old
-// "emoji" variant used for its own guarantee), and its "reveal" half is a
-// completely different mechanic (8 pie-slice shards flying apart) rather
-// than the shared gradient-shrink every other variant's reveal uses - see
-// the .overlay's own comment below on why .reveal.firework deliberately
-// doesn't exist in styles.css. Fixed positions/angles (not randomized) so
-// both halves always read as one deliberate pattern rather than a
-// different scatter every roll.
-const FIREWORK_BURST_POSITIONS: Array<{ top: string; left: string }> = [
-  { top: "70%", left: "18%" },
-  { top: "55%", left: "60%" },
-  { top: "30%", left: "35%" },
-  { top: "65%", left: "80%" },
-  { top: "40%", left: "12%" },
-  { top: "25%", left: "68%" },
-];
-// One glowing color per burst (matched 1:1 with FIREWORK_BURST_POSITIONS) -
-// each burst's own rocket/tail/spark rays all share this same color, so a
-// single burst reads as one coherent colored firework rather than a
-// generic black starburst.
-const FIREWORK_BURST_COLORS = [
-  "#ffd166",
-  "#ff6b6b",
-  "#4ecdc4",
-  "#c77dff",
-  "#7bed9f",
-  "#ffa94d",
-];
-const FIREWORK_RAY_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
-
-// The 8 pie-slice wedges "firework"'s own reveal shatters the screen into -
-// (50%, 50%) plus two adjacent perimeter points (the 4 corners and the 4
-// edge-midpoints, in compass order) so their union exactly tiles the whole
-// box with no gaps/overlap at rest, before each flies outward in its own
-// direction on reveal.
-const TEAR_WEDGES: Array<{
-  clipPath: string;
-  x: string;
-  y: string;
-  rotate: string;
-}> = [
-  { clipPath: "polygon(50% 50%, 0% 0%, 50% 0%)", x: "-55vw", y: "-55vh", rotate: "-30deg" },
-  { clipPath: "polygon(50% 50%, 50% 0%, 100% 0%)", x: "55vw", y: "-55vh", rotate: "30deg" },
-  { clipPath: "polygon(50% 50%, 100% 0%, 100% 50%)", x: "70vw", y: "-15vh", rotate: "40deg" },
-  { clipPath: "polygon(50% 50%, 100% 50%, 100% 100%)", x: "70vw", y: "15vh", rotate: "-40deg" },
-  { clipPath: "polygon(50% 50%, 100% 100%, 50% 100%)", x: "55vw", y: "55vh", rotate: "30deg" },
-  { clipPath: "polygon(50% 50%, 50% 100%, 0% 100%)", x: "-55vw", y: "55vh", rotate: "-30deg" },
-  { clipPath: "polygon(50% 50%, 0% 100%, 0% 50%)", x: "-70vw", y: "15vh", rotate: "-40deg" },
-  { clipPath: "polygon(50% 50%, 0% 50%, 0% 0%)", x: "-70vw", y: "-15vh", rotate: "40deg" },
-];
+// toggle button need it too. Most variants are a pure CSS gradient pattern
+// hooked onto the shared .overlay div below via styles[variant] - "heart"
+// and "firework" are the two exceptions, each rendering their own real DOM
+// elements instead (variants/heart.tsx, variants/firework.tsx).
 
 interface BattleTransitionProps {
   mode: string;
@@ -204,52 +155,8 @@ const BattleTransition = ({
           aria-hidden="true"
         >
           {phase === "flash" && <div className={styles.flash} />}
-          {variant === "firework" && phase === "cover" && (
-            <div className={styles.fireworkField}>
-              {FIREWORK_BURST_POSITIONS.map((pos, burstIndex) => (
-                <div
-                  key={burstIndex}
-                  className={styles.fireworkBurst}
-                  style={
-                    {
-                      top: pos.top,
-                      left: pos.left,
-                      "--burst-delay": `${burstIndex * 90}ms`,
-                      "--burst-color": FIREWORK_BURST_COLORS[burstIndex],
-                    } as React.CSSProperties
-                  }
-                >
-                  <span className={styles.fireworkRocket} />
-                  {FIREWORK_RAY_ANGLES.map((angle) => (
-                    <span
-                      key={angle}
-                      className={styles.fireworkRay}
-                      style={{ "--ray-angle": `${angle}deg` } as React.CSSProperties}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-          )}
-          {variant === "firework" && phase === "reveal" && (
-            <div className={styles.tearField}>
-              {TEAR_WEDGES.map((wedge, index) => (
-                <div
-                  key={index}
-                  className={styles.tearShard}
-                  style={
-                    {
-                      clipPath: wedge.clipPath,
-                      "--tear-x": wedge.x,
-                      "--tear-y": wedge.y,
-                      "--tear-rotate": wedge.rotate,
-                      "--tear-delay": `${index * 35}ms`,
-                    } as React.CSSProperties
-                  }
-                />
-              ))}
-            </div>
-          )}
+          {variant === "firework" && <FireworkOverlay phase={phase} />}
+          {variant === "heart" && <HeartOverlay phase={phase} />}
         </div>
       )}
     </div>

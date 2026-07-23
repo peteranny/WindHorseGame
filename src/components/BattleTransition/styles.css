@@ -577,155 +577,42 @@
   }
 }
 
+/*
+ * "heart" and "firework" both render real DOM elements
+ * (variants/heart.tsx, variants/firework.tsx) rather than growing a CSS
+ * gradient pattern on this shared .overlay element the way every other
+ * variant does - those elements' own classes/keyframes live in their
+ * matching variants/*.css file instead of here. What stays here is only
+ * the backdrop each one's *cover* half hooks onto .overlay itself for its
+ * safety net: a near-instant snap to solid black in the last sliver of
+ * the duration (0% and 90%/95% both stay fully transparent, so nothing
+ * fades in before then), catching whatever the visible black shapes
+ * haven't already covered by then - the same guarantee every gradient
+ * variant's own 100% keyframe provides, just reached a different way.
+ * Neither has a matching *.reveal.X* rule: "heart"'s own hearts already
+ * fade to invisible on their own (revealing needs no coverage guarantee,
+ * only covering does), and "firework"'s tear shards fly apart on their
+ * own animation with .overlay's background staying its ordinary
+ * transparent self underneath them.
+ */
 .cover.heart {
-  animation-name: battle-cover-heart;
+  animation-name: battle-cover-heart-backdrop;
 }
 
-.reveal.heart {
-  animation-name: battle-reveal-heart;
-}
-
-/*
- * Two different SVG data URIs sharing the same 32x29 heart path (the first
- * outer subpath is only present in the reveal one - see below), sized in
- * vmax (not vmin, and not %) so the fixed 32:29 ratio between the two size
- * keyframe values holds regardless of the viewport's own aspect ratio. A
- * plain percentage size (what this variant used originally) stretches
- * width vs height independently whenever the box isn't square, and vmin
- * (tried next) is pinned to the *smaller* of the two dimensions - on a wide
- * or tall window the heart grows plenty relative to that smaller dimension
- * while still falling well short of the *larger* one, leaving a visible gap
- * right up until the abrupt flip-to-flat-black at 100%, which read as the
- * heart "not reaching the edges" and a jarring pop when that gap suddenly
- * vanished. vmax (the larger dimension) with a generous final multiplier
- * (8x the heart's own natural size) guarantees the shape comfortably
- * outgrows either dimension before that flip, on any aspect ratio - also
- * accounting for the shared .cover/.reveal transform's own scale (down to
- * 0.9x at "cover"'s last non-flip keyframe) shrinking the whole box a
- * little further at render time.
- *
- * Cover grows a *solid* black heart (background-image, default alpha
- * masking - opaque fill visible, transparent elsewhere) until it's huge
- * enough to fully cover the screen, then flips to flat #000 same as every
- * other variant's own safety net. Reveal instead punches a *hole*: the
- * backdrop is solid #000 throughout, and mask-image (not background-image)
- * cuts a heart-shaped transparent hole out of it that grows from nothing at
- * the center up to full-screen - the mask image itself combines a full
- * covering rect with the heart subpath under fill-rule="evenodd", so the
- * heart's own interior (crossed by both subpaths, i.e. an even crossing
- * count) is the only excluded/transparent region while everywhere else
- * (crossed once, by the rect alone) stays opaque - exactly the "hole" this
- * variant wants, using ordinary alpha masking with no vendor-specific
- * mask-composite needed.
- */
-.heart {
-  background-repeat: no-repeat;
-  background-position: center;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-}
-
-@keyframes battle-cover-heart {
+@keyframes battle-cover-heart-backdrop {
   0% {
-    transform: scale(0.15) rotate(-25deg);
-    background-color: transparent;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath fill='%23000' d='M16 29C16 29 0 18.5 0 9.5C0 4.25 4.25 0 9.5 0C12.5 0 15 1.5 16 4C17 1.5 19.5 0 22.5 0C27.75 0 32 4.25 32 9.5C32 18.5 16 29 16 29Z'/%3E%3C/svg%3E");
-    background-size: 6.4vmax 5.8vmax;
+    background: rgb(0 0 0 / 0%);
   }
 
-  20% {
-    transform: scale(0.35) rotate(-18deg);
-    background-color: transparent;
-    background-size: 32vmax 29vmax;
-  }
-
-  40% {
-    transform: scale(0.55) rotate(-12deg);
-    background-color: transparent;
-    background-size: 76.8vmax 69.6vmax;
-  }
-
-  60% {
-    transform: scale(0.75) rotate(-7deg);
-    background-color: transparent;
-    background-size: 144vmax 130.5vmax;
-  }
-
-  80% {
-    transform: scale(0.9) rotate(-3deg);
-    background-color: transparent;
-    background-size: 256vmax 232vmax;
+  95% {
+    background: rgb(0 0 0 / 0%);
   }
 
   100% {
-    transform: scale(1) rotate(0deg);
-    background-image: none;
-    background-color: #000;
+    background: #000;
   }
 }
 
-@keyframes battle-reveal-heart {
-  0% {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-    background-color: #000;
-    -webkit-mask-image: none;
-    mask-image: none;
-  }
-
-  20% {
-    transform: scale(1.1) rotate(3deg);
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath fill-rule='evenodd' fill='%23000' d='M0 0H32V29H0Z M16 29C16 29 0 18.5 0 9.5C0 4.25 4.25 0 9.5 0C12.5 0 15 1.5 16 4C17 1.5 19.5 0 22.5 0C27.75 0 32 4.25 32 9.5C32 18.5 16 29 16 29Z'/%3E%3C/svg%3E");
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath fill-rule='evenodd' fill='%23000' d='M0 0H32V29H0Z M16 29C16 29 0 18.5 0 9.5C0 4.25 4.25 0 9.5 0C12.5 0 15 1.5 16 4C17 1.5 19.5 0 22.5 0C27.75 0 32 4.25 32 9.5C32 18.5 16 29 16 29Z'/%3E%3C/svg%3E");
-    -webkit-mask-size: 6.4vmax 5.8vmax;
-    mask-size: 6.4vmax 5.8vmax;
-  }
-
-  40% {
-    transform: scale(1.2) rotate(6deg);
-    -webkit-mask-size: 32vmax 29vmax;
-    mask-size: 32vmax 29vmax;
-  }
-
-  60% {
-    transform: scale(1.35) rotate(8deg);
-    -webkit-mask-size: 76.8vmax 69.6vmax;
-    mask-size: 76.8vmax 69.6vmax;
-  }
-
-  80% {
-    opacity: 0.6;
-    transform: scale(1.5) rotate(9deg);
-    -webkit-mask-size: 144vmax 130.5vmax;
-    mask-size: 144vmax 130.5vmax;
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1.6) rotate(10deg);
-    -webkit-mask-size: 256vmax 232vmax;
-    mask-size: 256vmax 232vmax;
-  }
-}
-
-/*
- * "firework" plays two unrelated mechanics rather than one shared gradient
- * both ways. Cover: real colored rockets (index.tsx's DOM elements below)
- * rise then burst into glowing spark rays, over a plain fading-black
- * backdrop - same opacity-only backdrop trick the old "emoji" variant used
- * for its own guarantee, since the decorative rockets/rays alone don't
- * mathematically guarantee full coverage the way a gradient's own 100%
- * keyframe does (they're free to be purely decorative - colorful, glowing,
- * never required to actually paint every pixel - precisely because the
- * backdrop already carries that guarantee on its own). Reveal: deliberately
- * has no .reveal.firework rule at all - index.tsx instead renders 8
- * pie-slice shards (TEAR_WEDGES) that already tile the whole box solid
- * black at rest, then fly apart on their own animation (.tearShard below),
- * so .overlay's own background just stays its ordinary transparent self
- * underneath them for this phase.
- */
 .cover.firework {
   animation-name: battle-cover-firework-backdrop;
 }
@@ -735,197 +622,11 @@
     background: rgb(0 0 0 / 0%);
   }
 
+  90% {
+    background: rgb(0 0 0 / 0%);
+  }
+
   100% {
     background: #000;
-  }
-}
-
-.fireworkField {
-  position: absolute;
-  inset: 0;
-}
-
-.fireworkBurst {
-  position: absolute;
-  width: 0;
-  height: 0;
-}
-
-/*
- * The rocket rises from off-screen below straight up to its own burst
- * point (a plain vertical translate, since it's already positioned at that
- * point via .fireworkBurst's own top/left) with a glowing colored head and
- * a comet-style tail (::after, a color-to-transparent gradient trailing
- * below it) - then fades out right as it arrives, handing off to the burst
- * rays below rather than lingering.
- */
-.fireworkRocket {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: calc(7px * var(--scale));
-  height: calc(7px * var(--scale));
-  margin-left: calc(-3.5px * var(--scale));
-  border-radius: 50%;
-  background: var(--burst-color, #fff);
-  box-shadow:
-    0 0 calc(10px * var(--scale)) var(--burst-color, #fff),
-    0 0 calc(4px * var(--scale)) #fff;
-  opacity: 0;
-  animation-name: battle-firework-rocket-rise;
-  animation-duration: 260ms;
-  animation-timing-function: ease-out;
-  animation-delay: var(--burst-delay, 0ms);
-  animation-fill-mode: both;
-}
-
-.fireworkRocket::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  width: calc(2px * var(--scale));
-  height: calc(28px * var(--scale));
-  transform: translateX(-50%);
-  background: linear-gradient(to top, rgb(0 0 0 / 0%), var(--burst-color, #fff));
-  opacity: 0.8;
-}
-
-@keyframes battle-firework-rocket-rise {
-  0% {
-    transform: translateY(calc(130px * var(--scale))) scale(0.6);
-    opacity: 0;
-  }
-
-  15% {
-    opacity: 1;
-  }
-
-  85% {
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 0;
-  }
-}
-
-/*
- * Sparks igniting right as the rocket arrives (animation-delay adds the
- * rocket's own rise duration on top of --burst-delay) - a glowing color
- * gradient (bright at the burst point, fading to nothing at the tip) plus
- * a small round glint (::after) at the tip, rather than a flat black bar.
- * The 60%->100% stretch keeps drifting/rotating slightly further while
- * fading out, reading as sparks arcing and fizzling under gravity rather
- * than stopping dead the instant they reach full length.
- */
-.fireworkRay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: calc(4px * var(--scale));
-  height: calc(70px * var(--scale));
-  background: linear-gradient(to top, var(--burst-color, #fff), rgb(255 255 255 / 0%));
-  box-shadow: 0 0 calc(6px * var(--scale)) var(--burst-color, #fff);
-  border-radius: calc(3px * var(--scale));
-  transform-origin: bottom center;
-  transform: translateX(-50%) rotate(var(--ray-angle)) scaleY(0);
-  opacity: 0;
-  animation-name: battle-firework-ray-grow;
-  animation-duration: 480ms;
-  animation-timing-function: ease-out;
-  animation-delay: calc(var(--burst-delay, 0ms) + 260ms);
-  animation-fill-mode: both;
-}
-
-.fireworkRay::after {
-  content: "";
-  position: absolute;
-  top: -4%;
-  left: 50%;
-  width: calc(5px * var(--scale));
-  height: calc(5px * var(--scale));
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 calc(6px * var(--scale)) var(--burst-color, #fff);
-  opacity: 0;
-  animation-name: battle-firework-glint;
-  animation-duration: 480ms;
-  animation-timing-function: ease-out;
-  animation-delay: calc(var(--burst-delay, 0ms) + 260ms);
-  animation-fill-mode: both;
-}
-
-@keyframes battle-firework-ray-grow {
-  0% {
-    transform: translateX(-50%) rotate(var(--ray-angle)) scaleY(0);
-    opacity: 0;
-  }
-
-  15% {
-    opacity: 1;
-  }
-
-  60% {
-    transform: translateX(-50%) rotate(var(--ray-angle)) scaleY(1);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateX(-50%) rotate(calc(var(--ray-angle) + 6deg)) scaleY(1.15);
-    opacity: 0;
-  }
-}
-
-@keyframes battle-firework-glint {
-  0%,
-  40% {
-    opacity: 0;
-  }
-
-  55% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0;
-  }
-}
-
-.tearField {
-  position: absolute;
-  inset: 0;
-}
-
-/*
- * Each shard is a full-box black rectangle clipped down to its own pie
- * slice (index.tsx's TEAR_WEDGES, inline per-shard since every wedge's
- * clip-path/fly direction is unique) - together they tile the whole box
- * exactly at rest (0%), then fly apart toward their own --tear-x/--tear-y/
- * --tear-rotate and fade out, revealing the battle content already mounted
- * underneath.
- */
-.tearShard {
-  position: absolute;
-  inset: 0;
-  background: #000;
-  animation-name: battle-tear-shard;
-  animation-duration: 550ms;
-  animation-timing-function: ease-in;
-  animation-delay: var(--tear-delay, 0ms);
-  animation-fill-mode: both;
-}
-
-@keyframes battle-tear-shard {
-  0% {
-    transform: translate(0, 0) rotate(0deg);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translate(var(--tear-x), var(--tear-y)) rotate(var(--tear-rotate));
-    opacity: 0;
   }
 }

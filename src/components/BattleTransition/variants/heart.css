@@ -1,0 +1,77 @@
+/*
+ * The classes rendered by heart.tsx's own 20 heart-shaped DOM elements -
+ * the backdrop that guarantees full coverage
+ * (battle-cover-heart-backdrop, BattleTransition/styles.css) stays in the
+ * main stylesheet instead, since it's applied to the shared .overlay
+ * element itself via styles.heart there, not to anything rendered here.
+ */
+.heartField {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * Sized in vmax (not vmin, and not %) so the fixed 32:29 heart ratio holds
+ * regardless of the viewport's own aspect ratio - the same fix this
+ * variant's old single-giant-heart design needed (vmin is pinned to the
+ * *smaller* viewport dimension, which fell short of the larger one on a
+ * wide or tall window). At ~30vmax wide/tall, each heart is comfortably
+ * bigger than a 20%-of-viewport grid cell, so neighboring hearts overlap
+ * generously once popped in, tiling solid black with no seams between
+ * them - reusing the same SVG heart path as the plain "solid heart" case,
+ * no evenodd/mask trickery needed now that this variant doesn't rely on a
+ * single shape growing to cover the whole screen by itself.
+ */
+.heartShape {
+  position: absolute;
+  width: 30vmax;
+  height: 27.2vmax;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath fill='%23000' d='M16 29C16 29 0 18.5 0 9.5C0 4.25 4.25 0 9.5 0C12.5 0 15 1.5 16 4C17 1.5 19.5 0 22.5 0C27.75 0 32 4.25 32 9.5C32 18.5 16 29 16 29Z'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  animation-delay: var(--heart-delay, 0ms);
+  animation-fill-mode: both;
+}
+
+.heartPopIn {
+  animation-name: battle-heart-pop-in;
+  animation-duration: 480ms;
+  animation-timing-function: ease-out;
+}
+
+.heartPopOut {
+  animation-name: battle-heart-pop-out;
+  animation-duration: 280ms;
+  animation-timing-function: ease-in;
+}
+
+@keyframes battle-heart-pop-in {
+  0% {
+    transform: translate(-50%, -50%) scale(0) rotate(-15deg);
+    opacity: 0;
+  }
+
+  60% {
+    transform: translate(-50%, -50%) scale(1.15) rotate(4deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes battle-heart-pop-out {
+  0% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(0) rotate(12deg);
+    opacity: 0;
+  }
+}

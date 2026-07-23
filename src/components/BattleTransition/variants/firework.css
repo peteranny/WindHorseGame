@@ -1,0 +1,162 @@
+/*
+ * The classes rendered by firework.tsx's own DOM elements (bursts on
+ * cover, tear shards on reveal) - the backdrop that actually guarantees
+ * full coverage (battle-cover-firework-backdrop) stays in the main
+ * BattleTransition/styles.css instead, since it's applied to the shared
+ * .overlay element itself via styles.firework there, not to anything
+ * rendered here.
+ */
+.fireworkField {
+  position: absolute;
+  inset: 0;
+}
+
+.fireworkBurst {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/*
+ * The rocket rises from off-screen below straight up to its own burst
+ * point (a plain vertical translate, since it's already positioned at that
+ * point via .fireworkBurst's own top/left) with a solid black head and a
+ * comet-style tail (::after, black fading to transparent trailing below
+ * it) - then fades out right as it arrives, handing off to the burst rays
+ * below rather than lingering.
+ */
+.fireworkRocket {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: calc(9px * var(--scale));
+  height: calc(9px * var(--scale));
+  margin-left: calc(-4.5px * var(--scale));
+  border-radius: 50%;
+  background: #000;
+  opacity: 0;
+  animation-name: battle-firework-rocket-rise;
+  animation-duration: 220ms;
+  animation-timing-function: ease-out;
+  animation-delay: var(--burst-delay, 0ms);
+  animation-fill-mode: both;
+}
+
+.fireworkRocket::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: calc(3px * var(--scale));
+  height: calc(34px * var(--scale));
+  transform: translateX(-50%);
+  background: linear-gradient(to top, rgb(0 0 0 / 0%), #000);
+  opacity: 0.9;
+}
+
+@keyframes battle-firework-rocket-rise {
+  0% {
+    transform: translateY(calc(140px * var(--scale))) scale(0.6);
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0;
+  }
+}
+
+/*
+ * Sparks igniting right as the rocket arrives (animation-delay adds the
+ * rocket's own rise duration on top of --burst-delay) - solid black,
+ * fading only at the outer tip. 12 rays per burst (30deg apart) land at
+ * their full length first (0%->55%, the "splat"), then keep animating -
+ * scaleX grows hugely (1->9) over 55%->100% so each ray visibly thickens
+ * into a wide wedge, merging sideways with its rotational neighbors
+ * (spaced only 30deg apart) until adjacent rays' bodies overlap and close
+ * the gaps between them - 9 overlapping bursts' worth of these thickened
+ * wedges is what actually blankets the screen, well before the backdrop's
+ * own end-of-phase snap ever needs to catch whatever's left.
+ */
+.fireworkRay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: calc(10px * var(--scale));
+  height: calc(130px * var(--scale));
+  background: linear-gradient(to top, #000, rgb(0 0 0 / 0%));
+  border-radius: calc(5px * var(--scale));
+  transform-origin: bottom center;
+  transform: translateX(-50%) rotate(var(--ray-angle)) scaleY(0) scaleX(1);
+  opacity: 0;
+  animation-name: battle-firework-ray-grow;
+  animation-duration: 500ms;
+  animation-timing-function: ease-out;
+  animation-delay: calc(var(--burst-delay, 0ms) + 220ms);
+  animation-fill-mode: both;
+}
+
+@keyframes battle-firework-ray-grow {
+  0% {
+    transform: translateX(-50%) rotate(var(--ray-angle)) scaleY(0) scaleX(1);
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  55% {
+    transform: translateX(-50%) rotate(var(--ray-angle)) scaleY(1) scaleX(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(-50%) rotate(calc(var(--ray-angle) + 3deg)) scaleY(1.05) scaleX(9);
+    opacity: 1;
+  }
+}
+
+.tearField {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * Each shard is a full-box black rectangle clipped down to its own pie
+ * slice (firework.tsx's TEAR_WEDGES, inline per-shard since every wedge's
+ * clip-path/fly direction is unique) - together they tile the whole box
+ * exactly at rest (0%), then fly apart toward their own --tear-x/--tear-y/
+ * --tear-rotate and fade out, revealing the battle content already mounted
+ * underneath.
+ */
+.tearShard {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  animation-name: battle-tear-shard;
+  animation-duration: 550ms;
+  animation-timing-function: ease-in;
+  animation-delay: var(--tear-delay, 0ms);
+  animation-fill-mode: both;
+}
+
+@keyframes battle-tear-shard {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(var(--tear-x), var(--tear-y)) rotate(var(--tear-rotate));
+    opacity: 0;
+  }
+}
