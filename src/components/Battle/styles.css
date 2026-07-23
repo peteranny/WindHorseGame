@@ -937,6 +937,7 @@
 }
 
 .levelBadge {
+  font-family: monospace;
   font-size: calc(8pt * var(--scale));
   font-weight: bold;
   color: white;
