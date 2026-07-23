@@ -8,6 +8,8 @@ import MONSTERS from "../../data/monsters/monsters";
 import { GOAL_NAME } from "../../data/goalEncounter";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
 import { formatCaptureTimestamp, sortByCaptureTime } from "./capturedHistory";
+import { SettingsModal } from "./SettingsModal";
+import { CapturedMonsterIcon } from "./CapturedMonsterIcon";
 import styles from "./styles.css";
 
 type KeyListStatus = "idle" | "loading" | "loaded";
@@ -100,141 +102,104 @@ const Settings = () => {
       </div>
 
       {isChangeKeyDialogOpen && (
-        <div
-          className={styles.dialogOverlay}
-          onClick={() => setIsChangeKeyDialogOpen(false)}
+        <SettingsModal
+          title="更換存檔金鑰"
+          onClose={() => setIsChangeKeyDialogOpen(false)}
         >
-          <div
-            className={styles.dialogBox}
-            onClick={(e) => e.stopPropagation()}
+          <form
+            className={styles.keyForm}
+            onSubmit={(e) => {
+              e.preventDefault();
+              changeKey(keyInput);
+            }}
           >
-            <div className={styles.dialogHeader}>
-              <h2 className={styles.dialogTitle}>更換存檔金鑰</h2>
-              <button
-                type="button"
-                className={styles.dialogClose}
-                aria-label="關閉"
-                onClick={() => setIsChangeKeyDialogOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-            <form
-              className={styles.keyForm}
-              onSubmit={(e) => {
-                e.preventDefault();
-                changeKey(keyInput);
-              }}
-            >
-              <input
-                className={styles.keyInput}
-                value={keyInput}
-                onChange={(e) => setKeyInput(e.target.value)}
-                placeholder="輸入存檔金鑰"
-              />
-              <button type="submit" className={styles.primaryButton}>
-                確定
-              </button>
-            </form>
+            <input
+              className={styles.keyInput}
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+              placeholder="輸入存檔金鑰"
+            />
+            <button type="submit" className={styles.primaryButton}>
+              確定
+            </button>
+          </form>
 
-            {isDevMode && (
-              <div className={styles.devKeyList}>
-                <p className={styles.devLabel}>開發用：試算表中現有的金鑰</p>
-                {keyListStatus === "loading" && (
-                  <p className={styles.peekStatus}>載入中...</p>
-                )}
-                {keyListStatus === "loaded" && keyOptions.length === 0 && (
-                  <p className={styles.peekStatus}>找不到任何存檔金鑰</p>
-                )}
-                {keyListStatus === "loaded" && keyOptions.length > 0 && (
-                  <ul className={styles.keyOptionList}>
-                    {keyOptions.map((key) => (
-                      <li key={key}>
-                        <button
-                          type="button"
-                          className={styles.keyOptionButton}
-                          onClick={() => changeKey(key)}
-                        >
-                          {key}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+          {isDevMode && (
+            <div className={styles.devKeyList}>
+              <p className={styles.devLabel}>開發用：試算表中現有的金鑰</p>
+              {keyListStatus === "loading" && (
+                <p className={styles.peekStatus}>載入中...</p>
+              )}
+              {keyListStatus === "loaded" && keyOptions.length === 0 && (
+                <p className={styles.peekStatus}>找不到任何存檔金鑰</p>
+              )}
+              {keyListStatus === "loaded" && keyOptions.length > 0 && (
+                <ul className={styles.keyOptionList}>
+                  {keyOptions.map((key) => (
+                    <li key={key}>
+                      <button
+                        type="button"
+                        className={styles.keyOptionButton}
+                        onClick={() => changeKey(key)}
+                      >
+                        {key}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </SettingsModal>
       )}
 
       {isHistoryDialogOpen && (
-        <div
-          className={styles.dialogOverlay}
-          onClick={() => setIsHistoryDialogOpen(false)}
+        <SettingsModal
+          title="捕獲紀錄"
+          onClose={() => setIsHistoryDialogOpen(false)}
         >
-          <div
-            className={styles.dialogBox}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.dialogHeader}>
-              <h2 className={styles.dialogTitle}>捕獲紀錄</h2>
-              <button
-                type="button"
-                className={styles.dialogClose}
-                aria-label="關閉"
-                onClick={() => setIsHistoryDialogOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-            <table className={styles.peekTable}>
-              <thead>
-                <tr>
-                  <th>順序</th>
-                  <th>怪獸</th>
-                  <th>捕獲時間</th>
-                </tr>
-              </thead>
-              <tbody>
-                {capturedOrder.map((monsterId, i) => {
-                  const monster = MONSTERS.find((m) => m.id === monsterId);
-                  if (!monster) return null;
-                  return (
-                    <tr key={monsterId}>
-                      <td>{i + 1}</td>
-                      <td>
-                        <img
-                          className={styles.peekIcon}
-                          src={monster.icon}
-                          alt={monster.name}
-                        />
-                      </td>
-                      <td>{formatCaptureTimestamp(captured[monsterId])}</td>
-                    </tr>
-                  );
-                })}
-                {goalDefeatedAt !== null && (
-                  <tr>
-                    <td>{capturedOrder.length + 1}</td>
+          <table className={styles.peekTable}>
+            <thead>
+              <tr>
+                <th>順序</th>
+                <th>怪獸</th>
+                <th>捕獲時間</th>
+              </tr>
+            </thead>
+            <tbody>
+              {capturedOrder.map((monsterId, i) => {
+                const monster = MONSTERS.find((m) => m.id === monsterId);
+                if (!monster) return null;
+                return (
+                  <tr key={monsterId}>
+                    <td>{i + 1}</td>
                     <td>
-                      <img
-                        className={styles.peekIcon}
-                        src={GOAL_SPRITE}
-                        alt={GOAL_NAME}
+                      <CapturedMonsterIcon
+                        src={monster.icon}
+                        name={monster.name}
                       />
                     </td>
-                    <td>{formatCaptureTimestamp(goalDefeatedAt)}</td>
+                    <td>{formatCaptureTimestamp(captured[monsterId])}</td>
                   </tr>
-                )}
-                {capturedOrder.length === 0 && goalDefeatedAt === null && (
-                  <tr>
-                    <td colSpan={3}>尚未捕獲任何怪獸</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                );
+              })}
+              {goalDefeatedAt !== null && (
+                <tr>
+                  <td>{capturedOrder.length + 1}</td>
+                  <td>
+                    <CapturedMonsterIcon src={GOAL_SPRITE} name={GOAL_NAME} />
+                  </td>
+                  <td>{formatCaptureTimestamp(goalDefeatedAt)}</td>
+                </tr>
+              )}
+              {capturedOrder.length === 0 && goalDefeatedAt === null && (
+                <tr>
+                  <td colSpan={3}>尚未捕獲任何怪獸</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </SettingsModal>
       )}
     </Screen>
   );
