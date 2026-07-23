@@ -120,17 +120,13 @@
 }
 
 /*
- * linear, not ease-in - a non-linear timing-function applies to *each*
- * segment between consecutive keyframes independently (restarting its own
- * accelerate/decelerate curve at every keyframe boundary), not once across
- * the whole animation. With 6 keyframes (5 segments), ease-in made the
- * pattern repeatedly ramp up then snap back to near-zero speed at every
- * 20% mark - a visible stutter, especially since cover's own keyframe
- * values already encode a roughly-linear growth on their own (see e.g.
- * .radial's 1/4/7/10/14/18deg steps) and carry no continuous scale/rotate
- * motion (unlike .reveal below) to visually mask the stutter between them.
- * linear removes the redundant per-segment easing, so the pattern grows at
- * a constant rate with no speed discontinuity at each keyframe.
+ * linear - every gradient-based cover variant below now animates a single
+ * @property-registered custom value (an angle or length, see each
+ * variant's own comment) continuously from its keyframes' `from` to `to`,
+ * rather than stepping through several `%` stops of pre-computed gradient
+ * values. With just one segment (0%->100%), linear reads as a steady,
+ * deliberate constant-rate growth - the exact effect the design wants,
+ * with no per-keyframe stutter to work around anymore.
  */
 .cover {
   /* Must match BattleTransition/timing.ts's DISTORT_IN_MS. */
@@ -141,9 +137,48 @@
 
 .reveal {
   /* Must match BattleTransition/timing.ts's DISTORT_OUT_MS. */
-  animation-duration: 600ms;
+  animation-duration: 900ms;
   animation-timing-function: ease-out;
   animation-fill-mode: both;
+}
+
+/*
+ * A spinning wedge pattern - repeating-conic-gradient's own period never
+ * changes (90deg: a black wedge plus the transparent gap after it - a big,
+ * chunky quarter-circle slice rather than a fine spinning texture), only
+ * how much of that period is black (5deg at the thinnest, 90deg - the
+ * whole period - once solid) does, driven by --wedge-angle. Cover
+ * deliberately carries no scale/rotate motion (compare "clockwise"'s own
+ * cover, which never had any) - the gradient already spans the full box
+ * at every step, so animating a transform on top of it would only shrink/
+ * rotate that same full-box pattern down into a small bounded rect that
+ * then has to scale back up, which reads as an obviously bounded frame
+ * rather than a fullscreen effect. Reveal keeps its own scale/rotate
+ * (below) since growing past 100% while fading out is a different,
+ * intentional "burst outward" exit motion, not a bounding-frame artifact.
+ *
+ * --wedge-angle is a real registered <angle>, not a plain custom property -
+ * without @property, a custom property is just an opaque string to the
+ * animation engine, so the browser can't interpolate it: it would hold
+ * the "from" value for the whole segment, then snap straight to "to" at
+ * the very end (a non-interpolable-value jump, the same class of glitch
+ * a raw `background` keyframe animation has if consecutive stops don't
+ * share the same value type - e.g. a gradient suddenly becoming a flat
+ * color). Registering the type here means the browser instead ticks
+ * --wedge-angle smoothly from 5deg to 90deg every frame, and the static
+ * `background` below (not itself animated) just reads whatever the
+ * current value is - so the gradient's own gap continuously closes rather
+ * than jumping shut.
+ */
+@property --wedge-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 5deg;
+}
+
+.cover.radial,
+.reveal.radial {
+  background: repeating-conic-gradient(from 0deg, #000 0deg var(--wedge-angle), transparent var(--wedge-angle) 90deg);
 }
 
 .cover.radial {
@@ -154,89 +189,59 @@
   animation-name: battle-reveal-radial;
 }
 
-/*
- * A spinning wedge pattern - repeating-conic-gradient's own period never
- * changes (18deg: a black wedge plus the transparent gap after it), only
- * how much of that period is black (1deg at the thinnest, 18deg - the
- * whole period - once solid) does. Cover deliberately carries no scale/
- * rotate motion (compare "clockwise"'s own cover, which never had any) -
- * the gradient already spans the full box at every step, so animating a
- * transform on top of it would only shrink/rotate that same full-box
- * pattern down into a small bounded rect that then has to scale back up,
- * which reads as an obviously bounded frame rather than a fullscreen
- * effect. Reveal keeps its own scale/rotate (below) since growing past
- * 100% while fading out is a different, intentional "burst outward" exit
- * motion, not a bounding-frame artifact.
- *
- * The 100% frame stays a repeating-conic-gradient (a full 18deg period,
- * i.e. no visible gap left) rather than dropping to a flat `background:
- * #000` - same fix as "clockwise"'s own cover (see its comment below).
- * Switching to a plain color there is a non-interpolable value change, so
- * the browser holds the 80% frame's still-visibly-gapped pattern, then
- * snaps straight to solid partway through the 80%->100% segment instead
- * of smoothly closing the last gap - visible as an early "still gappy,
- * then abrupt pop to solid" glitch right before the screen is expected to
- * already be fully covered.
- */
 @keyframes battle-cover-radial {
-  0% {
-    background: repeating-conic-gradient(from 0deg, #000 0deg 1deg, transparent 1deg 18deg);
+  from {
+    --wedge-angle: 5deg;
   }
 
-  20% {
-    background: repeating-conic-gradient(from 0deg, #000 0deg 4deg, transparent 4deg 18deg);
-  }
-
-  40% {
-    background: repeating-conic-gradient(from 0deg, #000 0deg 7deg, transparent 7deg 18deg);
-  }
-
-  60% {
-    background: repeating-conic-gradient(from 0deg, #000 0deg 10deg, transparent 10deg 18deg);
-  }
-
-  80% {
-    background: repeating-conic-gradient(from 0deg, #000 0deg 14deg, transparent 14deg 18deg);
-  }
-
-  100% {
-    background: repeating-conic-gradient(from 0deg, #000 0deg 18deg, transparent 18deg 18deg);
+  to {
+    --wedge-angle: 90deg;
   }
 }
 
+/*
+ * Runs the same --wedge-angle sweep in reverse (90deg back down to 5deg)
+ * while transform separately bursts outward - no opacity fade here
+ * (unlike "firework", the only variant that actually fades out; every
+ * other gradient variant reveals purely through the pattern re-opening
+ * and scaling/rotating away). Starting from 90deg (fully solid, matching
+ * where cover left off) rather than a flat `background: #000` sidesteps
+ * the same non-interpolable-value jump .radial's own cover comment
+ * describes, just at reveal's own start instead of cover's own end.
+ */
 @keyframes battle-reveal-radial {
-  0% {
-    opacity: 1;
+  from {
     transform: scale(1) rotate(0deg);
-    background: #000;
+    --wedge-angle: 90deg;
   }
 
-  20% {
-    transform: scale(1.1) rotate(3deg);
-    background: repeating-conic-gradient(from 0deg, #000 0deg 14deg, transparent 14deg 18deg);
+  to {
+    transform: scale(1.6) rotate(45deg);
+    --wedge-angle: 0deg;
   }
+}
 
-  40% {
-    transform: scale(1.2) rotate(6deg);
-    background: repeating-conic-gradient(from 0deg, #000 0deg 10deg, transparent 10deg 18deg);
-  }
+/*
+ * Horizontal bands (stacked top-to-bottom, not vertical columns) - same
+ * "grow the black share of a fixed period" idea as .radial above, just
+ * with repeating-linear-gradient's own band height (300px - a full maze
+ * cell, CELL_SIZE, used purely as a size reference here, not an actual
+ * shared constant) in place of the conic gradient's angle, driven by
+ * --band-length - deliberately a big, chunky unit rather than a fine
+ * pinstripe. No scale/rotate on cover, same reasoning as .radial's own
+ * cover above. See .radial's own --wedge-angle comment for why this needs
+ * @property (a real registered <length>) rather than a plain custom
+ * property to animate smoothly.
+ */
+@property --band-length {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 16px;
+}
 
-  60% {
-    transform: scale(1.35) rotate(8deg);
-    background: repeating-conic-gradient(from 0deg, #000 0deg 7deg, transparent 7deg 18deg);
-  }
-
-  80% {
-    opacity: 0.6;
-    transform: scale(1.5) rotate(9deg);
-    background: repeating-conic-gradient(from 0deg, #000 0deg 4deg, transparent 4deg 18deg);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1.6) rotate(10deg);
-    background: repeating-conic-gradient(from 0deg, #000 0deg 1deg, transparent 1deg 18deg);
-  }
+.cover.stripes,
+.reveal.stripes {
+  background: repeating-linear-gradient(180deg, #000 0 var(--band-length), transparent var(--band-length) 300px);
 }
 
 .cover.stripes {
@@ -247,74 +252,63 @@
   animation-name: battle-reveal-stripes;
 }
 
-/*
- * Horizontal bands (stacked top-to-bottom, not vertical columns) - same
- * "grow the black share of a fixed period" idea as .radial above, just
- * with repeating-linear-gradient's own band height (36px) in place of the
- * conic gradient's angle. No scale/rotate on cover, same reasoning as
- * .radial's own cover above. 100% stays a repeating-linear-gradient (a
- * full 36px period) rather than flattening to `background: #000` - same
- * non-interpolable-value fix as .radial's own cover above.
- */
 @keyframes battle-cover-stripes {
-  0% {
-    background: repeating-linear-gradient(180deg, #000 0 2px, transparent 2px 36px);
+  from {
+    --band-length: 16px;
   }
 
-  20% {
-    background: repeating-linear-gradient(180deg, #000 0 8px, transparent 8px 36px);
-  }
-
-  40% {
-    background: repeating-linear-gradient(180deg, #000 0 14px, transparent 14px 36px);
-  }
-
-  60% {
-    background: repeating-linear-gradient(180deg, #000 0 22px, transparent 22px 36px);
-  }
-
-  80% {
-    background: repeating-linear-gradient(180deg, #000 0 30px, transparent 30px 36px);
-  }
-
-  100% {
-    background: repeating-linear-gradient(180deg, #000 0 36px, transparent 36px 36px);
+  to {
+    --band-length: 300px;
   }
 }
 
+/* Same reverse-sweep idea as .radial's own reveal above - no opacity fade. */
 @keyframes battle-reveal-stripes {
-  0% {
-    opacity: 1;
+  from {
     transform: scale(1) rotate(0deg);
-    background: #000;
+    --band-length: 300px;
   }
 
-  20% {
-    transform: scale(1.1) rotate(3deg);
-    background: repeating-linear-gradient(180deg, #000 0 30px, transparent 30px 36px);
+  to {
+    transform: scale(1.6) rotate(45deg);
+    --band-length: 0;
   }
+}
 
-  40% {
-    transform: scale(1.2) rotate(6deg);
-    background: repeating-linear-gradient(180deg, #000 0 22px, transparent 22px 36px);
-  }
+/*
+ * Two dot layers tiled in a quincunx (offset by half the tile in both
+ * directions, see background-position below) - background-size/position
+ * live on the always-applied .particles class rather than the animated
+ * rule below, so there's no risk of them drifting toward some unintended
+ * "neutral" value. Tile is 300px (a full maze cell, CELL_SIZE, used purely
+ * as a size reference here) - deliberately a big, chunky unit rather than
+ * a fine speckle of confetti. Only each dot's own radius (--dot-radius:
+ * 20px at the smallest, 240px at the largest - comfortably past the point
+ * the two offset layers already tile fully solid) animates. See .radial's
+ * own --wedge-angle comment for why this needs @property (a real
+ * registered <length>) rather than a plain custom property to animate
+ * smoothly - here it also sidesteps ever needing to flip background-image
+ * to `none` once solid (a non-interpolable value change of its own kind),
+ * since the gradient stays a gradient the whole time and is just already-
+ * solid by the time it matters.
+ */
+.particles {
+  background-size: 300px 300px, 300px 300px;
+  background-position: 0 0, 150px 150px;
+}
 
-  60% {
-    transform: scale(1.35) rotate(8deg);
-    background: repeating-linear-gradient(180deg, #000 0 14px, transparent 14px 36px);
-  }
+@property --dot-radius {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 20px;
+}
 
-  80% {
-    opacity: 0.6;
-    transform: scale(1.5) rotate(9deg);
-    background: repeating-linear-gradient(180deg, #000 0 8px, transparent 8px 36px);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1.6) rotate(10deg);
-    background: repeating-linear-gradient(180deg, #000 0 2px, transparent 2px 36px);
-  }
+.cover.particles,
+.reveal.particles {
+  background-color: transparent;
+  background-image:
+    radial-gradient(circle, #000 var(--dot-radius), transparent calc(var(--dot-radius) + 0.5px)),
+    radial-gradient(circle, #000 var(--dot-radius), transparent calc(var(--dot-radius) + 0.5px));
 }
 
 .cover.particles {
@@ -325,120 +319,50 @@
   animation-name: battle-reveal-particles;
 }
 
-/*
- * Two dot layers tiled in a quincunx (offset by half the tile in both
- * directions, see background-position below) - background-size/position
- * live on the always-applied .particles class (never touched by either
- * keyframe rule below) rather than being repeated inside every single
- * keyframe, so there's no risk of them drifting toward some unintended
- * "neutral" value the way an animated property only partially specified
- * across keyframes could. Only each dot's own radius (3px at the smallest,
- * 30px at the largest - well past the point the two offset layers already
- * overlap solid) animates; 100% still drops to a flat #000 same as the
- * other two variants, so coverage is exact regardless of how the growing
- * circles actually tile.
- */
-.particles {
-  background-size: 48px 48px, 48px 48px;
-  background-position: 0 0, 24px 24px;
-}
-
 @keyframes battle-cover-particles {
-  0% {
-    background-color: transparent;
-    background-image:
-      radial-gradient(circle, #000 3px, transparent 3.5px),
-      radial-gradient(circle, #000 3px, transparent 3.5px);
+  from {
+    --dot-radius: 20px;
   }
 
-  20% {
-    background-color: transparent;
-    background-image:
-      radial-gradient(circle, #000 10px, transparent 10.5px),
-      radial-gradient(circle, #000 10px, transparent 10.5px);
-  }
-
-  40% {
-    background-color: transparent;
-    background-image:
-      radial-gradient(circle, #000 16px, transparent 16.5px),
-      radial-gradient(circle, #000 16px, transparent 16.5px);
-  }
-
-  60% {
-    background-color: transparent;
-    background-image:
-      radial-gradient(circle, #000 22px, transparent 22.5px),
-      radial-gradient(circle, #000 22px, transparent 22.5px);
-  }
-
-  80% {
-    background-color: transparent;
-    background-image:
-      radial-gradient(circle, #000 30px, transparent 30.5px),
-      radial-gradient(circle, #000 30px, transparent 30.5px);
-  }
-
-  /*
-   * Stays a radial-gradient (40px - comfortably past the point the two
-   * offset layers already tile fully solid) rather than switching to
-   * `background-image: none` - the property's value type would otherwise
-   * jump non-interpolably from a gradient to "none" mid-segment, same
-   * class of glitch as .radial/.stripes/.rings' own cover fix above.
-   */
-  100% {
-    background-color: transparent;
-    background-image:
-      radial-gradient(circle, #000 40px, transparent 40.5px),
-      radial-gradient(circle, #000 40px, transparent 40.5px);
+  to {
+    --dot-radius: 240px;
   }
 }
 
+/* Same reverse-sweep idea as .radial's own reveal above - no opacity fade. */
 @keyframes battle-reveal-particles {
-  0% {
-    opacity: 1;
+  from {
     transform: scale(1) rotate(0deg);
-    background-image: none;
-    background-color: #000;
+    --dot-radius: 240px;
   }
 
-  20% {
-    transform: scale(1.1) rotate(3deg);
-    background-color: transparent;
-    background-image:
-      radial-gradient(circle, #000 30px, transparent 30.5px),
-      radial-gradient(circle, #000 30px, transparent 30.5px);
+  to {
+    transform: scale(1.6) rotate(45deg);
+    --dot-radius: 0;
   }
+}
 
-  40% {
-    transform: scale(1.2) rotate(6deg);
-    background-image:
-      radial-gradient(circle, #000 22px, transparent 22.5px),
-      radial-gradient(circle, #000 22px, transparent 22.5px);
-  }
+/*
+ * Concentric rings expanding from the screen's own center (repeating-
+ * radial-gradient in place of .stripes'/.vertical's linear bands) - same
+ * "ring thickness within a fixed period" growth as those two, driven by
+ * --ring-length, just radiating outward from a point instead of sweeping
+ * across an axis. Period is 300px (a full maze cell, CELL_SIZE, used
+ * purely as a size reference here) - deliberately big, chunky rings
+ * rather than fine concentric lines. No scale/rotate on cover, same
+ * reasoning as .radial's own cover above. See .radial's own --wedge-angle
+ * comment for why this needs @property (a real registered <length>)
+ * rather than a plain custom property to animate smoothly.
+ */
+@property --ring-length {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 16px;
+}
 
-  60% {
-    transform: scale(1.35) rotate(8deg);
-    background-image:
-      radial-gradient(circle, #000 16px, transparent 16.5px),
-      radial-gradient(circle, #000 16px, transparent 16.5px);
-  }
-
-  80% {
-    opacity: 0.6;
-    transform: scale(1.5) rotate(9deg);
-    background-image:
-      radial-gradient(circle, #000 10px, transparent 10.5px),
-      radial-gradient(circle, #000 10px, transparent 10.5px);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1.6) rotate(10deg);
-    background-image:
-      radial-gradient(circle, #000 3px, transparent 3.5px),
-      radial-gradient(circle, #000 3px, transparent 3.5px);
-  }
+.cover.rings,
+.reveal.rings {
+  background: repeating-radial-gradient(circle, #000 0 var(--ring-length), transparent var(--ring-length) 300px);
 }
 
 .cover.rings {
@@ -449,129 +373,61 @@
   animation-name: battle-reveal-rings;
 }
 
-/*
- * Concentric rings expanding from the screen's own center (repeating-
- * radial-gradient in place of .stripes'/.vertical's linear bands) - same
- * "ring thickness within a fixed period" growth as those two, just
- * radiating outward from a point instead of sweeping across an axis. No
- * scale/rotate on cover, same reasoning as .radial's own cover above.
- * 100% stays a repeating-radial-gradient (a full 36px period) rather than
- * flattening to `background: #000` - same non-interpolable-value fix as
- * .radial's own cover above.
- */
 @keyframes battle-cover-rings {
-  0% {
-    background: repeating-radial-gradient(circle, #000 0 2px, transparent 2px 36px);
+  from {
+    --ring-length: 16px;
   }
 
-  20% {
-    background: repeating-radial-gradient(circle, #000 0 8px, transparent 8px 36px);
-  }
-
-  40% {
-    background: repeating-radial-gradient(circle, #000 0 14px, transparent 14px 36px);
-  }
-
-  60% {
-    background: repeating-radial-gradient(circle, #000 0 22px, transparent 22px 36px);
-  }
-
-  80% {
-    background: repeating-radial-gradient(circle, #000 0 30px, transparent 30px 36px);
-  }
-
-  100% {
-    background: repeating-radial-gradient(circle, #000 0 36px, transparent 36px 36px);
+  to {
+    --ring-length: 300px;
   }
 }
 
+/* Same reverse-sweep idea as .radial's own reveal above - no opacity fade. */
 @keyframes battle-reveal-rings {
-  0% {
-    opacity: 1;
+  from {
     transform: scale(1) rotate(0deg);
-    background: #000;
+    --ring-length: 300px;
   }
 
-  20% {
-    transform: scale(1.1) rotate(3deg);
-    background: repeating-radial-gradient(circle, #000 0 30px, transparent 30px 36px);
+  to {
+    transform: scale(1.6) rotate(45deg);
+    --ring-length: 0;
   }
-
-  40% {
-    transform: scale(1.2) rotate(6deg);
-    background: repeating-radial-gradient(circle, #000 0 22px, transparent 22px 36px);
-  }
-
-  60% {
-    transform: scale(1.35) rotate(8deg);
-    background: repeating-radial-gradient(circle, #000 0 14px, transparent 14px 36px);
-  }
-
-  80% {
-    opacity: 0.6;
-    transform: scale(1.5) rotate(9deg);
-    background: repeating-radial-gradient(circle, #000 0 8px, transparent 8px 36px);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1.6) rotate(10deg);
-    background: repeating-radial-gradient(circle, #000 0 2px, transparent 2px 36px);
-  }
-}
-
-.cover.clockwise {
-  animation-name: battle-cover-clockwise;
 }
 
 /*
  * A single clock-hand wedge sweeping 0deg -> 360deg (conic-gradient's own
  * default direction is clockwise from 12 o'clock) rather than many thin
  * repeating wedges growing together like .radial - reads as one deliberate
- * clockwise wipe instead of a spinning burst. Deliberately has *no* shared
- * scale/rotate motion the way every other gradient variant's own keyframes
- * do (compare .radial/.stripes/etc above) - this one is meant to read as
- * purely a pie chart filling in from 0 to 360deg, so its own transform
- * stays untouched (i.e. "none") at every step instead of also zooming/
- * spinning the whole wedge as a second, independent motion layered on top.
- *
- * Unlike .radial/.stripes/.rings above, the 100% frame here stays a
- * conic-gradient (a full 360deg wedge) instead of dropping to a flat
- * `background: #000` - those other variants can flip to a plain color
- * because their pattern is already visually solid well before 100%, so
- * the type change (gradient -> solid color, not smoothly interpolable)
- * lands on an already-black frame and is invisible. This wedge is still
- * visibly sweeping right up to 100%, so the same flip would show as an
- * abrupt jump: gradient/solid-color background values can't interpolate,
- * so the browser holds the 80% frame's 288deg wedge, then snaps straight
- * to fully solid partway through the 80%->100% segment, skipping the last
- * ~72deg of the sweep. Keeping every keyframe a conic-gradient (differing
- * only in stop angles) lets the browser interpolate the sweep smoothly
- * all the way to a full circle.
+ * clockwise wipe instead of a spinning burst, driven by --sweep-angle.
+ * Deliberately has *no* shared scale/rotate motion the way every other
+ * gradient variant's own keyframes do (compare .radial/.stripes/etc
+ * above) - this one is meant to read as purely a pie chart filling in
+ * from 0 to 360deg, so its own transform stays untouched (i.e. "none") at
+ * every step instead of also zooming/spinning the whole wedge as a
+ * second, independent motion layered on top. See .radial's own
+ * --wedge-angle comment for why this needs @property (a real registered
+ * <angle>) rather than a plain custom property to animate smoothly.
  */
+@property --sweep-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.cover.clockwise {
+  animation-name: battle-cover-clockwise;
+  background: conic-gradient(from 0deg, #000 0deg var(--sweep-angle), transparent var(--sweep-angle) 360deg);
+}
+
 @keyframes battle-cover-clockwise {
-  0% {
-    background: conic-gradient(from 0deg, #000 0deg 0deg, transparent 0deg 360deg);
+  from {
+    --sweep-angle: 0deg;
   }
 
-  20% {
-    background: conic-gradient(from 0deg, #000 0deg 72deg, transparent 72deg 360deg);
-  }
-
-  40% {
-    background: conic-gradient(from 0deg, #000 0deg 144deg, transparent 144deg 360deg);
-  }
-
-  60% {
-    background: conic-gradient(from 0deg, #000 0deg 216deg, transparent 216deg 360deg);
-  }
-
-  80% {
-    background: conic-gradient(from 0deg, #000 0deg 288deg, transparent 288deg 360deg);
-  }
-
-  100% {
-    background: conic-gradient(from 0deg, #000 0deg 360deg, transparent 360deg 360deg);
+  to {
+    --sweep-angle: 360deg;
   }
 }
 

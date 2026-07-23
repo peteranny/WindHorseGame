@@ -19,7 +19,8 @@ export const DISTORT_IN_MS = 900;
 // reads as having genuinely happened "in the dark" rather than in a single
 // blink.
 export const COVERED_HOLD_MS = 1000;
-export const DISTORT_OUT_MS = 600;
+// Same pace as DISTORT_IN_MS (cover) - 1.5x was tried and felt too slow.
+export const DISTORT_OUT_MS = DISTORT_IN_MS;
 // Battle itself only ever mounts right as the solid-black hold begins (the
 // same instant BattleTransition swaps the content), which is still
 // COVERED_HOLD_MS + DISTORT_OUT_MS before the overlay is actually, fully
