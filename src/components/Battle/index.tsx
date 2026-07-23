@@ -5,7 +5,6 @@ import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
 import { isDevStateKey } from "../../store/devMode";
 import MONSTERS from "../../data/monsters/monsters";
-import { ATTACK_COOLDOWN_MS, PROTAGONIST_MAX_HP } from "../../data/monsters/battleFormulas";
 import { hueForFamily } from "./attackGroups";
 import { GOAL_NAME } from "../../data/goalEncounter";
 import { HpBar } from "./HpBar";
@@ -19,11 +18,12 @@ import { ThrownProjectile } from "./ThrownProjectile";
 import { SpitDroplet } from "./SpitDroplet";
 import { ToastStack } from "./ToastStack";
 import { AttackWire } from "./AttackWire";
-import { FamilyDot } from "./FamilyDot";
-import { AttackIcon } from "./AttackIcon";
-import { CooldownOverlay } from "./CooldownOverlay";
 import { ScrollHint } from "./ScrollHint";
 import { OutcomeFade } from "./OutcomeFade";
+import { EscapeButton } from "./EscapeButton";
+import { SkipBattleButton } from "./SkipBattleButton";
+import { DevOutcomeShortcuts } from "./DevOutcomeShortcuts";
+import { AttackButton } from "./AttackButton";
 import { useHealEffect } from "./useHealEffect";
 import { useThrowEffect } from "./useThrowEffect";
 import { useSpitEffect } from "./useSpitEffect";
@@ -290,55 +290,23 @@ const Battle = () => {
           )}
         >
         <div className={styles.buttonRow}>
-          <button
-            type="button"
-            className={styles.escapeButton}
+          <EscapeButton
             disabled={pendingOutcome !== null}
-            onClick={() =>
-              // Escaping below half HP counts as a real loss (same sink
-              // animation, battle-loss cooldown, and "lose" outcome
-              // conversation as actually being knocked out) - otherwise a
-              // player could always bail out right before defeat to dodge
-              // the cooldown lock entirely, defeating its whole purpose. A
-              // real escape still plays the same turning-black fade a loss
-              // does (isSinking/.outcomeFade below) - just without either
-              // sprite actually sinking, since nothing was defeated.
-              protagonistHp < PROTAGONIST_MAX_HP / 2
-                ? setPendingOutcome("lose")
-                : setPendingOutcome("escape")
-            }
-          >
-            逃跑
-          </button>
+            protagonistHp={protagonistHp}
+            setPendingOutcome={setPendingOutcome}
+          />
           {isGoalEncounter && goalDefeatedAt !== null && (
-            <button
-              type="button"
-              className={styles.skipButton}
+            <SkipBattleButton
               disabled={pendingOutcome !== null}
-              onClick={() => damageWild(wildHp)}
-            >
-              跳過戰鬥
-            </button>
+              onSkip={() => damageWild(wildHp)}
+            />
           )}
           {isDevMode && (
-            <>
-              <button
-                type="button"
-                className={styles.devButton}
-                disabled={pendingOutcome !== null}
-                onClick={() => damageWild(wildHp)}
-              >
-                贏
-              </button>
-              <button
-                type="button"
-                className={styles.devButton}
-                disabled={pendingOutcome !== null}
-                onClick={() => damageProtagonist(protagonistHp)}
-              >
-                輸
-              </button>
-            </>
+            <DevOutcomeShortcuts
+              disabled={pendingOutcome !== null}
+              onWin={() => damageWild(wildHp)}
+              onLose={() => damageProtagonist(protagonistHp)}
+            />
           )}
         </div>
         {isGoalEncounter && goalDefeatedAt !== null && (
@@ -368,52 +336,29 @@ const Battle = () => {
                   className={styles.attackGroup}
                   style={groupStyle}
                 >
-                  {group.map((option, index) => {
-                    const remainingMs =
-                      (cooldowns[option.key] ?? 0) - Date.now();
-                    const ready = remainingMs <= 0;
-                    const remainingPercent = Math.max(
-                      0,
-                      Math.min(100, (remainingMs / ATTACK_COOLDOWN_MS) * 100)
-                    );
-                    return (
-                      <React.Fragment key={option.key}>
-                        {index > 0 && <AttackWire />}
-                        <button
-                          type="button"
-                          ref={(el) => {
-                            buttonRefs.current[option.key] = el;
-                          }}
-                          className={cn(
-                            styles.attackButton,
-                            isLinked && styles.attackButtonLinked,
-                            leavingKeys.has(option.key) &&
-                              styles.attackButtonLeaving,
-                            enteringKeys.has(option.key) &&
-                              styles.attackButtonEntering,
-                            isActionBarRevealing && styles.attackButtonReveal
-                          )}
-                          disabled={!ready || pendingOutcome !== null || isEntering}
-                          onClick={() => handleAttack(option)}
-                        >
-                          {option.trueFamily !== null && (
-                            <FamilyDot
-                              hue={hueForFamily(option.trueFamily, ALL_FAMILIES)}
-                            />
-                          )}
-                          <AttackIcon src={option.icon} alt={option.label} />
-                          <span className={styles.attackLabel}>
-                            {option.isHealer
-                              ? `${option.label}（治療）`
-                              : option.label}
-                          </span>
-                          {!ready && (
-                            <CooldownOverlay remainingPercent={remainingPercent} />
-                          )}
-                        </button>
-                      </React.Fragment>
-                    );
-                  })}
+                  {group.map((option, index) => (
+                    <React.Fragment key={option.key}>
+                      {index > 0 && <AttackWire />}
+                      <AttackButton
+                        option={option}
+                        cooldownUntil={cooldowns[option.key] ?? 0}
+                        hue={
+                          option.trueFamily !== null
+                            ? hueForFamily(option.trueFamily, ALL_FAMILIES)
+                            : null
+                        }
+                        isLinked={isLinked}
+                        isLeaving={leavingKeys.has(option.key)}
+                        isReordering={enteringKeys.has(option.key)}
+                        isRevealing={isActionBarRevealing}
+                        disabled={pendingOutcome !== null || isEntering}
+                        buttonRef={(el) => {
+                          buttonRefs.current[option.key] = el;
+                        }}
+                        onClick={() => handleAttack(option)}
+                      />
+                    </React.Fragment>
+                  ))}
                 </div>
               );
             })}
