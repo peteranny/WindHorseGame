@@ -48,7 +48,12 @@ const FireworkOverlay = ({ phase }: FireworkOverlayProps) => {
             {
               top: pos.top,
               left: pos.left,
-              "--burst-delay": `${burstIndex * 15}ms`,
+              // Each burst's own rocket+blast cycle (firework.css) is ~250ms
+              // - staggering by that same amount lets one burst finish
+              // blasting before the next rocket launches, reading as a
+              // sequential rocket-blast-rocket-blast-rocket-blast volley
+              // rather than 3 near-simultaneous pops.
+              "--burst-delay": `${burstIndex * 250}ms`,
             } as React.CSSProperties
           }
         >

@@ -24,6 +24,14 @@
  * comet-style tail (::after, black fading to transparent trailing below
  * it) - then fades out right as it arrives, handing off to the burst rays
  * below rather than lingering.
+ *
+ * duration - along with .fireworkRay's own below - is tuned so 3 sequential
+ * bursts (firework.tsx's own --burst-delay stagger) each fully rise and
+ * blast, one after another, comfortably inside the shared cover phase's
+ * own budget (BattleTransition/timing.ts's DISTORT_IN_MS) - a rocket+blast
+ * cycle here is deliberately quicker than a single lone firework would use,
+ * since 3 of these need to read as a distinct rocket-blast-rocket-blast-
+ * rocket-blast volley rather than one slow bloom.
  */
 .fireworkRocket {
   position: absolute;
@@ -36,7 +44,7 @@
   background: #000;
   opacity: 0;
   animation-name: battle-firework-rocket-rise;
-  animation-duration: 220ms;
+  animation-duration: 90ms;
   animation-timing-function: ease-out;
   animation-delay: var(--burst-delay, 0ms);
   animation-fill-mode: both;
@@ -110,9 +118,9 @@
   transform: translateX(-50%) rotate(var(--ray-angle)) scaleY(0) scaleX(1);
   opacity: 0;
   animation-name: battle-firework-ray-grow;
-  animation-duration: 500ms;
+  animation-duration: 160ms;
   animation-timing-function: ease-out;
-  animation-delay: calc(var(--burst-delay, 0ms) + 220ms);
+  animation-delay: calc(var(--burst-delay, 0ms) + 90ms);
   animation-fill-mode: both;
 }
 
