@@ -28,7 +28,7 @@ export const VARIANTS: Variant[] = [
 // normal random-per-transition pick) gets its own glyph alongside these.
 export const VARIANT_EMOJIS: Record<Variant, string> = {
   radial: "🔆",
-  stripes: "🎞️",
+  stripes: "➖",
   particles: "🔵",
   rings: "⭕",
   clockwise: "🕛",
