@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
-import cn from "classnames";
 import styles from "./styles.css";
+import { MiniMapCell } from "./MiniMapCell";
 import simpleMap from "../Maze/map.txt";
 import { CELL_TYPE, compileMap } from "../Maze/compileMap";
 import { computeMonsterIds } from "../Maze/monsterPositions";
@@ -58,14 +58,11 @@ const MiniMap = () => {
               isExplored &&
               isPassableCell(map, monsterIds, captured, r, c);
             return (
-              <div
+              <MiniMapCell
                 key={c}
-                className={cn(
-                  styles.cell,
-                  styles[baseClass],
-                  markerClass && styles[markerClass],
-                  isTeleportable && styles.teleportable
-                )}
+                baseClass={baseClass}
+                markerClass={markerClass}
+                isTeleportable={isTeleportable}
                 onClick={isTeleportable ? () => teleportTo(c, r) : undefined}
               />
             );
