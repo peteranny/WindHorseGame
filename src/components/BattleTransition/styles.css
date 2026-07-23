@@ -119,10 +119,23 @@
   }
 }
 
+/*
+ * linear, not ease-in - a non-linear timing-function applies to *each*
+ * segment between consecutive keyframes independently (restarting its own
+ * accelerate/decelerate curve at every keyframe boundary), not once across
+ * the whole animation. With 6 keyframes (5 segments), ease-in made the
+ * pattern repeatedly ramp up then snap back to near-zero speed at every
+ * 20% mark - a visible stutter, especially since cover's own keyframe
+ * values already encode a roughly-linear growth on their own (see e.g.
+ * .radial's 1/4/7/10/14/18deg steps) and carry no continuous scale/rotate
+ * motion (unlike .reveal below) to visually mask the stutter between them.
+ * linear removes the redundant per-segment easing, so the pattern grows at
+ * a constant rate with no speed discontinuity at each keyframe.
+ */
 .cover {
   /* Must match BattleTransition/timing.ts's DISTORT_IN_MS. */
   animation-duration: 900ms;
-  animation-timing-function: ease-in;
+  animation-timing-function: linear;
   animation-fill-mode: both;
 }
 
