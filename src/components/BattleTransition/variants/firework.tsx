@@ -7,23 +7,15 @@ import { Phase } from "../types";
 // firework.css's own top comment for why cover and reveal are two
 // completely unrelated mechanics rather than one gradient played both ways.
 //
-// Rows alternate between two column sets - brick-wall style, rather than a
-// rigid 3x3 grid - so each row's bursts sit centered over the *gaps*
-// between the row above/below it: "A" rows (1st, 3rd) use 3 columns
-// (15/50/85%), "B" rows (2nd, 4th) use the 2 midpoints between those
-// (32.5/67.5%) instead of a 3rd column of their own, since shifting a full
-// 3-column row by half spacing would push its outer columns off-screen.
+// Just 3 bursts, spread unevenly (not a symmetric triangle) so they read as
+// a deliberate scatter rather than a rigid formation - each ray now reaches
+// a viewport-relative 100vmax (see firework.css), so a single burst alone
+// already covers the full screen; 3 staggered ones is plenty to read as a
+// graceful volley without the clutter of many simultaneous bursts.
 const FIREWORK_BURST_POSITIONS: Array<{ top: string; left: string }> = [
-  { top: "12%", left: "15%" },
-  { top: "12%", left: "50%" },
-  { top: "12%", left: "85%" },
-  { top: "37%", left: "32.5%" },
-  { top: "37%", left: "67.5%" },
-  { top: "62%", left: "15%" },
-  { top: "62%", left: "50%" },
-  { top: "62%", left: "85%" },
-  { top: "87%", left: "32.5%" },
-  { top: "87%", left: "67.5%" },
+  { top: "20%", left: "25%" },
+  { top: "35%", left: "70%" },
+  { top: "75%", left: "40%" },
 ];
 const FIREWORK_RAY_ANGLES = [
   0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330,
