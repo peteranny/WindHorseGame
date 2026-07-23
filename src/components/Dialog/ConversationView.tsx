@@ -6,6 +6,8 @@ import React, {
   useState,
 } from "react";
 import styles from "./styles.css";
+import { SpeakerPortrait } from "./SpeakerPortrait";
+import { AdvanceCaret } from "./AdvanceCaret";
 import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
 import MONSTERS from "../../data/monsters/monsters";
@@ -216,9 +218,7 @@ const ConversationView = () => {
 
   return (
     <div className={styles.conversation} onClick={advance}>
-      {!isNarration && (
-        <img src={portrait} alt={speakerName} className={styles.portrait} />
-      )}
+      {!isNarration && <SpeakerPortrait src={portrait} name={speakerName} />}
       <div className={styles.textBlock}>
         {!isNarration && (
           <div className={styles.speakerName}>{speakerName}</div>
@@ -227,11 +227,7 @@ const ConversationView = () => {
           {displayedText}
         </div>
       </div>
-      {isTypingDone && (
-        <span className={styles.advanceCaret} aria-hidden="true">
-          ▼
-        </span>
-      )}
+      {isTypingDone && <AdvanceCaret />}
       {showSkipConversationButton && (
         <button
           type="button"
