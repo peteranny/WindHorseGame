@@ -8,8 +8,22 @@ import MONSTERS from "../../data/monsters/monsters";
 import { ATTACK_COOLDOWN_MS, PROTAGONIST_MAX_HP } from "../../data/monsters/battleFormulas";
 import { hueForFamily } from "./attackGroups";
 import { GOAL_NAME } from "../../data/goalEncounter";
-import { pointStyle, spitStyle } from "./geometry";
 import { HpBar } from "./HpBar";
+import { PlayerSprite } from "./PlayerSprite";
+import { EnemySprite } from "./EnemySprite";
+import { EnemyShadow } from "./EnemyShadow";
+import { AttackTelegraph } from "./AttackTelegraph";
+import { ColdNoodleSprite } from "./ColdNoodleSprite";
+import { LevelBadge } from "./LevelBadge";
+import { ThrownProjectile } from "./ThrownProjectile";
+import { SpitDroplet } from "./SpitDroplet";
+import { ToastStack } from "./ToastStack";
+import { AttackWire } from "./AttackWire";
+import { FamilyDot } from "./FamilyDot";
+import { AttackIcon } from "./AttackIcon";
+import { CooldownOverlay } from "./CooldownOverlay";
+import { ScrollHint } from "./ScrollHint";
+import { OutcomeFade } from "./OutcomeFade";
 import { useHealEffect } from "./useHealEffect";
 import { useThrowEffect } from "./useThrowEffect";
 import { useSpitEffect } from "./useSpitEffect";
@@ -28,9 +42,7 @@ import { useWildAttackClock, TELEGRAPH_MARK_DELAYS_MS } from "./useWildAttackClo
 import { useBattleOutcome } from "./useBattleOutcome";
 import { useAttackGrid } from "./useAttackGrid";
 import { useTrajectory } from "./useTrajectory";
-import PLAYER_SPRITE from "../../assets/playerSprite.png";
 import GOAL_SPRITE from "../../assets/goalSprite.png";
-import COLD_NOODLE_SPRITE from "../../assets/coldNoodle.png";
 import ROAD_TILE from "../../assets/roadTile.jpg";
 
 // Every distinct attack family that actually exists, in a stable
@@ -174,83 +186,38 @@ const Battle = () => {
         style={{ backgroundImage: `url(${ROAD_TILE})` } as React.CSSProperties}
       >
         <div className={styles.playerSide}>
-          <img
+          <PlayerSprite
             ref={playerSpriteRef}
-            src={PLAYER_SPRITE}
-            alt="小風"
-            className={cn(
-              styles.playerSprite,
-              isEntering && styles.playerEnter,
-              isPlayerSinking
-                ? styles.playerSink
-                : playerHealEffect && styles.playerHeal
-            )}
-            style={
-              {
-                "--enter-delay": `${PLAYER_ENTER_DELAY_MS}ms`,
-                "--enter-duration": `${ENTER_PLAYER_MS}ms`,
-              } as React.CSSProperties
-            }
+            isEntering={isEntering}
+            isSinking={isPlayerSinking}
+            isHealing={playerHealEffect !== null}
+            enterDelayMs={PLAYER_ENTER_DELAY_MS}
+            enterDurationMs={ENTER_PLAYER_MS}
           />
         </div>
         <div className={styles.enemySide}>
           <div className={styles.enemySpriteWrap}>
-            <div
+            <EnemyShadow
               ref={enemyShadowRef}
-              className={cn(
-                styles.enemyShadow,
-                isEntering && styles.enemyShadowEnter,
-                isEnemySinking && styles.enemyShadowSink
-              )}
-              aria-hidden="true"
-              style={
-                {
-                  "--enter-delay": `${ENEMY_ENTER_DELAY_MS}ms`,
-                  "--enter-duration": `${ENTER_ENEMY_MS}ms`,
-                } as React.CSSProperties
-              }
+              isEntering={isEntering}
+              isSinking={isEnemySinking}
+              enterDelayMs={ENEMY_ENTER_DELAY_MS}
+              enterDurationMs={ENTER_ENEMY_MS}
             />
-            <img
+            <EnemySprite
               ref={enemySpriteRef}
               src={enemyIcon}
               alt={enemyName}
-              className={cn(
-                styles.enemySprite,
-                isEntering && styles.enemyEnter,
-                isEnemySinking
-                  ? styles.enemySink
-                  : enemyHealEffect && styles.enemyHeal
-              )}
-              style={
-                {
-                  "--enter-delay": `${ENEMY_ENTER_DELAY_MS}ms`,
-                  "--enter-duration": `${ENTER_ENEMY_MS}ms`,
-                } as React.CSSProperties
-              }
+              isEntering={isEntering}
+              isSinking={isEnemySinking}
+              isHealing={enemyHealEffect !== null}
+              enterDelayMs={ENEMY_ENTER_DELAY_MS}
+              enterDurationMs={ENTER_ENEMY_MS}
             />
             {isWildTelegraphing && (
-              <div className={styles.telegraph} aria-hidden="true">
-                {TELEGRAPH_MARK_DELAYS_MS.map((delayMs, i) => (
-                  <span
-                    key={i}
-                    className={styles.telegraphMark}
-                    style={
-                      { "--telegraph-delay": `${delayMs}ms` } as React.CSSProperties
-                    }
-                  >
-                    ？
-                  </span>
-                ))}
-              </div>
+              <AttackTelegraph delaysMs={TELEGRAPH_MARK_DELAYS_MS} />
             )}
-            {coldNoodleEffect === "heal" && (
-              <img
-                src={COLD_NOODLE_SPRITE}
-                alt=""
-                aria-hidden="true"
-                className={styles.coldNoodleSideDish}
-              />
-            )}
+            {coldNoodleEffect === "heal" && <ColdNoodleSprite />}
           </div>
         </div>
         <div
@@ -281,7 +248,7 @@ const Battle = () => {
         >
           <div className={styles.nameRow}>
             <span>小風</span>
-            <span className={styles.levelBadge}>LV. {line.length}</span>
+            <LevelBadge level={line.length} />
           </div>
           <HpBar hp={protagonistHp} maxHp={10} />
           {isDevMode && (
@@ -291,58 +258,29 @@ const Battle = () => {
           )}
         </div>
         {throwEffects.map((effect) => (
-          <img
+          <ThrownProjectile
             key={effect.id}
-            src={effect.icon}
-            alt=""
-            aria-hidden="true"
-            className={cn(
-              styles.thrownIcon,
-              effect.selfToss && styles.thrownIconSelf
-            )}
-            style={pointStyle(effect.from, effect.to)}
-            onAnimationEnd={() => clearThrow(effect.id)}
+            effect={effect}
+            onLand={() => clearThrow(effect.id)}
           />
         ))}
         {spitEffect !== null && (
-          <span
+          <SpitDroplet
             key={`player-spit-${spitEffect.id}`}
-            className={cn(styles.spitDrop, styles.spitDropForward)}
-            aria-hidden="true"
-            style={spitStyle(spitEffect)}
-            onAnimationEnd={clearSpit}
-          >
-            💧
-          </span>
+            effect={spitEffect}
+            direction="forward"
+            onLand={clearSpit}
+          />
         )}
         {enemySpitEffect !== null && (
-          <span
+          <SpitDroplet
             key={`enemy-spit-${enemySpitEffect.id}`}
-            className={cn(styles.spitDrop, styles.spitDropReverse)}
-            aria-hidden="true"
-            style={spitStyle(enemySpitEffect)}
-            onAnimationEnd={clearEnemySpit}
-          >
-            💧
-          </span>
+            effect={enemySpitEffect}
+            direction="reverse"
+            onLand={clearEnemySpit}
+          />
         )}
-        {toasts.length > 0 && (
-          <div className={styles.toastStack}>
-            {toasts.map((toast, index) => (
-              <div
-                key={toast.id}
-                className={styles.toastItem}
-                style={
-                  {
-                    "--toast-offset": toasts.length - 1 - index,
-                  } as React.CSSProperties
-                }
-              >
-                <div className={styles.toast}>{toast.text}</div>
-              </div>
-            ))}
-          </div>
-        )}
+        <ToastStack toasts={toasts} />
       </div>
       <div className={styles.actionBar}>
         <div
@@ -440,12 +378,7 @@ const Battle = () => {
                     );
                     return (
                       <React.Fragment key={option.key}>
-                        {index > 0 && (
-                          <span
-                            className={styles.attackWire}
-                            aria-hidden="true"
-                          />
-                        )}
+                        {index > 0 && <AttackWire />}
                         <button
                           type="button"
                           ref={(el) => {
@@ -464,34 +397,18 @@ const Battle = () => {
                           onClick={() => handleAttack(option)}
                         >
                           {option.trueFamily !== null && (
-                            <span
-                              className={styles.familyDot}
-                              aria-hidden="true"
-                              style={
-                                {
-                                  "--family-hue": hueForFamily(
-                                    option.trueFamily,
-                                    ALL_FAMILIES
-                                  ),
-                                } as React.CSSProperties
-                              }
+                            <FamilyDot
+                              hue={hueForFamily(option.trueFamily, ALL_FAMILIES)}
                             />
                           )}
-                          <img
-                            src={option.icon}
-                            alt={option.label}
-                            className={styles.attackIcon}
-                          />
+                          <AttackIcon src={option.icon} alt={option.label} />
                           <span className={styles.attackLabel}>
                             {option.isHealer
                               ? `${option.label}（治療）`
                               : option.label}
                           </span>
                           {!ready && (
-                            <div
-                              className={styles.cooldownOverlay}
-                              style={{ height: `${remainingPercent}%` }}
-                            />
+                            <CooldownOverlay remainingPercent={remainingPercent} />
                           )}
                         </button>
                       </React.Fragment>
@@ -501,41 +418,16 @@ const Battle = () => {
               );
             })}
           </div>
-          {canScrollLeft && (
-            <div
-              className={cn(styles.scrollHint, styles.scrollHintLeft)}
-              aria-hidden="true"
-            >
-              <span className={styles.scrollHintArrow}>‹</span>
-            </div>
-          )}
-          {canScrollRight && (
-            <div
-              className={cn(styles.scrollHint, styles.scrollHintRight)}
-              aria-hidden="true"
-            >
-              <span className={styles.scrollHintArrow}>›</span>
-            </div>
-          )}
+          {canScrollLeft && <ScrollHint direction="left" />}
+          {canScrollRight && <ScrollHint direction="right" />}
         </div>
         </div>
       </div>
       {isSinking && pendingOutcome !== null && (
-        <div
-          className={cn(
-            styles.outcomeFade,
-            pendingOutcome === "escape"
-              ? styles.outcomeFadeQuickTiming
-              : styles.outcomeFadeSinkTiming,
-            styles[`outcomeFade${capitalize(pendingOutcome)}`]
-          )}
-        />
+        <OutcomeFade outcome={pendingOutcome} />
       )}
     </div>
   );
 };
-
-const capitalize = (text: string): string =>
-  text.charAt(0).toUpperCase() + text.slice(1);
 
 export default Battle;
