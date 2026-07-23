@@ -14,6 +14,12 @@ import BattleTransition from "../BattleTransition";
 import { useFlowStore } from "../../store/flowStore";
 import { useGameStore } from "../../store/gameStore";
 import { isDevStateKey } from "../../store/devMode";
+import {
+  VARIANT_EMOJIS,
+  VARIANT_LABELS,
+  DEFAULT_VARIANT_EMOJI,
+  DEFAULT_VARIANT_LABEL,
+} from "../../store/battleTransitionVariants";
 import { CELL_SIZE } from "../Maze/cellSize";
 import WALL_TILE from "../../assets/wallTile.png";
 import styles from "./styles.css";
@@ -39,6 +45,12 @@ const Game = () => {
   );
   const setDevCooldownLockDisabled = useFlowStore(
     (state) => state.setDevCooldownLockDisabled
+  );
+  const devForcedTransitionVariant = useFlowStore(
+    (state) => state.devForcedTransitionVariant
+  );
+  const cycleDevForcedTransitionVariant = useFlowStore(
+    (state) => state.cycleDevForcedTransitionVariant
   );
   // Same offsetX/offsetY formula Maze itself uses to keep the player's own
   // cell centered on screen - applied here as the infinite wall backdrop's
@@ -160,6 +172,24 @@ const Game = () => {
                               🔓
                             </button>
                           )}
+                          <button
+                            type="button"
+                            aria-label={`切換戰鬥轉場效果（目前：${
+                              devForcedTransitionVariant === null
+                                ? DEFAULT_VARIANT_LABEL
+                                : VARIANT_LABELS[devForcedTransitionVariant]
+                            }）`}
+                            className={cn(
+                              styles.devToggle,
+                              devForcedTransitionVariant !== null &&
+                                styles.devToggleActive
+                            )}
+                            onClick={cycleDevForcedTransitionVariant}
+                          >
+                            {devForcedTransitionVariant === null
+                              ? DEFAULT_VARIANT_EMOJI
+                              : VARIANT_EMOJIS[devForcedTransitionVariant]}
+                          </button>
                         </>
                       )}
                       <Link

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import cn from "classnames";
 import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
+import { Variant, VARIANTS } from "../../store/battleTransitionVariants";
 import {
   FREEZE_MS,
   FLASH_MS,
@@ -16,27 +17,10 @@ import {
 // their own; "cover" and "reveal" both wear whichever variant was rolled for
 // this transition, growing in then shrinking back out again. Leaving battle
 // plays the much simpler "resolve" instead - see the leavingBattle branch
-// below.
+// below. The variant catalog itself lives in store/battleTransitionVariants
+// (not here) since flowStore's own devForcedTransitionVariant and Game's dev
+// toggle button need it too.
 type Phase = "idle" | "freeze" | "flash" | "cover" | "reveal" | "resolve";
-type Variant =
-  | "radial"
-  | "stripes"
-  | "particles"
-  | "vertical"
-  | "rings"
-  | "crosshatch"
-  | "emoji"
-  | "heart";
-const VARIANTS: Variant[] = [
-  "radial",
-  "stripes",
-  "particles",
-  "vertical",
-  "rings",
-  "crosshatch",
-  "emoji",
-  "heart",
-];
 
 // "emoji" is the one variant that isn't a pure CSS gradient pattern - it
 // pops real glyphs in over a plain fading-black backdrop (styles.css's
@@ -77,6 +61,12 @@ const BattleTransition = ({
   // that flips `mode` away from "battle", so it's already current by the
   // time this effect sees the mode change.
   const battleOutcome = useFlowStore((state) => state.battleOutcome);
+  // Dev-only override (Game's map-screen toggle button, only shown under a
+  // dev save key) - forces every roll below to this exact variant instead
+  // of a random one. null (its default) leaves the random pick untouched.
+  const devForcedTransitionVariant = useFlowStore(
+    (state) => state.devForcedTransitionVariant
+  );
   const [resolveColor, setResolveColor] = useState<"black" | "white">(
     "black"
   );
@@ -123,8 +113,13 @@ const BattleTransition = ({
     }
 
     // Rolled once per transition (not per phase), so "cover" and "reveal"
-    // always wear the same pattern as each other.
-    setVariant(VARIANTS[Math.floor(Math.random() * VARIANTS.length)]);
+    // always wear the same pattern as each other - unless a dev override is
+    // forcing one specific variant, in which case every transition wears
+    // that same one instead of rolling at all.
+    setVariant(
+      devForcedTransitionVariant ??
+        VARIANTS[Math.floor(Math.random() * VARIANTS.length)]
+    );
     setPhase("freeze");
 
     const coveredAt = FREEZE_MS + FLASH_MS + DISTORT_IN_MS;
@@ -152,7 +147,7 @@ const BattleTransition = ({
       ),
     ];
     return () => timers.forEach(clearTimeout);
-  }, [mode, battleOutcome]);
+  }, [mode, battleOutcome, devForcedTransitionVariant]);
 
   return (
     <div className={styles.stack}>

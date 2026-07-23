@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { PROTAGONIST_MAX_HP } from "../data/monsters/battleFormulas";
 import { BattleOutcome } from "../data/conversations/engine";
+import { Variant, VARIANTS } from "./battleTransitionVariants";
 
 type Mode = "map" | "conversation" | "battle";
 type TalkingSpeaker = "protagonist" | "monster" | "narration" | null;
@@ -38,6 +39,12 @@ interface FlowState {
   // "reset ever-clear" button once goalDefeatedAt is set, since the lock is
   // disabled forever from then on anyway).
   devCooldownLockDisabled: boolean;
+  // Forces BattleTransition's entrance pattern to a specific variant instead
+  // of its normal per-transition random pick - null means "default"
+  // (random), cycled one step at a time by the map screen's own dev-only
+  // toggle button (Game/index.tsx). Never persisted, same as every other
+  // dev-only field here.
+  devForcedTransitionVariant: Variant | null;
   startEncounter: (monsterId: number) => void;
   startGoalEncounter: () => void;
   // Re-shows the finale conversation directly, without a real battle -
@@ -63,6 +70,7 @@ interface FlowState {
   setTalkingSpeaker: (speaker: TalkingSpeaker) => void;
   setDevReleaseEnabled: (enabled: boolean) => void;
   setDevCooldownLockDisabled: (enabled: boolean) => void;
+  cycleDevForcedTransitionVariant: () => void;
 }
 
 export const useFlowStore = create<FlowState>((set) => ({
@@ -77,6 +85,7 @@ export const useFlowStore = create<FlowState>((set) => ({
   protagonistHp: PROTAGONIST_MAX_HP,
   devReleaseEnabled: false,
   devCooldownLockDisabled: false,
+  devForcedTransitionVariant: null,
   startEncounter: (monsterId) =>
     set({ mode: "conversation", activeMonsterId: monsterId }),
   startGoalEncounter: () =>
@@ -124,4 +133,16 @@ export const useFlowStore = create<FlowState>((set) => ({
   setDevReleaseEnabled: (enabled) => set({ devReleaseEnabled: enabled }),
   setDevCooldownLockDisabled: (enabled) =>
     set({ devCooldownLockDisabled: enabled }),
+  cycleDevForcedTransitionVariant: () =>
+    set((state) => {
+      const currentIndex =
+        state.devForcedTransitionVariant === null
+          ? -1
+          : VARIANTS.indexOf(state.devForcedTransitionVariant);
+      const nextIndex = currentIndex + 1;
+      return {
+        devForcedTransitionVariant:
+          nextIndex >= VARIANTS.length ? null : VARIANTS[nextIndex],
+      };
+    }),
 }));
