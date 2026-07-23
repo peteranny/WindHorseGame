@@ -22,23 +22,46 @@ import {
 // toggle button need it too.
 type Phase = "idle" | "freeze" | "flash" | "cover" | "reveal" | "resolve";
 
-// "emoji" is the one variant that isn't a pure CSS gradient pattern - it
-// pops real glyphs in over a plain fading-black backdrop (styles.css's
-// battle-cover/reveal-emoji-backdrop, opacity only, no gradient growth)
-// rather than growing a repeating-gradient's own coverage. Fixed positions/
-// glyphs (not randomized) so the burst always reads as one deliberate
-// pattern rather than a different scatter every roll.
-const EMOJI_GLYPHS = ["⚡", "💥", "✨", "🔥", "💫", "⭐", "☄️", "🌀", "⚔️"];
-const EMOJI_POSITIONS: Array<{ top: string; left: string }> = [
-  { top: "15%", left: "15%" },
-  { top: "15%", left: "50%" },
-  { top: "15%", left: "85%" },
-  { top: "50%", left: "15%" },
-  { top: "50%", left: "50%" },
-  { top: "50%", left: "85%" },
-  { top: "85%", left: "15%" },
-  { top: "85%", left: "50%" },
-  { top: "85%", left: "85%" },
+// "firework" is the one variant that isn't a pure CSS gradient pattern - its
+// "cover" half pops real spark bursts (DOM elements, not a background
+// pattern) over a plain fading-black backdrop (styles.css's
+// battle-cover-firework-backdrop, opacity only - same technique the old
+// "emoji" variant used for its own guarantee), and its "reveal" half is a
+// completely different mechanic (8 pie-slice shards flying apart) rather
+// than the shared gradient-shrink every other variant's reveal uses - see
+// the .overlay's own comment below on why .reveal.firework deliberately
+// doesn't exist in styles.css. Fixed positions/angles (not randomized) so
+// both halves always read as one deliberate pattern rather than a
+// different scatter every roll.
+const FIREWORK_BURST_POSITIONS: Array<{ top: string; left: string }> = [
+  { top: "70%", left: "18%" },
+  { top: "55%", left: "60%" },
+  { top: "30%", left: "35%" },
+  { top: "65%", left: "80%" },
+  { top: "40%", left: "12%" },
+  { top: "25%", left: "68%" },
+];
+const FIREWORK_RAY_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
+
+// The 8 pie-slice wedges "firework"'s own reveal shatters the screen into -
+// (50%, 50%) plus two adjacent perimeter points (the 4 corners and the 4
+// edge-midpoints, in compass order) so their union exactly tiles the whole
+// box with no gaps/overlap at rest, before each flies outward in its own
+// direction on reveal.
+const TEAR_WEDGES: Array<{
+  clipPath: string;
+  x: string;
+  y: string;
+  rotate: string;
+}> = [
+  { clipPath: "polygon(50% 50%, 0% 0%, 50% 0%)", x: "-55vw", y: "-55vh", rotate: "-30deg" },
+  { clipPath: "polygon(50% 50%, 50% 0%, 100% 0%)", x: "55vw", y: "-55vh", rotate: "30deg" },
+  { clipPath: "polygon(50% 50%, 100% 0%, 100% 50%)", x: "70vw", y: "-15vh", rotate: "40deg" },
+  { clipPath: "polygon(50% 50%, 100% 50%, 100% 100%)", x: "70vw", y: "15vh", rotate: "-40deg" },
+  { clipPath: "polygon(50% 50%, 100% 100%, 50% 100%)", x: "55vw", y: "55vh", rotate: "30deg" },
+  { clipPath: "polygon(50% 50%, 50% 100%, 0% 100%)", x: "-55vw", y: "55vh", rotate: "-30deg" },
+  { clipPath: "polygon(50% 50%, 0% 100%, 0% 50%)", x: "-70vw", y: "15vh", rotate: "-40deg" },
+  { clipPath: "polygon(50% 50%, 0% 50%, 0% 0%)", x: "-70vw", y: "-15vh", rotate: "40deg" },
 ];
 
 interface BattleTransitionProps {
@@ -169,26 +192,47 @@ const BattleTransition = ({
           aria-hidden="true"
         >
           {phase === "flash" && <div className={styles.flash} />}
-          {variant === "emoji" && (phase === "cover" || phase === "reveal") && (
-            <div className={styles.emojiField}>
-              {EMOJI_POSITIONS.map((pos, index) => (
-                <span
-                  key={index}
-                  className={cn(
-                    styles.emojiShard,
-                    phase === "cover" && styles.emojiPopIn,
-                    phase === "reveal" && styles.emojiPopOut
-                  )}
+          {variant === "firework" && phase === "cover" && (
+            <div className={styles.fireworkField}>
+              {FIREWORK_BURST_POSITIONS.map((pos, burstIndex) => (
+                <div
+                  key={burstIndex}
+                  className={styles.fireworkBurst}
                   style={
                     {
                       top: pos.top,
                       left: pos.left,
-                      "--emoji-delay": `${index * 45}ms`,
+                      "--burst-delay": `${burstIndex * 90}ms`,
                     } as React.CSSProperties
                   }
                 >
-                  {EMOJI_GLYPHS[index]}
-                </span>
+                  {FIREWORK_RAY_ANGLES.map((angle) => (
+                    <span
+                      key={angle}
+                      className={styles.fireworkRay}
+                      style={{ "--ray-angle": `${angle}deg` } as React.CSSProperties}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+          {variant === "firework" && phase === "reveal" && (
+            <div className={styles.tearField}>
+              {TEAR_WEDGES.map((wedge, index) => (
+                <div
+                  key={index}
+                  className={styles.tearShard}
+                  style={
+                    {
+                      clipPath: wedge.clipPath,
+                      "--tear-x": wedge.x,
+                      "--tear-y": wedge.y,
+                      "--tear-rotate": wedge.rotate,
+                      "--tear-delay": `${index * 35}ms`,
+                    } as React.CSSProperties
+                  }
+                />
               ))}
             </div>
           )}

@@ -411,88 +411,6 @@
   }
 }
 
-.cover.vertical {
-  animation-name: battle-cover-vertical;
-}
-
-.reveal.vertical {
-  animation-name: battle-reveal-vertical;
-}
-
-/*
- * Same "grow the black share of a fixed period" idea as .stripes, just
- * rotated 90deg - vertical bands sweeping in from the sides instead of
- * horizontal ones stacking top-to-bottom, so a random roll between the two
- * reads as a genuinely different sweep direction rather than the same
- * pattern twice.
- */
-@keyframes battle-cover-vertical {
-  0% {
-    transform: scale(0.15) rotate(-25deg);
-    background: repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 36px);
-  }
-
-  20% {
-    transform: scale(0.35) rotate(-18deg);
-    background: repeating-linear-gradient(90deg, #000 0 8px, transparent 8px 36px);
-  }
-
-  40% {
-    transform: scale(0.55) rotate(-12deg);
-    background: repeating-linear-gradient(90deg, #000 0 14px, transparent 14px 36px);
-  }
-
-  60% {
-    transform: scale(0.75) rotate(-7deg);
-    background: repeating-linear-gradient(90deg, #000 0 22px, transparent 22px 36px);
-  }
-
-  80% {
-    transform: scale(0.9) rotate(-3deg);
-    background: repeating-linear-gradient(90deg, #000 0 30px, transparent 30px 36px);
-  }
-
-  100% {
-    transform: scale(1) rotate(0deg);
-    background: #000;
-  }
-}
-
-@keyframes battle-reveal-vertical {
-  0% {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-    background: #000;
-  }
-
-  20% {
-    transform: scale(1.1) rotate(3deg);
-    background: repeating-linear-gradient(90deg, #000 0 30px, transparent 30px 36px);
-  }
-
-  40% {
-    transform: scale(1.2) rotate(6deg);
-    background: repeating-linear-gradient(90deg, #000 0 22px, transparent 22px 36px);
-  }
-
-  60% {
-    transform: scale(1.35) rotate(8deg);
-    background: repeating-linear-gradient(90deg, #000 0 14px, transparent 14px 36px);
-  }
-
-  80% {
-    opacity: 0.6;
-    transform: scale(1.5) rotate(9deg);
-    background: repeating-linear-gradient(90deg, #000 0 8px, transparent 8px 36px);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1.6) rotate(10deg);
-    background: repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 36px);
-  }
-}
-
 .cover.rings {
   animation-name: battle-cover-rings;
 }
@@ -681,99 +599,84 @@
   }
 }
 
+.cover.clockwise {
+  animation-name: battle-cover-clockwise;
+}
+
+.reveal.clockwise {
+  animation-name: battle-reveal-clockwise;
+}
+
 /*
- * .emoji is the one variant that isn't a growing CSS gradient - it's a
- * plain fading-black backdrop (opacity only, no pattern) with a handful of
- * real glyphs (index.tsx's EMOJI_GLYPHS/EMOJI_POSITIONS) popping in over
- * it, so a battle's entrance gets one genuinely different, more playful
- * flavor alongside the five abstract sweeps above. No transform scale/
- * rotate on the backdrop itself (unlike every other variant) - the glyphs
- * carry all the motion here instead, via their own .emojiPopIn/.emojiPopOut
- * keyframes below.
+ * A single clock-hand wedge sweeping 0deg -> 360deg (conic-gradient's own
+ * default direction is clockwise from 12 o'clock) rather than many thin
+ * repeating wedges growing together like .radial - reads as one deliberate
+ * clockwise wipe instead of a spinning burst.
  */
-.cover.emoji {
-  animation-name: battle-cover-emoji-backdrop;
-}
-
-.reveal.emoji {
-  animation-name: battle-reveal-emoji-backdrop;
-}
-
-@keyframes battle-cover-emoji-backdrop {
+@keyframes battle-cover-clockwise {
   0% {
-    background: rgb(0 0 0 / 0%);
+    transform: scale(0.15) rotate(-25deg);
+    background: conic-gradient(from 0deg, #000 0deg 0deg, transparent 0deg 360deg);
   }
 
-  100% {
-    background: #000;
-  }
-}
-
-@keyframes battle-reveal-emoji-backdrop {
-  0% {
-    opacity: 1;
-    background: #000;
+  20% {
+    transform: scale(0.35) rotate(-18deg);
+    background: conic-gradient(from 0deg, #000 0deg 72deg, transparent 72deg 360deg);
   }
 
-  100% {
-    opacity: 0;
-    background: #000;
-  }
-}
-
-.emojiField {
-  position: absolute;
-  inset: 0;
-}
-
-.emojiShard {
-  position: absolute;
-  transform: translate(-50%, -50%) scale(0);
-  font-size: calc(48px * var(--scale));
-  line-height: 1;
-  opacity: 0;
-  animation-delay: var(--emoji-delay, 0ms);
-  animation-fill-mode: both;
-}
-
-.emojiPopIn {
-  animation-name: battle-emoji-pop-in;
-  animation-duration: 500ms;
-  animation-timing-function: ease-out;
-}
-
-.emojiPopOut {
-  animation-name: battle-emoji-pop-out;
-  animation-duration: 500ms;
-  animation-timing-function: ease-in;
-}
-
-@keyframes battle-emoji-pop-in {
-  0% {
-    transform: translate(-50%, -50%) scale(0) rotate(-30deg);
-    opacity: 0;
+  40% {
+    transform: scale(0.55) rotate(-12deg);
+    background: conic-gradient(from 0deg, #000 0deg 144deg, transparent 144deg 360deg);
   }
 
   60% {
-    transform: translate(-50%, -50%) scale(1.3) rotate(8deg);
-    opacity: 1;
+    transform: scale(0.75) rotate(-7deg);
+    background: conic-gradient(from 0deg, #000 0deg 216deg, transparent 216deg 360deg);
+  }
+
+  80% {
+    transform: scale(0.9) rotate(-3deg);
+    background: conic-gradient(from 0deg, #000 0deg 288deg, transparent 288deg 360deg);
   }
 
   100% {
-    transform: translate(-50%, -50%) scale(1) rotate(0deg);
-    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    background: #000;
   }
 }
 
-@keyframes battle-emoji-pop-out {
+@keyframes battle-reveal-clockwise {
   0% {
-    transform: translate(-50%, -50%) scale(1) rotate(0deg);
     opacity: 1;
+    transform: scale(1) rotate(0deg);
+    background: #000;
+  }
+
+  20% {
+    transform: scale(1.1) rotate(3deg);
+    background: conic-gradient(from 0deg, #000 0deg 288deg, transparent 288deg 360deg);
+  }
+
+  40% {
+    transform: scale(1.2) rotate(6deg);
+    background: conic-gradient(from 0deg, #000 0deg 216deg, transparent 216deg 360deg);
+  }
+
+  60% {
+    transform: scale(1.35) rotate(8deg);
+    background: conic-gradient(from 0deg, #000 0deg 144deg, transparent 144deg 360deg);
+  }
+
+  80% {
+    opacity: 0.6;
+    transform: scale(1.5) rotate(9deg);
+    background: conic-gradient(from 0deg, #000 0deg 72deg, transparent 72deg 360deg);
   }
 
   100% {
-    transform: translate(-50%, -50%) scale(1.6) rotate(15deg);
     opacity: 0;
+    transform: scale(1.6) rotate(10deg);
+    background: conic-gradient(from 0deg, #000 0deg 0deg, transparent 0deg 360deg);
   }
 }
 
@@ -786,17 +689,35 @@
 }
 
 /*
- * A single centered heart glyph (inline SVG, solid black on transparent)
- * zooming in - background-size is what "grows" here (a single shape
- * scaling up past 100% of the box) rather than a repeating pattern's own
- * period, but the guarantee is identical to every other variant: the 100%
- * keyframe drops the image for a flat solid #000, so the screen is
- * genuinely, fully opaque by the time content swaps underneath, regardless
- * of how exactly the heart itself tiles/overflows at that size.
+ * Two different SVG data URIs sharing the same 32x29 heart path (the first
+ * outer subpath is only present in the reveal one - see below), sized via
+ * vmin (not %) so the fixed 32:29 ratio between the two size keyframe
+ * values holds regardless of the viewport's own aspect ratio - a plain
+ * percentage size (what this variant used before) stretches independently
+ * on width vs height whenever the box itself isn't square, which is why the
+ * original version of this variant looked distorted.
+ *
+ * Cover grows a *solid* black heart (background-image, default alpha
+ * masking - opaque fill visible, transparent elsewhere) until it's huge
+ * enough to fully cover the screen, then flips to flat #000 same as every
+ * other variant's own safety net. Reveal instead punches a *hole*: the
+ * backdrop is solid #000 throughout, and mask-image (not background-image)
+ * cuts a heart-shaped transparent hole out of it that grows from nothing at
+ * the center up to full-screen - the mask image itself combines a full
+ * covering rect with the heart subpath under fill-rule="evenodd", so the
+ * heart's own interior (crossed by both subpaths, i.e. an even crossing
+ * count) is the only excluded/transparent region while everywhere else
+ * (crossed once, by the rect alone) stays opaque - exactly the "hole" this
+ * variant wants, using ordinary alpha masking with no vendor-specific
+ * mask-composite needed.
  */
 .heart {
   background-repeat: no-repeat;
   background-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
 }
 
 @keyframes battle-cover-heart {
@@ -804,27 +725,27 @@
     transform: scale(0.15) rotate(-25deg);
     background-color: transparent;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath fill='%23000' d='M16 29C16 29 0 18.5 0 9.5C0 4.25 4.25 0 9.5 0C12.5 0 15 1.5 16 4C17 1.5 19.5 0 22.5 0C27.75 0 32 4.25 32 9.5C32 18.5 16 29 16 29Z'/%3E%3C/svg%3E");
-    background-size: 6% 6%;
+    background-size: 6.4vmin 5.8vmin;
   }
 
   20% {
     transform: scale(0.35) rotate(-18deg);
-    background-size: 34% 34%;
+    background-size: 32vmin 29vmin;
   }
 
   40% {
     transform: scale(0.55) rotate(-12deg);
-    background-size: 68% 68%;
+    background-size: 70.4vmin 63.8vmin;
   }
 
   60% {
     transform: scale(0.75) rotate(-7deg);
-    background-size: 110% 110%;
+    background-size: 128vmin 116vmin;
   }
 
   80% {
     transform: scale(0.9) rotate(-3deg);
-    background-size: 170% 170%;
+    background-size: 224vmin 203vmin;
   }
 
   100% {
@@ -838,36 +759,149 @@
   0% {
     opacity: 1;
     transform: scale(1) rotate(0deg);
-    background-image: none;
     background-color: #000;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   20% {
     transform: scale(1.1) rotate(3deg);
-    background-color: transparent;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath fill='%23000' d='M16 29C16 29 0 18.5 0 9.5C0 4.25 4.25 0 9.5 0C12.5 0 15 1.5 16 4C17 1.5 19.5 0 22.5 0C27.75 0 32 4.25 32 9.5C32 18.5 16 29 16 29Z'/%3E%3C/svg%3E");
-    background-size: 170% 170%;
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath fill-rule='evenodd' fill='%23000' d='M0 0H32V29H0Z M16 29C16 29 0 18.5 0 9.5C0 4.25 4.25 0 9.5 0C12.5 0 15 1.5 16 4C17 1.5 19.5 0 22.5 0C27.75 0 32 4.25 32 9.5C32 18.5 16 29 16 29Z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath fill-rule='evenodd' fill='%23000' d='M0 0H32V29H0Z M16 29C16 29 0 18.5 0 9.5C0 4.25 4.25 0 9.5 0C12.5 0 15 1.5 16 4C17 1.5 19.5 0 22.5 0C27.75 0 32 4.25 32 9.5C32 18.5 16 29 16 29Z'/%3E%3C/svg%3E");
+    -webkit-mask-size: 6.4vmin 5.8vmin;
+    mask-size: 6.4vmin 5.8vmin;
   }
 
   40% {
     transform: scale(1.2) rotate(6deg);
-    background-size: 110% 110%;
+    -webkit-mask-size: 32vmin 29vmin;
+    mask-size: 32vmin 29vmin;
   }
 
   60% {
     transform: scale(1.35) rotate(8deg);
-    background-size: 68% 68%;
+    -webkit-mask-size: 70.4vmin 63.8vmin;
+    mask-size: 70.4vmin 63.8vmin;
   }
 
   80% {
     opacity: 0.6;
     transform: scale(1.5) rotate(9deg);
-    background-size: 34% 34%;
+    -webkit-mask-size: 128vmin 116vmin;
+    mask-size: 128vmin 116vmin;
   }
 
   100% {
     opacity: 0;
     transform: scale(1.6) rotate(10deg);
-    background-size: 6% 6%;
+    -webkit-mask-size: 224vmin 203vmin;
+    mask-size: 224vmin 203vmin;
+  }
+}
+
+/*
+ * "firework" plays two unrelated mechanics rather than one shared gradient
+ * both ways. Cover: decorative spark bursts (index.tsx's DOM elements
+ * below) fly outward over a plain fading-black backdrop - same
+ * opacity-only backdrop trick the old "emoji" variant used, since the rays
+ * alone don't mathematically guarantee full coverage the way a gradient's
+ * own 100% keyframe does. Reveal: deliberately has no .reveal.firework rule
+ * at all - index.tsx instead renders 8 pie-slice shards (TEAR_WEDGES) that
+ * already tile the whole box solid black at rest, then fly apart on their
+ * own animation (.tearShard below), so .overlay's own background just
+ * stays its ordinary transparent self underneath them for this phase.
+ */
+.cover.firework {
+  animation-name: battle-cover-firework-backdrop;
+}
+
+@keyframes battle-cover-firework-backdrop {
+  0% {
+    background: rgb(0 0 0 / 0%);
+  }
+
+  100% {
+    background: #000;
+  }
+}
+
+.fireworkField {
+  position: absolute;
+  inset: 0;
+}
+
+.fireworkBurst {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.fireworkRay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: calc(6px * var(--scale));
+  height: calc(85px * var(--scale));
+  background: #000;
+  border-radius: calc(3px * var(--scale));
+  transform-origin: bottom center;
+  transform: translateX(-50%) rotate(var(--ray-angle)) scaleY(0);
+  opacity: 0;
+  animation-name: battle-firework-ray-grow;
+  animation-duration: 380ms;
+  animation-timing-function: ease-out;
+  animation-delay: var(--burst-delay, 0ms);
+  animation-fill-mode: both;
+}
+
+@keyframes battle-firework-ray-grow {
+  0% {
+    transform: translateX(-50%) rotate(var(--ray-angle)) scaleY(0);
+    opacity: 0;
+  }
+
+  40% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(-50%) rotate(var(--ray-angle)) scaleY(1);
+    opacity: 0.9;
+  }
+}
+
+.tearField {
+  position: absolute;
+  inset: 0;
+}
+
+/*
+ * Each shard is a full-box black rectangle clipped down to its own pie
+ * slice (index.tsx's TEAR_WEDGES, inline per-shard since every wedge's
+ * clip-path/fly direction is unique) - together they tile the whole box
+ * exactly at rest (0%), then fly apart toward their own --tear-x/--tear-y/
+ * --tear-rotate and fade out, revealing the battle content already mounted
+ * underneath.
+ */
+.tearShard {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  animation-name: battle-tear-shard;
+  animation-duration: 550ms;
+  animation-timing-function: ease-in;
+  animation-delay: var(--tear-delay, 0ms);
+  animation-fill-mode: both;
+}
+
+@keyframes battle-tear-shard {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(var(--tear-x), var(--tear-y)) rotate(var(--tear-rotate));
+    opacity: 0;
   }
 }

@@ -7,21 +7,21 @@ export type Variant =
   | "radial"
   | "stripes"
   | "particles"
-  | "vertical"
   | "rings"
   | "crosshatch"
-  | "emoji"
-  | "heart";
+  | "clockwise"
+  | "heart"
+  | "firework";
 
 export const VARIANTS: Variant[] = [
   "radial",
   "stripes",
   "particles",
-  "vertical",
   "rings",
   "crosshatch",
-  "emoji",
+  "clockwise",
   "heart",
+  "firework",
 ];
 
 // One glyph per variant, shown on the map screen's dev-only cycle button
@@ -32,11 +32,11 @@ export const VARIANT_EMOJIS: Record<Variant, string> = {
   radial: "🌀",
   stripes: "🎞️",
   particles: "🔵",
-  vertical: "🎚️",
   rings: "🎯",
   crosshatch: "🕸️",
-  emoji: "🎉",
+  clockwise: "🕛",
   heart: "❤️",
+  firework: "🎆",
 };
 
 export const DEFAULT_VARIANT_EMOJI = "🎲";
@@ -45,11 +45,11 @@ export const VARIANT_LABELS: Record<Variant, string> = {
   radial: "放射狀",
   stripes: "橫條紋",
   particles: "粒子",
-  vertical: "直條紋",
   rings: "同心圓",
   crosshatch: "交叉網格",
-  emoji: "表情符號",
+  clockwise: "順時針",
   heart: "愛心",
+  firework: "煙火",
 };
 
 export const DEFAULT_VARIANT_LABEL = "預設（隨機）";
