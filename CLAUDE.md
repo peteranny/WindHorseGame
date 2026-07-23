@@ -60,12 +60,28 @@ src/
     Dialog/               # Bottom panel; renders ConversationView while a conversation is active.
                           # paginateText.ts splits a page's full text into <=2-line, DOM-measured
                           # chunks (joined with "..."); useTypewriter.ts types out the current chunk.
+                          # SpeakerPortrait.tsx (the current speaker's own portrait img, hidden for a
+                          # narration page) and AdvanceCaret.tsx (the "▼" tap-to-continue indicator)
+                          # are ConversationView's own extracted sub-components.
     Battle/               # Full-screen real-time battle UI (replaces Maze/Dialog while mode === "battle").
-                          # index.tsx itself holds just the render tree now - every stateful concern,
-                          # including the interactive ones, lives in its own module: geometry.ts (Point +
+                          # index.tsx itself holds just the render tree now, built almost entirely out of
+                          # semantic sub-components rather than raw img/span/div tags - PlayerSprite.tsx/
+                          # EnemySprite.tsx/EnemyShadow.tsx (each forwards its own ref via
+                          # React.forwardRef, since useTrajectory/useAttackGrid/useWildAttackClock measure
+                          # them via getBoundingClientRect and spriteEffects.ts's playBump animates them
+                          # directly through the Web Animations API - dropping the ref would silently break
+                          # both), AttackTelegraph.tsx, ColdNoodleSprite.tsx, LevelBadge.tsx,
+                          # ThrownProjectile.tsx, SpitDroplet.tsx, ToastStack.tsx, AttackWire.tsx,
+                          # FamilyDot.tsx, AttackIcon.tsx, CooldownOverlay.tsx, ScrollHint.tsx, and
+                          # OutcomeFade.tsx - each a plain presentational component, no ref of its own. The
+                          # .battlefield/attack-grid wrapper divs stay inline in index.tsx rather than their
+                          # own components - they're tightly bundled with the same ref-based scroll/
+                          # trajectory logic (see useAttackGrid.ts below), so extracting them would add risk
+                          # without real semantic gain. Every other stateful concern, including the
+                          # interactive ones, lives in its own module: geometry.ts (Point +
                           # rectCenter/percentIn/angleBetween/pointStyle/spitStyle - the underlying pure
-                          # trajectory math, with pointStyle/spitStyle also used directly by index.tsx's own
-                          # throw/spit rendering), spriteEffects.ts (playBump's WAAPI attack/hit bump
+                          # trajectory math, with pointStyle/spitStyle also used by ThrownProjectile.tsx/
+                          # SpitDroplet.tsx), spriteEffects.ts (playBump's WAAPI attack/hit bump
                           # keyframes, shared EFFECT_DURATION_MS), HpBar.tsx, and four generic "on/off with a
                           # timeout" hooks - useHealEffect.ts (also exports HEAL_ANIMATION_MS),
                           # useThrowEffect.ts (THROW_DURATION_MS), useSpitEffect.ts (SPIT_DURATION_MS), and
@@ -99,33 +115,43 @@ src/
                           # battle" edge - see "Entering a battle: the screen transition" below.
     MiniMap/              # Small corner overview of the whole map: player position, uncaptured monsters, and
                           # the goal tile - the latter two always visible as beacons even through unexplored fog.
+                          # MiniMapCell.tsx (fog/wall/road + marker + teleportable) is its own extracted
+                          # component, mirroring the main Maze view's own MazeCell.tsx.
     StateKeyGate/         # Blocks rendering until the save-state key is set and state is hydrated.
-    Settings/             # /settings route: shows the current save-state key as plain text plus two
-                          # buttons - "更換金鑰" opens a dialog with a text input (defaulting to the
-                          # current key) to type a new one; "查詢捕獲紀錄" opens a dialog with the
-                          # player's own capture history (public to everyone, not dev-gated) - a
-                          # compact table (order, icon, "YYYY/MM/DD hh:mm" capture time,
-                          # capturedHistory.ts's sortByCaptureTime/formatCaptureTimestamp) with a
-                          # trailing row for the goal (goalSprite.png/GOAL_NAME) and its own
-                          # goalDefeatedAt, shown only once that key has actually cleared it - read
-                          # straight off gameStore's own captured/goalDefeatedAt (already hydrated
-                          # for whichever key is active) rather than fetched separately, so there's
-                          # no code path that can show anyone else's data. Under a dev save key
-                          # (isDevStateKey), the change-key dialog additionally shows a dashed-border
-                          # section below the input: every save key currently in the spreadsheet
+    Settings/             # /settings route: shows the current save-state key as plain text plus
+                          # action buttons (SettingsModal.tsx is the shared dialog shell - title/
+                          # onClose/children - behind every dialog below). "更換金鑰" opens a dialog
+                          # with a text input (defaulting to the current key) to type a new one;
+                          # "查詢捕獲紀錄" opens a dialog with the player's own capture history
+                          # (public to everyone, not dev-gated) - CapturedHistoryTable.tsx, a compact
+                          # table (order, icon, "YYYY/MM/DD hh:mm" capture time, capturedHistory.ts's
+                          # sortByCaptureTime/formatCaptureTimestamp) with a trailing row for the goal
+                          # (goalSprite.png/GOAL_NAME) and its own goalDefeatedAt, shown only once that
+                          # key has actually cleared it - read straight off gameStore's own captured/
+                          # goalDefeatedAt (already hydrated for whichever key is active) rather than
+                          # fetched separately, so there's no code path here that can show anyone
+                          # else's data. Under a dev save key (isDevStateKey), a third "瀏覽存檔金鑰"
+                          # button opens its own dialog listing every key currently in the spreadsheet
                           # (persistence.ts's loadRemoteStateKeys, lazily fetched only the first time
-                          # this dialog opens) as quick-pick buttons - tapping one switches to that
-                          # key immediately, the same as submitting the input with it typed in.
+                          # this dialog opens) - each row has its own 更換金鑰 (switches straight to
+                          # that key) and 查詢捕獲紀錄 (opens a peek dialog fetching *that* key's own
+                          # data via loadRemoteState, falling back to getLocalSnapshot for local dev,
+                          # reusing the same CapturedHistoryTable) buttons, aimed at that row's key
+                          # rather than the currently active one.
   data/
     monsters/
-      monsters.generated.json  # The 39 monster definitions (name, description, family, isHealer/healAmount -
-                                # no icon field, see icons/ below). Sourced from a separate WindHorseNote
-                                # project's creatures data (copied, not referenced live) plus 1 placeholder.
+      monsters.generated.json  # The 39 monster definitions (name, description, family, attackFamily,
+                                # healAmount - no icon field, see icons/ below, and no isHealer: that's
+                                # derived from attackFamily === MOM_FAMILY in monsters.ts instead of
+                                # stored, since attackFamily already fully determines it). Sourced from
+                                # a separate WindHorseNote project's creatures data (copied, not
+                                # referenced live) plus 1 placeholder.
       icons/<id>.png            # One real image file per monster (39 are .png; the placeholder monster's
                                 # (id 39) is .svg) - types.ts, monsters.ts imports every one by id and merges
                                 # it into the metadata from the JSON above to build the final Monster[].
-      types.ts, monsters.ts    # Monster type (incl. attackFamily/attackStep) and the typed loader that merges
-                                # monsters.generated.json with icons/.
+      types.ts, monsters.ts    # Monster type (incl. attackFamily/attackStep/isHealer, the latter two
+                                # both computed in monsters.ts, not read off the JSON) and the typed
+                                # loader that merges monsters.generated.json with icons/.
       captureLogic.ts          # Pure captureMonster/isFullyCaptured helpers (used by gameStore and the goal tile).
       battleFormulas.ts        # computeWildMaxHp and the battle constants (cooldown, damage, HP, tick rate).
       attackFamily.ts          # computeAttackFamily(name) - a from-the-name family/step rule, unused at runtime
