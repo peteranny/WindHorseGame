@@ -6,6 +6,7 @@ import { Variant, VARIANTS } from "../../store/battleTransitionVariants";
 import { Phase } from "./types";
 import FireworkOverlay from "./variants/firework";
 import HeartOverlay from "./variants/heart";
+import ClockwiseOverlay from "./variants/clockwise";
 import {
   FREEZE_MS,
   FLASH_MS,
@@ -24,8 +25,9 @@ import {
 // (not here) since flowStore's own devForcedTransitionVariant and Game's dev
 // toggle button need it too. Most variants are a pure CSS gradient pattern
 // hooked onto the shared .overlay div below via styles[variant] - "heart"
-// and "firework" are the two exceptions, each rendering their own real DOM
-// elements instead (variants/heart.tsx, variants/firework.tsx).
+// and "firework" are DOM-element exceptions on their cover half (variants/
+// heart.tsx, variants/firework.tsx), and "clockwise" is a DOM-element
+// exception on its reveal half instead (variants/clockwise.tsx).
 
 interface BattleTransitionProps {
   mode: string;
@@ -157,6 +159,7 @@ const BattleTransition = ({
           {phase === "flash" && <div className={styles.flash} />}
           {variant === "firework" && <FireworkOverlay phase={phase} />}
           {variant === "heart" && <HeartOverlay phase={phase} />}
+          {variant === "clockwise" && <ClockwiseOverlay phase={phase} />}
         </div>
       )}
     </div>

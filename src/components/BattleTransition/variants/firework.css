@@ -1,10 +1,10 @@
 /*
- * The classes rendered by firework.tsx's own DOM elements (bursts on
- * cover, tear shards on reveal) - the backdrop that actually guarantees
- * full coverage (battle-cover-firework-backdrop) stays in the main
- * BattleTransition/styles.css instead, since it's applied to the shared
- * .overlay element itself via styles.firework there, not to anything
- * rendered here.
+ * The classes rendered by firework.tsx's own DOM elements (cover's bursts
+ * only now - reveal is a plain fade, battle-reveal-firework-fade in the
+ * main BattleTransition/styles.css) - the backdrop that actually
+ * guarantees full coverage (battle-cover-firework-backdrop) also stays in
+ * that main stylesheet, since it's applied to the shared .overlay element
+ * itself via styles.firework there, not to anything rendered here.
  */
 .fireworkField {
   position: absolute;
@@ -122,41 +122,5 @@
   100% {
     transform: translateX(-50%) rotate(calc(var(--ray-angle) + 3deg)) scaleY(1.05) scaleX(9);
     opacity: 1;
-  }
-}
-
-.tearField {
-  position: absolute;
-  inset: 0;
-}
-
-/*
- * Each shard is a full-box black rectangle clipped down to its own pie
- * slice (firework.tsx's TEAR_WEDGES, inline per-shard since every wedge's
- * clip-path/fly direction is unique) - together they tile the whole box
- * exactly at rest (0%), then fly apart toward their own --tear-x/--tear-y/
- * --tear-rotate and fade out, revealing the battle content already mounted
- * underneath.
- */
-.tearShard {
-  position: absolute;
-  inset: 0;
-  background: #000;
-  animation-name: battle-tear-shard;
-  animation-duration: 550ms;
-  animation-timing-function: ease-in;
-  animation-delay: var(--tear-delay, 0ms);
-  animation-fill-mode: both;
-}
-
-@keyframes battle-tear-shard {
-  0% {
-    transform: translate(0, 0) rotate(0deg);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translate(var(--tear-x), var(--tear-y)) rotate(var(--tear-rotate));
-    opacity: 0;
   }
 }

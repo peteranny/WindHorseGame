@@ -500,100 +500,68 @@
   animation-name: battle-cover-clockwise;
 }
 
-.reveal.clockwise {
-  animation-name: battle-reveal-clockwise;
-}
-
 /*
  * A single clock-hand wedge sweeping 0deg -> 360deg (conic-gradient's own
  * default direction is clockwise from 12 o'clock) rather than many thin
  * repeating wedges growing together like .radial - reads as one deliberate
- * clockwise wipe instead of a spinning burst.
+ * clockwise wipe instead of a spinning burst. Deliberately has *no* shared
+ * scale/rotate motion the way every other gradient variant's own keyframes
+ * do (compare .radial/.stripes/etc above) - this one is meant to read as
+ * purely a pie chart filling in from 0 to 360deg, so its own transform
+ * stays untouched (i.e. "none") at every step instead of also zooming/
+ * spinning the whole wedge as a second, independent motion layered on top.
  */
 @keyframes battle-cover-clockwise {
   0% {
-    transform: scale(0.15) rotate(-25deg);
     background: conic-gradient(from 0deg, #000 0deg 0deg, transparent 0deg 360deg);
   }
 
   20% {
-    transform: scale(0.35) rotate(-18deg);
     background: conic-gradient(from 0deg, #000 0deg 72deg, transparent 72deg 360deg);
   }
 
   40% {
-    transform: scale(0.55) rotate(-12deg);
     background: conic-gradient(from 0deg, #000 0deg 144deg, transparent 144deg 360deg);
   }
 
   60% {
-    transform: scale(0.75) rotate(-7deg);
     background: conic-gradient(from 0deg, #000 0deg 216deg, transparent 216deg 360deg);
   }
 
   80% {
-    transform: scale(0.9) rotate(-3deg);
     background: conic-gradient(from 0deg, #000 0deg 288deg, transparent 288deg 360deg);
   }
 
   100% {
-    transform: scale(1) rotate(0deg);
     background: #000;
-  }
-}
-
-@keyframes battle-reveal-clockwise {
-  0% {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-    background: #000;
-  }
-
-  20% {
-    transform: scale(1.1) rotate(3deg);
-    background: conic-gradient(from 0deg, #000 0deg 288deg, transparent 288deg 360deg);
-  }
-
-  40% {
-    transform: scale(1.2) rotate(6deg);
-    background: conic-gradient(from 0deg, #000 0deg 216deg, transparent 216deg 360deg);
-  }
-
-  60% {
-    transform: scale(1.35) rotate(8deg);
-    background: conic-gradient(from 0deg, #000 0deg 144deg, transparent 144deg 360deg);
-  }
-
-  80% {
-    opacity: 0.6;
-    transform: scale(1.5) rotate(9deg);
-    background: conic-gradient(from 0deg, #000 0deg 72deg, transparent 72deg 360deg);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1.6) rotate(10deg);
-    background: conic-gradient(from 0deg, #000 0deg 0deg, transparent 0deg 360deg);
   }
 }
 
 /*
- * "heart" and "firework" both render real DOM elements
- * (variants/heart.tsx, variants/firework.tsx) rather than growing a CSS
- * gradient pattern on this shared .overlay element the way every other
- * variant does - those elements' own classes/keyframes live in their
- * matching variants/*.css file instead of here. What stays here is only
- * the backdrop each one's *cover* half hooks onto .overlay itself for its
- * safety net: a near-instant snap to solid black in the last sliver of
- * the duration (0% and 90%/95% both stay fully transparent, so nothing
- * fades in before then), catching whatever the visible black shapes
- * haven't already covered by then - the same guarantee every gradient
- * variant's own 100% keyframe provides, just reached a different way.
- * Neither has a matching *.reveal.X* rule: "heart"'s own hearts already
- * fade to invisible on their own (revealing needs no coverage guarantee,
- * only covering does), and "firework"'s tear shards fly apart on their
- * own animation with .overlay's background staying its ordinary
- * transparent self underneath them.
+ * "heart", "firework", and "clockwise" all render real DOM elements
+ * (variants/heart.tsx, variants/firework.tsx, variants/clockwise.tsx)
+ * somewhere in their sequence, rather than only growing a CSS gradient
+ * pattern on this shared .overlay element the way radial/stripes/
+ * particles/rings do throughout. Those elements' own classes/keyframes
+ * live in their
+ * matching variants/*.css file instead of here. What stays here is:
+ *   - "heart" and "firework"'s own *cover* backdrop, each a near-instant
+ *     snap to solid black in the last sliver of the duration (0% and
+ *     90%/95% both stay fully transparent, so nothing fades in before
+ *     then) - a pure safety net catching whatever the visible black
+ *     shapes haven't already covered by then, the same guarantee every
+ *     gradient variant's own 100% keyframe provides, just reached a
+ *     different way. Neither has a matching cover-side rule of its own
+ *     kind needed for reveal: "heart"'s own hearts already fade to
+ *     invisible on their own (revealing needs no coverage guarantee, only
+ *     covering does), and "clockwise"'s tear shards (which now play on
+ *     *its* reveal, not firework's - see below) fly apart on their own
+ *     animation with .overlay's background staying its ordinary
+ *     transparent self underneath them.
+ *   - "firework"'s own *reveal*, a plain opacity fade (no DOM elements of
+ *     its own for this half) - the pie-slice tear-apart effect it used to
+ *     use moved to "clockwise" instead, since a shattering tear reads as a
+ *     better fit for a clock-hand sweep's own exit.
  */
 .cover.heart {
   animation-name: battle-cover-heart-backdrop;
@@ -627,6 +595,22 @@
   }
 
   100% {
+    background: #000;
+  }
+}
+
+.reveal.firework {
+  animation-name: battle-reveal-firework-fade;
+}
+
+@keyframes battle-reveal-firework-fade {
+  0% {
+    opacity: 1;
+    background: #000;
+  }
+
+  100% {
+    opacity: 0;
     background: #000;
   }
 }
