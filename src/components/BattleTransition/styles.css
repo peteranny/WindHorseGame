@@ -331,6 +331,7 @@
 
   20% {
     transform: scale(0.35) rotate(-18deg);
+    background-color: transparent;
     background-image:
       radial-gradient(circle, #000 10px, transparent 10.5px),
       radial-gradient(circle, #000 10px, transparent 10.5px);
@@ -338,6 +339,7 @@
 
   40% {
     transform: scale(0.55) rotate(-12deg);
+    background-color: transparent;
     background-image:
       radial-gradient(circle, #000 16px, transparent 16.5px),
       radial-gradient(circle, #000 16px, transparent 16.5px);
@@ -345,6 +347,7 @@
 
   60% {
     transform: scale(0.75) rotate(-7deg);
+    background-color: transparent;
     background-image:
       radial-gradient(circle, #000 22px, transparent 22.5px),
       radial-gradient(circle, #000 22px, transparent 22.5px);
@@ -352,6 +355,7 @@
 
   80% {
     transform: scale(0.9) rotate(-3deg);
+    background-color: transparent;
     background-image:
       radial-gradient(circle, #000 30px, transparent 30.5px),
       radial-gradient(circle, #000 30px, transparent 30.5px);
@@ -492,113 +496,6 @@
   }
 }
 
-.cover.crosshatch {
-  animation-name: battle-cover-crosshatch;
-}
-
-.reveal.crosshatch {
-  animation-name: battle-reveal-crosshatch;
-}
-
-/*
- * A net/grid pattern - two repeating-linear-gradient layers (horizontal +
- * vertical lines) stacked as separate background-images rather than one
- * gradient, since only .crosshatch needs two independent axes growing in
- * lockstep. Wherever *both* layers are still transparent the map/dialog
- * scene shows through, same "grow toward solid" guarantee as every other
- * variant once both axes' lines widen enough to fully overlap.
- */
-@keyframes battle-cover-crosshatch {
-  0% {
-    transform: scale(0.15) rotate(-25deg);
-    background-color: transparent;
-    background-image:
-      repeating-linear-gradient(0deg, #000 0 2px, transparent 2px 36px),
-      repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 36px);
-  }
-
-  20% {
-    transform: scale(0.35) rotate(-18deg);
-    background-image:
-      repeating-linear-gradient(0deg, #000 0 8px, transparent 8px 36px),
-      repeating-linear-gradient(90deg, #000 0 8px, transparent 8px 36px);
-  }
-
-  40% {
-    transform: scale(0.55) rotate(-12deg);
-    background-image:
-      repeating-linear-gradient(0deg, #000 0 14px, transparent 14px 36px),
-      repeating-linear-gradient(90deg, #000 0 14px, transparent 14px 36px);
-  }
-
-  60% {
-    transform: scale(0.75) rotate(-7deg);
-    background-image:
-      repeating-linear-gradient(0deg, #000 0 22px, transparent 22px 36px),
-      repeating-linear-gradient(90deg, #000 0 22px, transparent 22px 36px);
-  }
-
-  80% {
-    transform: scale(0.9) rotate(-3deg);
-    background-image:
-      repeating-linear-gradient(0deg, #000 0 30px, transparent 30px 36px),
-      repeating-linear-gradient(90deg, #000 0 30px, transparent 30px 36px);
-  }
-
-  100% {
-    transform: scale(1) rotate(0deg);
-    background-image: none;
-    background-color: #000;
-  }
-}
-
-@keyframes battle-reveal-crosshatch {
-  0% {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-    background-image: none;
-    background-color: #000;
-  }
-
-  20% {
-    transform: scale(1.1) rotate(3deg);
-    background-color: transparent;
-    background-image:
-      repeating-linear-gradient(0deg, #000 0 30px, transparent 30px 36px),
-      repeating-linear-gradient(90deg, #000 0 30px, transparent 30px 36px);
-  }
-
-  40% {
-    transform: scale(1.2) rotate(6deg);
-    background-image:
-      repeating-linear-gradient(0deg, #000 0 22px, transparent 22px 36px),
-      repeating-linear-gradient(90deg, #000 0 22px, transparent 22px 36px);
-  }
-
-  60% {
-    transform: scale(1.35) rotate(8deg);
-    background-image:
-      repeating-linear-gradient(0deg, #000 0 14px, transparent 14px 36px),
-      repeating-linear-gradient(90deg, #000 0 14px, transparent 14px 36px);
-  }
-
-  80% {
-    opacity: 0.6;
-    transform: scale(1.5) rotate(9deg);
-    background-image:
-      repeating-linear-gradient(0deg, #000 0 8px, transparent 8px 36px),
-      repeating-linear-gradient(90deg, #000 0 8px, transparent 8px 36px);
-  }
-
-  100% {
-    opacity: 0;
-    transform: scale(1.6) rotate(10deg);
-    background-image:
-      repeating-linear-gradient(0deg, #000 0 2px, transparent 2px 36px),
-      repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 36px);
-  }
-}
-
 .cover.clockwise {
   animation-name: battle-cover-clockwise;
 }
@@ -730,21 +627,25 @@
 
   20% {
     transform: scale(0.35) rotate(-18deg);
+    background-color: transparent;
     background-size: 32vmin 29vmin;
   }
 
   40% {
     transform: scale(0.55) rotate(-12deg);
+    background-color: transparent;
     background-size: 70.4vmin 63.8vmin;
   }
 
   60% {
     transform: scale(0.75) rotate(-7deg);
+    background-color: transparent;
     background-size: 128vmin 116vmin;
   }
 
   80% {
     transform: scale(0.9) rotate(-3deg);
+    background-color: transparent;
     background-size: 224vmin 203vmin;
   }
 

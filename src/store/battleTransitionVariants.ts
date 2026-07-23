@@ -8,7 +8,6 @@ export type Variant =
   | "stripes"
   | "particles"
   | "rings"
-  | "crosshatch"
   | "clockwise"
   | "heart"
   | "firework";
@@ -18,7 +17,6 @@ export const VARIANTS: Variant[] = [
   "stripes",
   "particles",
   "rings",
-  "crosshatch",
   "clockwise",
   "heart",
   "firework",
@@ -33,7 +31,6 @@ export const VARIANT_EMOJIS: Record<Variant, string> = {
   stripes: "🎞️",
   particles: "🔵",
   rings: "🎯",
-  crosshatch: "🕸️",
   clockwise: "🕛",
   heart: "❤️",
   firework: "🎆",
@@ -46,7 +43,6 @@ export const VARIANT_LABELS: Record<Variant, string> = {
   stripes: "橫條紋",
   particles: "粒子",
   rings: "同心圓",
-  crosshatch: "交叉網格",
   clockwise: "順時針",
   heart: "愛心",
   firework: "煙火",
