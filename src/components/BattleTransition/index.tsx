@@ -18,8 +18,44 @@ import {
 // plays the much simpler "resolve" instead - see the leavingBattle branch
 // below.
 type Phase = "idle" | "freeze" | "flash" | "cover" | "reveal" | "resolve";
-type Variant = "radial" | "stripes" | "particles";
-const VARIANTS: Variant[] = ["radial", "stripes", "particles"];
+type Variant =
+  | "radial"
+  | "stripes"
+  | "particles"
+  | "vertical"
+  | "rings"
+  | "crosshatch"
+  | "emoji"
+  | "heart";
+const VARIANTS: Variant[] = [
+  "radial",
+  "stripes",
+  "particles",
+  "vertical",
+  "rings",
+  "crosshatch",
+  "emoji",
+  "heart",
+];
+
+// "emoji" is the one variant that isn't a pure CSS gradient pattern - it
+// pops real glyphs in over a plain fading-black backdrop (styles.css's
+// battle-cover/reveal-emoji-backdrop, opacity only, no gradient growth)
+// rather than growing a repeating-gradient's own coverage. Fixed positions/
+// glyphs (not randomized) so the burst always reads as one deliberate
+// pattern rather than a different scatter every roll.
+const EMOJI_GLYPHS = ["⚡", "💥", "✨", "🔥", "💫", "⭐", "☄️", "🌀", "⚔️"];
+const EMOJI_POSITIONS: Array<{ top: string; left: string }> = [
+  { top: "15%", left: "15%" },
+  { top: "15%", left: "50%" },
+  { top: "15%", left: "85%" },
+  { top: "50%", left: "15%" },
+  { top: "50%", left: "50%" },
+  { top: "50%", left: "85%" },
+  { top: "85%", left: "15%" },
+  { top: "85%", left: "50%" },
+  { top: "85%", left: "85%" },
+];
 
 interface BattleTransitionProps {
   mode: string;
@@ -138,6 +174,29 @@ const BattleTransition = ({
           aria-hidden="true"
         >
           {phase === "flash" && <div className={styles.flash} />}
+          {variant === "emoji" && (phase === "cover" || phase === "reveal") && (
+            <div className={styles.emojiField}>
+              {EMOJI_POSITIONS.map((pos, index) => (
+                <span
+                  key={index}
+                  className={cn(
+                    styles.emojiShard,
+                    phase === "cover" && styles.emojiPopIn,
+                    phase === "reveal" && styles.emojiPopOut
+                  )}
+                  style={
+                    {
+                      top: pos.top,
+                      left: pos.left,
+                      "--emoji-delay": `${index * 45}ms`,
+                    } as React.CSSProperties
+                  }
+                >
+                  {EMOJI_GLYPHS[index]}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

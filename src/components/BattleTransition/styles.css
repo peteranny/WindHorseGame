@@ -410,3 +410,464 @@
       radial-gradient(circle, #000 3px, transparent 3.5px);
   }
 }
+
+.cover.vertical {
+  animation-name: battle-cover-vertical;
+}
+
+.reveal.vertical {
+  animation-name: battle-reveal-vertical;
+}
+
+/*
+ * Same "grow the black share of a fixed period" idea as .stripes, just
+ * rotated 90deg - vertical bands sweeping in from the sides instead of
+ * horizontal ones stacking top-to-bottom, so a random roll between the two
+ * reads as a genuinely different sweep direction rather than the same
+ * pattern twice.
+ */
+@keyframes battle-cover-vertical {
+  0% {
+    transform: scale(0.15) rotate(-25deg);
+    background: repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 36px);
+  }
+
+  20% {
+    transform: scale(0.35) rotate(-18deg);
+    background: repeating-linear-gradient(90deg, #000 0 8px, transparent 8px 36px);
+  }
+
+  40% {
+    transform: scale(0.55) rotate(-12deg);
+    background: repeating-linear-gradient(90deg, #000 0 14px, transparent 14px 36px);
+  }
+
+  60% {
+    transform: scale(0.75) rotate(-7deg);
+    background: repeating-linear-gradient(90deg, #000 0 22px, transparent 22px 36px);
+  }
+
+  80% {
+    transform: scale(0.9) rotate(-3deg);
+    background: repeating-linear-gradient(90deg, #000 0 30px, transparent 30px 36px);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    background: #000;
+  }
+}
+
+@keyframes battle-reveal-vertical {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    background: #000;
+  }
+
+  20% {
+    transform: scale(1.1) rotate(3deg);
+    background: repeating-linear-gradient(90deg, #000 0 30px, transparent 30px 36px);
+  }
+
+  40% {
+    transform: scale(1.2) rotate(6deg);
+    background: repeating-linear-gradient(90deg, #000 0 22px, transparent 22px 36px);
+  }
+
+  60% {
+    transform: scale(1.35) rotate(8deg);
+    background: repeating-linear-gradient(90deg, #000 0 14px, transparent 14px 36px);
+  }
+
+  80% {
+    opacity: 0.6;
+    transform: scale(1.5) rotate(9deg);
+    background: repeating-linear-gradient(90deg, #000 0 8px, transparent 8px 36px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6) rotate(10deg);
+    background: repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 36px);
+  }
+}
+
+.cover.rings {
+  animation-name: battle-cover-rings;
+}
+
+.reveal.rings {
+  animation-name: battle-reveal-rings;
+}
+
+/*
+ * Concentric rings expanding from the screen's own center (repeating-
+ * radial-gradient in place of .stripes'/.vertical's linear bands) - same
+ * "ring thickness within a fixed period" growth as those two, just
+ * radiating outward from a point instead of sweeping across an axis.
+ */
+@keyframes battle-cover-rings {
+  0% {
+    transform: scale(0.15) rotate(-25deg);
+    background: repeating-radial-gradient(circle, #000 0 2px, transparent 2px 36px);
+  }
+
+  20% {
+    transform: scale(0.35) rotate(-18deg);
+    background: repeating-radial-gradient(circle, #000 0 8px, transparent 8px 36px);
+  }
+
+  40% {
+    transform: scale(0.55) rotate(-12deg);
+    background: repeating-radial-gradient(circle, #000 0 14px, transparent 14px 36px);
+  }
+
+  60% {
+    transform: scale(0.75) rotate(-7deg);
+    background: repeating-radial-gradient(circle, #000 0 22px, transparent 22px 36px);
+  }
+
+  80% {
+    transform: scale(0.9) rotate(-3deg);
+    background: repeating-radial-gradient(circle, #000 0 30px, transparent 30px 36px);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    background: #000;
+  }
+}
+
+@keyframes battle-reveal-rings {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    background: #000;
+  }
+
+  20% {
+    transform: scale(1.1) rotate(3deg);
+    background: repeating-radial-gradient(circle, #000 0 30px, transparent 30px 36px);
+  }
+
+  40% {
+    transform: scale(1.2) rotate(6deg);
+    background: repeating-radial-gradient(circle, #000 0 22px, transparent 22px 36px);
+  }
+
+  60% {
+    transform: scale(1.35) rotate(8deg);
+    background: repeating-radial-gradient(circle, #000 0 14px, transparent 14px 36px);
+  }
+
+  80% {
+    opacity: 0.6;
+    transform: scale(1.5) rotate(9deg);
+    background: repeating-radial-gradient(circle, #000 0 8px, transparent 8px 36px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6) rotate(10deg);
+    background: repeating-radial-gradient(circle, #000 0 2px, transparent 2px 36px);
+  }
+}
+
+.cover.crosshatch {
+  animation-name: battle-cover-crosshatch;
+}
+
+.reveal.crosshatch {
+  animation-name: battle-reveal-crosshatch;
+}
+
+/*
+ * A net/grid pattern - two repeating-linear-gradient layers (horizontal +
+ * vertical lines) stacked as separate background-images rather than one
+ * gradient, since only .crosshatch needs two independent axes growing in
+ * lockstep. Wherever *both* layers are still transparent the map/dialog
+ * scene shows through, same "grow toward solid" guarantee as every other
+ * variant once both axes' lines widen enough to fully overlap.
+ */
+@keyframes battle-cover-crosshatch {
+  0% {
+    transform: scale(0.15) rotate(-25deg);
+    background-color: transparent;
+    background-image:
+      repeating-linear-gradient(0deg, #000 0 2px, transparent 2px 36px),
+      repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 36px);
+  }
+
+  20% {
+    transform: scale(0.35) rotate(-18deg);
+    background-image:
+      repeating-linear-gradient(0deg, #000 0 8px, transparent 8px 36px),
+      repeating-linear-gradient(90deg, #000 0 8px, transparent 8px 36px);
+  }
+
+  40% {
+    transform: scale(0.55) rotate(-12deg);
+    background-image:
+      repeating-linear-gradient(0deg, #000 0 14px, transparent 14px 36px),
+      repeating-linear-gradient(90deg, #000 0 14px, transparent 14px 36px);
+  }
+
+  60% {
+    transform: scale(0.75) rotate(-7deg);
+    background-image:
+      repeating-linear-gradient(0deg, #000 0 22px, transparent 22px 36px),
+      repeating-linear-gradient(90deg, #000 0 22px, transparent 22px 36px);
+  }
+
+  80% {
+    transform: scale(0.9) rotate(-3deg);
+    background-image:
+      repeating-linear-gradient(0deg, #000 0 30px, transparent 30px 36px),
+      repeating-linear-gradient(90deg, #000 0 30px, transparent 30px 36px);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    background-image: none;
+    background-color: #000;
+  }
+}
+
+@keyframes battle-reveal-crosshatch {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    background-image: none;
+    background-color: #000;
+  }
+
+  20% {
+    transform: scale(1.1) rotate(3deg);
+    background-color: transparent;
+    background-image:
+      repeating-linear-gradient(0deg, #000 0 30px, transparent 30px 36px),
+      repeating-linear-gradient(90deg, #000 0 30px, transparent 30px 36px);
+  }
+
+  40% {
+    transform: scale(1.2) rotate(6deg);
+    background-image:
+      repeating-linear-gradient(0deg, #000 0 22px, transparent 22px 36px),
+      repeating-linear-gradient(90deg, #000 0 22px, transparent 22px 36px);
+  }
+
+  60% {
+    transform: scale(1.35) rotate(8deg);
+    background-image:
+      repeating-linear-gradient(0deg, #000 0 14px, transparent 14px 36px),
+      repeating-linear-gradient(90deg, #000 0 14px, transparent 14px 36px);
+  }
+
+  80% {
+    opacity: 0.6;
+    transform: scale(1.5) rotate(9deg);
+    background-image:
+      repeating-linear-gradient(0deg, #000 0 8px, transparent 8px 36px),
+      repeating-linear-gradient(90deg, #000 0 8px, transparent 8px 36px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6) rotate(10deg);
+    background-image:
+      repeating-linear-gradient(0deg, #000 0 2px, transparent 2px 36px),
+      repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 36px);
+  }
+}
+
+/*
+ * .emoji is the one variant that isn't a growing CSS gradient - it's a
+ * plain fading-black backdrop (opacity only, no pattern) with a handful of
+ * real glyphs (index.tsx's EMOJI_GLYPHS/EMOJI_POSITIONS) popping in over
+ * it, so a battle's entrance gets one genuinely different, more playful
+ * flavor alongside the five abstract sweeps above. No transform scale/
+ * rotate on the backdrop itself (unlike every other variant) - the glyphs
+ * carry all the motion here instead, via their own .emojiPopIn/.emojiPopOut
+ * keyframes below.
+ */
+.cover.emoji {
+  animation-name: battle-cover-emoji-backdrop;
+}
+
+.reveal.emoji {
+  animation-name: battle-reveal-emoji-backdrop;
+}
+
+@keyframes battle-cover-emoji-backdrop {
+  0% {
+    background: rgb(0 0 0 / 0%);
+  }
+
+  100% {
+    background: #000;
+  }
+}
+
+@keyframes battle-reveal-emoji-backdrop {
+  0% {
+    opacity: 1;
+    background: #000;
+  }
+
+  100% {
+    opacity: 0;
+    background: #000;
+  }
+}
+
+.emojiField {
+  position: absolute;
+  inset: 0;
+}
+
+.emojiShard {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: calc(48px * var(--scale));
+  line-height: 1;
+  opacity: 0;
+  animation-delay: var(--emoji-delay, 0ms);
+  animation-fill-mode: both;
+}
+
+.emojiPopIn {
+  animation-name: battle-emoji-pop-in;
+  animation-duration: 500ms;
+  animation-timing-function: ease-out;
+}
+
+.emojiPopOut {
+  animation-name: battle-emoji-pop-out;
+  animation-duration: 500ms;
+  animation-timing-function: ease-in;
+}
+
+@keyframes battle-emoji-pop-in {
+  0% {
+    transform: translate(-50%, -50%) scale(0) rotate(-30deg);
+    opacity: 0;
+  }
+
+  60% {
+    transform: translate(-50%, -50%) scale(1.3) rotate(8deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes battle-emoji-pop-out {
+  0% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) scale(1.6) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+.cover.heart {
+  animation-name: battle-cover-heart;
+}
+
+.reveal.heart {
+  animation-name: battle-reveal-heart;
+}
+
+/*
+ * A single centered heart glyph (inline SVG, solid black on transparent)
+ * zooming in - background-size is what "grows" here (a single shape
+ * scaling up past 100% of the box) rather than a repeating pattern's own
+ * period, but the guarantee is identical to every other variant: the 100%
+ * keyframe drops the image for a flat solid #000, so the screen is
+ * genuinely, fully opaque by the time content swaps underneath, regardless
+ * of how exactly the heart itself tiles/overflows at that size.
+ */
+.heart {
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+@keyframes battle-cover-heart {
+  0% {
+    transform: scale(0.15) rotate(-25deg);
+    background-color: transparent;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath fill='%23000' d='M16 29C16 29 0 18.5 0 9.5C0 4.25 4.25 0 9.5 0C12.5 0 15 1.5 16 4C17 1.5 19.5 0 22.5 0C27.75 0 32 4.25 32 9.5C32 18.5 16 29 16 29Z'/%3E%3C/svg%3E");
+    background-size: 6% 6%;
+  }
+
+  20% {
+    transform: scale(0.35) rotate(-18deg);
+    background-size: 34% 34%;
+  }
+
+  40% {
+    transform: scale(0.55) rotate(-12deg);
+    background-size: 68% 68%;
+  }
+
+  60% {
+    transform: scale(0.75) rotate(-7deg);
+    background-size: 110% 110%;
+  }
+
+  80% {
+    transform: scale(0.9) rotate(-3deg);
+    background-size: 170% 170%;
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    background-image: none;
+    background-color: #000;
+  }
+}
+
+@keyframes battle-reveal-heart {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    background-image: none;
+    background-color: #000;
+  }
+
+  20% {
+    transform: scale(1.1) rotate(3deg);
+    background-color: transparent;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath fill='%23000' d='M16 29C16 29 0 18.5 0 9.5C0 4.25 4.25 0 9.5 0C12.5 0 15 1.5 16 4C17 1.5 19.5 0 22.5 0C27.75 0 32 4.25 32 9.5C32 18.5 16 29 16 29Z'/%3E%3C/svg%3E");
+    background-size: 170% 170%;
+  }
+
+  40% {
+    transform: scale(1.2) rotate(6deg);
+    background-size: 110% 110%;
+  }
+
+  60% {
+    transform: scale(1.35) rotate(8deg);
+    background-size: 68% 68%;
+  }
+
+  80% {
+    opacity: 0.6;
+    transform: scale(1.5) rotate(9deg);
+    background-size: 34% 34%;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.6) rotate(10deg);
+    background-size: 6% 6%;
+  }
+}
