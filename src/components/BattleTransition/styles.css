@@ -3,7 +3,8 @@
  * the same time - only one is ever mounted (see BattleTransition/index.tsx's
  * `displayed` state) - so this is just a plain positioned box, not a
  * crossfading stack of layers. Game's own flex layout expects whatever's
- * inside to be a flex column filling the available height, hence .layer.
+ * inside to be a flex column filling the available height, hence .layer/
+ * .contentWrap both being one.
  */
 .stack {
   position: relative;
@@ -16,6 +17,45 @@
   inset: 0;
   display: flex;
   flex-direction: column;
+}
+
+/*
+ * "squeeze" is the one variant that distorts the actual mounted content
+ * itself rather than just drawing a pattern on the shared .overlay on top
+ * of it (see index.tsx's own top comment) - .contentWrap is what actually
+ * gets squashed (battle-squeeze-collapse below), while .layer itself stays
+ * fixed-size and, only for this variant, carries a solid black background
+ * (.squeezeLayer) that's revealed behind the content as it collapses away
+ * from covering it. Harmless for every other variant, which never applies
+ * .squeezeLayer/.squeezeCollapsing at all.
+ */
+.contentWrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.squeezeLayer {
+  background: #000;
+}
+
+.squeezeCollapsing {
+  /* Must match BattleTransition/timing.ts's DISTORT_IN_MS. */
+  animation-name: battle-squeeze-collapse;
+  animation-duration: 900ms;
+  animation-timing-function: ease-in;
+  animation-fill-mode: both;
+}
+
+@keyframes battle-squeeze-collapse {
+  0% {
+    transform: scaleY(1);
+  }
+
+  100% {
+    transform: scaleY(0);
+  }
 }
 
 /*
@@ -202,7 +242,7 @@
 /*
  * Runs the same --wedge-angle sweep in reverse (90deg back down to 5deg)
  * while transform separately bursts outward - no opacity fade here
- * (unlike "firework", the only variant that actually fades out; every
+ * (unlike "squeeze", the only variant that actually fades out; every
  * other gradient variant reveals purely through the pattern re-opening
  * and scaling/rotating away). Starting from 90deg (fully solid, matching
  * where cover left off) rather than a flat `background: #000` sidesteps
@@ -432,30 +472,29 @@
 }
 
 /*
- * "heart", "firework", and "clockwise" all render real DOM elements
- * (variants/heart.tsx, variants/firework.tsx, variants/clockwise.tsx)
- * somewhere in their sequence, rather than only growing a CSS gradient
- * pattern on this shared .overlay element the way radial/stripes/
- * particles/rings do throughout. Those elements' own classes/keyframes
- * live in their
- * matching variants/*.css file instead of here. What stays here is:
- *   - "heart" and "firework"'s own *cover* backdrop, each a near-instant
- *     snap to solid black in the last sliver of the duration (0% and
- *     90%/95% both stay fully transparent, so nothing fades in before
- *     then) - a pure safety net catching whatever the visible black
- *     shapes haven't already covered by then, the same guarantee every
- *     gradient variant's own 100% keyframe provides, just reached a
- *     different way. Neither has a matching cover-side rule of its own
- *     kind needed for reveal: "heart"'s own hearts already fade to
- *     invisible on their own (revealing needs no coverage guarantee, only
- *     covering does), and "clockwise"'s tear shards (which now play on
- *     *its* reveal, not firework's - see below) fly apart on their own
+ * "heart" and "clockwise" both render real DOM elements (variants/
+ * heart.tsx, variants/clockwise.tsx) somewhere in their sequence, rather
+ * than only growing a CSS gradient pattern on this shared .overlay element
+ * the way radial/stripes/particles/rings do throughout - "squeeze" is a
+ * DOM-free exception of its own kind instead, distorting the actual
+ * mounted content (see .contentWrap/.squeezeLayer above) rather than
+ * drawing anything on .overlay for its cover half at all. Those DOM
+ * elements' own classes/keyframes live in their matching variants/*.css
+ * file instead of here. What stays here is:
+ *   - "heart"'s own *cover* backdrop, a near-instant snap to solid black
+ *     in the last sliver of the duration (0% and 95% both stay fully
+ *     transparent, so nothing fades in before then) - a pure safety net
+ *     catching whatever the visible black shape hasn't already covered by
+ *     then, the same guarantee every gradient variant's own 100% keyframe
+ *     provides, just reached a different way. No matching cover-side rule
+ *     is needed for reveal: "heart"'s own heart already fades to invisible
+ *     on its own (revealing needs no coverage guarantee, only covering
+ *     does), and "clockwise"'s tear shards fly apart on their own
  *     animation with .overlay's background staying its ordinary
  *     transparent self underneath them.
- *   - "firework"'s own *reveal*, a plain opacity fade (no DOM elements of
- *     its own for this half) - the pie-slice tear-apart effect it used to
- *     use moved to "clockwise" instead, since a shattering tear reads as a
- *     better fit for a clock-hand sweep's own exit.
+ *   - "squeeze"'s own *reveal*, a plain opacity fade (no DOM elements of
+ *     its own for this half) - the same shape as this project's very first
+ *     "firework" variant's own reveal used, before firework was replaced.
  */
 .cover.heart {
   animation-name: battle-cover-heart-backdrop;
@@ -475,29 +514,11 @@
   }
 }
 
-.cover.firework {
-  animation-name: battle-cover-firework-backdrop;
+.reveal.squeeze {
+  animation-name: battle-reveal-squeeze-fade;
 }
 
-@keyframes battle-cover-firework-backdrop {
-  0% {
-    background: rgb(0 0 0 / 0%);
-  }
-
-  90% {
-    background: rgb(0 0 0 / 0%);
-  }
-
-  100% {
-    background: #000;
-  }
-}
-
-.reveal.firework {
-  animation-name: battle-reveal-firework-fade;
-}
-
-@keyframes battle-reveal-firework-fade {
+@keyframes battle-reveal-squeeze-fade {
   0% {
     opacity: 1;
     background: #000;

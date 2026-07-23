@@ -10,7 +10,7 @@ export type Variant =
   | "rings"
   | "clockwise"
   | "heart"
-  | "firework";
+  | "squeeze";
 
 export const VARIANTS: Variant[] = [
   "radial",
@@ -19,7 +19,7 @@ export const VARIANTS: Variant[] = [
   "rings",
   "clockwise",
   "heart",
-  "firework",
+  "squeeze",
 ];
 
 // One glyph per variant, shown on the map screen's dev-only cycle button
@@ -33,7 +33,7 @@ export const VARIANT_EMOJIS: Record<Variant, string> = {
   rings: "🌀",
   clockwise: "🕛",
   heart: "❤️",
-  firework: "🎆",
+  squeeze: "📺",
 };
 
 export const DEFAULT_VARIANT_EMOJI = "🎲";
@@ -45,7 +45,7 @@ export const VARIANT_LABELS: Record<Variant, string> = {
   rings: "同心圓",
   clockwise: "順時針",
   heart: "愛心",
-  firework: "煙火",
+  squeeze: "壓縮",
 };
 
 export const DEFAULT_VARIANT_LABEL = "預設（隨機）";

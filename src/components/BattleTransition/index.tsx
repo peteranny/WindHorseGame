@@ -4,7 +4,6 @@ import styles from "./styles.css";
 import { useFlowStore } from "../../store/flowStore";
 import { Variant, VARIANTS } from "../../store/battleTransitionVariants";
 import { Phase } from "./types";
-import FireworkOverlay from "./variants/firework";
 import HeartOverlay from "./variants/heart";
 import ClockwiseOverlay from "./variants/clockwise";
 import {
@@ -24,10 +23,12 @@ import {
 // below. The variant catalog itself lives in store/battleTransitionVariants
 // (not here) since flowStore's own devForcedTransitionVariant and Game's dev
 // toggle button need it too. Most variants are a pure CSS gradient pattern
-// hooked onto the shared .overlay div below via styles[variant] - "heart"
-// and "firework" are DOM-element exceptions on their cover half (variants/
-// heart.tsx, variants/firework.tsx), and "clockwise" is a DOM-element
-// exception on its reveal half instead (variants/clockwise.tsx).
+// hooked onto the shared .overlay div below via styles[variant] - "heart" is
+// a DOM-element exception on its cover half (variants/heart.tsx), "clockwise"
+// is a DOM-element exception on its reveal half instead (variants/
+// clockwise.tsx), and "squeeze" is a different kind of exception entirely: it
+// distorts the actual mounted content (see contentWrap below), not just the
+// shared overlay.
 
 interface BattleTransitionProps {
   mode: string;
@@ -139,8 +140,22 @@ const BattleTransition = ({
 
   return (
     <div className={styles.stack}>
-      <div className={styles.layer}>
-        {displayed === "battle" ? battleContent : otherContent}
+      <div
+        className={cn(
+          styles.layer,
+          variant === "squeeze" && styles.squeezeLayer
+        )}
+      >
+        <div
+          className={cn(
+            styles.contentWrap,
+            variant === "squeeze" &&
+              phase === "cover" &&
+              styles.squeezeCollapsing
+          )}
+        >
+          {displayed === "battle" ? battleContent : otherContent}
+        </div>
       </div>
       {phase !== "idle" && (
         <div
@@ -157,7 +172,6 @@ const BattleTransition = ({
           aria-hidden="true"
         >
           {phase === "flash" && <div className={styles.flash} />}
-          {variant === "firework" && <FireworkOverlay phase={phase} />}
           {variant === "heart" && <HeartOverlay phase={phase} />}
           {variant === "clockwise" && <ClockwiseOverlay phase={phase} />}
         </div>

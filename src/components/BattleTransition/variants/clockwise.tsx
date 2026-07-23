@@ -7,10 +7,11 @@ import { Phase } from "../types";
 // into - (50%, 50%) plus two adjacent perimeter points (the 4 corners and
 // the 4 edge-midpoints, in compass order) so their union exactly tiles the
 // whole box with no gaps/overlap at rest, before each flies outward in its
-// own direction on reveal. Originally built for "firework"'s own reveal -
-// moved here since a shattering tear reads as a better fit for a clock-hand
-// sweep's own exit than for firework (whose exit is now a plain fade - see
-// BattleTransition/styles.css's battle-reveal-firework-fade).
+// own direction on reveal. Originally built for the "firework" variant's
+// own reveal (since replaced by "squeeze") - moved here since a shattering
+// tear reads as a better fit for a clock-hand sweep's own exit than a plain
+// fade (see BattleTransition/styles.css's battle-reveal-squeeze-fade for
+// where that plain-fade shape lives now).
 //
 // Each shard's own delay (index * 20ms, max 140ms at index 7) plus its
 // animation-duration (clockwise.css's 550ms) must together stay under

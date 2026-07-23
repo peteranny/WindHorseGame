@@ -25,7 +25,7 @@
    * opacity: 0 the instant this class is added (the same atomic style
    * change the mount-race fix above relies on), not part of the keyframes
    * below. The shard stays fully opaque as it flies apart and rotates
-   * away - no fade, unlike "firework"'s own reveal.
+   * away - no fade, unlike "squeeze"'s own reveal.
    */
   opacity: 1;
   animation-name: battle-tear-shard;
