@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
-import { BATTLE_LOSS_COOLDOWN_MS } from "../../data/monsters/battleFormulas";
+import { useEffect, useRef, useState } from "react";
+import {
+  BATTLE_LOSS_COOLDOWN_MS,
+  PROTAGONIST_MAX_HP,
+} from "../../data/monsters/battleFormulas";
 import { BattleOutcome } from "../../data/conversations/engine";
 
 export type PendingOutcome = "win" | "lose" | "escape" | null;
@@ -80,6 +83,40 @@ export const useBattleOutcome = ({
 }: UseBattleOutcomeParams): UseBattleOutcomeResult => {
   const [pendingOutcome, setPendingOutcome] = useState<PendingOutcome>(null);
   const [isSinking, setIsSinking] = useState(false);
+
+  // Below half HP was previously only ever locked in as a real loss once
+  // the player actually tapped 逃跑 (Battle/index.tsx) or the whole sink/
+  // fade sequence below finished - both well after the fact, and both
+  // skippable entirely by just reloading the page before then (mode/HP are
+  // never persisted, so a reload silently un-does the near-loss and hands
+  // back a full-HP battle with no cooldown). Marking the cooldown the
+  // instant HP first crosses below half - rather than waiting on any later
+  // event - means a reload can no longer dodge it: the persisted mark is
+  // already written by then regardless of what the player does next. A
+  // ref (not state) tracks the crossing so this only fires once per dip
+  // below half, not on every render while still under it.
+  const wasBelowHalfRef = useRef(false);
+  useEffect(() => {
+    if (isGoalEncounter || activeMonsterId === null) {
+      wasBelowHalfRef.current = false;
+      return;
+    }
+    const isBelowHalf = protagonistHp < PROTAGONIST_MAX_HP / 2;
+    if (isBelowHalf && !wasBelowHalfRef.current) {
+      setBattleCooldown(String(activeMonsterId), Date.now() + BATTLE_LOSS_COOLDOWN_MS);
+    }
+    wasBelowHalfRef.current = isBelowHalf;
+  }, [isGoalEncounter, activeMonsterId, protagonistHp, setBattleCooldown]);
+
+  // Erases that eager mark the instant the battle is actually won (not
+  // waiting on the sink/fade sequence either, for the same reload-proofing
+  // reason) - dipping below half HP and still turning the fight around
+  // shouldn't leave a cooldown behind.
+  useEffect(() => {
+    if (pendingOutcome === "win" && !isGoalEncounter && activeMonsterId !== null) {
+      setBattleCooldown(String(activeMonsterId), 0);
+    }
+  }, [pendingOutcome, isGoalEncounter, activeMonsterId, setBattleCooldown]);
 
   useEffect(() => {
     if (
