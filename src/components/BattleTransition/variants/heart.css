@@ -1,60 +1,69 @@
 /*
- * The classes rendered by heart.tsx's own 20 heart-shaped DOM elements -
- * the backdrop that guarantees full coverage
+ * A single heart, sized (at scale 1) comfortably larger than any real
+ * viewport in both dimensions - 220vmax wide x 199.4vmax tall (still the
+ * heart's own 32:29 ratio) means even the *smaller* of those two is well
+ * over 2x the viewport's own *larger* dimension, so a plain scale(0) ->
+ * scale(1) growth - no extra size math layered on top - already guarantees
+ * full coverage regardless of aspect ratio.
+ *
+ * This variant tried two other approaches first, both animating a
+ * background-size/mask-size on the *shared* .overlay element instead of a
+ * dedicated element's own transform:
+ *   - A single heart whose background-size grew via vmin, then vmax, plus
+ *     a hard flip to flat #000 at 100% as a safety net - this still had to
+ *     compound with the shared .cover/.reveal transform's own independent
+ *     scale/rotate (every gradient variant relies on that same shared
+ *     motion), so the heart's *apparent* growth curve was two differently-
+ *     unitted scale factors multiplying together rather than one clean
+ *     curve, which read as uneven/glitchy rather than a heart plainly
+ *     zooming in.
+ *   - A mask-image "hole" (evenodd rect-minus-heart) growing via mask-size
+ *     for reveal, replaced entirely below - the same compounding problem,
+ *     one direction in reverse.
+ * A single dedicated element with only its own transform (no shared
+ * .overlay motion, same as "firework") sidesteps both: what you see is
+ * exactly what's animating, nothing else layered on top.
+ *
+ * The backdrop that guarantees full coverage as a pure safety net
  * (battle-cover-heart-backdrop, BattleTransition/styles.css) stays in the
- * main stylesheet instead, since it's applied to the shared .overlay
- * element itself via styles.heart there, not to anything rendered here.
- */
-.heartField {
-  position: absolute;
-  inset: 0;
-}
-
-/*
- * Sized in vmax (not vmin, and not %) so the fixed 32:29 heart ratio holds
- * regardless of the viewport's own aspect ratio - the same fix this
- * variant's old single-giant-heart design needed (vmin is pinned to the
- * *smaller* viewport dimension, which fell short of the larger one on a
- * wide or tall window). At ~30vmax wide/tall, each heart is comfortably
- * bigger than a 20%-of-viewport grid cell, so neighboring hearts overlap
- * generously once popped in, tiling solid black with no seams between
- * them - reusing the same SVG heart path as the plain "solid heart" case,
- * no evenodd/mask trickery needed now that this variant doesn't rely on a
- * single shape growing to cover the whole screen by itself.
+ * main stylesheet, since it's applied to the shared .overlay element
+ * itself via styles.heart there, not to anything rendered here.
  */
 .heartShape {
   position: absolute;
-  width: 30vmax;
-  height: 27.2vmax;
+  top: 50%;
+  left: 50%;
+  width: 220vmax;
+  height: 199.4vmax;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath fill='%23000' d='M16 29C16 29 0 18.5 0 9.5C0 4.25 4.25 0 9.5 0C12.5 0 15 1.5 16 4C17 1.5 19.5 0 22.5 0C27.75 0 32 4.25 32 9.5C32 18.5 16 29 16 29Z'/%3E%3C/svg%3E");
   background-size: 100% 100%;
   background-repeat: no-repeat;
   transform: translate(-50%, -50%) scale(0);
   opacity: 0;
-  animation-delay: var(--heart-delay, 0ms);
   animation-fill-mode: both;
 }
 
-.heartPopIn {
-  animation-name: battle-heart-pop-in;
-  animation-duration: 480ms;
+.heartGrowIn {
+  /* Must match BattleTransition/timing.ts's DISTORT_IN_MS. */
+  animation-name: battle-heart-grow-in;
+  animation-duration: 900ms;
   animation-timing-function: ease-out;
 }
 
-.heartPopOut {
-  animation-name: battle-heart-pop-out;
-  animation-duration: 280ms;
+.heartShrinkOut {
+  /* Must match BattleTransition/timing.ts's DISTORT_OUT_MS. */
+  animation-name: battle-heart-shrink-out;
+  animation-duration: 600ms;
   animation-timing-function: ease-in;
 }
 
-@keyframes battle-heart-pop-in {
+@keyframes battle-heart-grow-in {
   0% {
-    transform: translate(-50%, -50%) scale(0) rotate(-15deg);
+    transform: translate(-50%, -50%) scale(0) rotate(-20deg);
     opacity: 0;
   }
 
-  60% {
-    transform: translate(-50%, -50%) scale(1.15) rotate(4deg);
+  15% {
     opacity: 1;
   }
 
@@ -64,14 +73,18 @@
   }
 }
 
-@keyframes battle-heart-pop-out {
+@keyframes battle-heart-shrink-out {
   0% {
     transform: translate(-50%, -50%) scale(1) rotate(0deg);
     opacity: 1;
   }
 
+  85% {
+    opacity: 1;
+  }
+
   100% {
-    transform: translate(-50%, -50%) scale(0) rotate(12deg);
+    transform: translate(-50%, -50%) scale(0) rotate(20deg);
     opacity: 0;
   }
 }

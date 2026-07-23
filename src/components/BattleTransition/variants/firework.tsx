@@ -6,16 +6,24 @@ import { Phase } from "../types";
 // deliberate pattern rather than a different scatter every roll. See
 // firework.css's own top comment for why cover and reveal are two
 // completely unrelated mechanics rather than one gradient played both ways.
+//
+// Rows alternate between two column sets - brick-wall style, rather than a
+// rigid 3x3 grid - so each row's bursts sit centered over the *gaps*
+// between the row above/below it: "A" rows (1st, 3rd) use 3 columns
+// (15/50/85%), "B" rows (2nd, 4th) use the 2 midpoints between those
+// (32.5/67.5%) instead of a 3rd column of their own, since shifting a full
+// 3-column row by half spacing would push its outer columns off-screen.
 const FIREWORK_BURST_POSITIONS: Array<{ top: string; left: string }> = [
-  { top: "18%", left: "20%" },
-  { top: "15%", left: "50%" },
-  { top: "20%", left: "82%" },
-  { top: "50%", left: "15%" },
-  { top: "48%", left: "50%" },
-  { top: "52%", left: "85%" },
-  { top: "82%", left: "20%" },
-  { top: "85%", left: "50%" },
-  { top: "80%", left: "80%" },
+  { top: "12%", left: "15%" },
+  { top: "12%", left: "50%" },
+  { top: "12%", left: "85%" },
+  { top: "37%", left: "32.5%" },
+  { top: "37%", left: "67.5%" },
+  { top: "62%", left: "15%" },
+  { top: "62%", left: "50%" },
+  { top: "62%", left: "85%" },
+  { top: "87%", left: "32.5%" },
+  { top: "87%", left: "67.5%" },
 ];
 const FIREWORK_RAY_ANGLES = [
   0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330,
