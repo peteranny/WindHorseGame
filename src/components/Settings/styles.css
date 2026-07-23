@@ -81,24 +81,21 @@
 }
 
 /*
- * The change-key dialog's dev-only quick-pick list of every key currently
- * in the spreadsheet (Settings' own isDevMode branch) - a dashed orangered
- * rule, same color language as every other dev-only affordance elsewhere
- * in the app (e.g. Battle's own dev buttons), just as a label/box here
- * rather than a button since there's nothing to tap except the key list
- * itself.
+ * The main card's dev-only "browse every key" button (Settings'
+ * isDevMode branch) - same dashed-orangered color language as every other
+ * dev-only affordance elsewhere in the app (e.g. Battle's own dev
+ * buttons).
  */
-.devKeyList {
-  margin-top: calc(12px * var(--scale));
-  padding-top: calc(12px * var(--scale));
-  border-top: 2px dashed orangered;
-}
-
-.devLabel {
-  margin: 0 0 calc(8px * var(--scale));
+.devButton {
+  box-sizing: border-box;
+  font-size: inherit;
+  padding: calc(8px * var(--scale)) calc(14px * var(--scale));
+  border: 2px dashed orangered;
+  border-radius: calc(4px * var(--scale));
+  background: #fff3e0;
   color: orangered;
-  font-size: calc(10pt * var(--scale));
   font-weight: bold;
+  cursor: pointer;
 }
 
 .peekStatus {
@@ -194,28 +191,38 @@
 .keyOptionList {
   display: flex;
   flex-direction: column;
-  gap: calc(4px * var(--scale));
+  gap: calc(8px * var(--scale));
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.keyOptionButton {
-  width: 100%;
+/* One row per key in the dev-only key browser - the key itself plus its
+   own 更換金鑰/查詢捕獲紀錄 actions, aimed at that row's key rather than
+   the currently active one. */
+.keyBrowserRow {
+  display: flex;
+  flex-direction: column;
+  gap: calc(6px * var(--scale));
   box-sizing: border-box;
-  text-align: left;
   padding: calc(8px * var(--scale)) calc(10px * var(--scale));
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: calc(4px * var(--scale));
   background: rgba(255, 255, 255, 0.06);
-  color: white;
-  font-size: inherit;
-  word-break: break-all;
-  cursor: pointer;
 }
 
-.keyOptionButton:hover {
-  background: rgba(255, 255, 255, 0.15);
+.keyBrowserKey {
+  word-break: break-all;
+  font-size: inherit;
+}
+
+.keyBrowserActions {
+  display: flex;
+  gap: calc(6px * var(--scale));
+
+  button {
+    flex: 1;
+  }
 }
 
 .advancedInfo {

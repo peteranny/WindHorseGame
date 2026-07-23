@@ -3,16 +3,18 @@ import { useHistory } from "react-router-dom";
 import Screen from "../Screen";
 import { useGameStore } from "../../store/gameStore";
 import { isDevStateKey } from "../../store/devMode";
-import { loadRemoteStateKeys } from "../../store/persistence";
-import MONSTERS from "../../data/monsters/monsters";
-import { GOAL_NAME } from "../../data/goalEncounter";
-import GOAL_SPRITE from "../../assets/goalSprite.png";
-import { formatCaptureTimestamp, sortByCaptureTime } from "./capturedHistory";
+import {
+  getLocalSnapshot,
+  loadRemoteState,
+  loadRemoteStateKeys,
+} from "../../store/persistence";
+import { PersistedGameState } from "../../store/types";
 import { SettingsModal } from "./SettingsModal";
-import { CapturedMonsterIcon } from "./CapturedMonsterIcon";
+import { CapturedHistoryTable } from "./CapturedHistoryTable";
 import styles from "./styles.css";
 
 type KeyListStatus = "idle" | "loading" | "loaded";
+type PeekStatus = "idle" | "loading" | "found" | "not-found";
 
 const Settings = () => {
   const history = useHistory();
@@ -21,26 +23,45 @@ const Settings = () => {
   // The player's own capture history - read straight off gameStore rather
   // than fetched separately, since it's already hydrated (local-vs-remote
   // resolved) for whichever key is currently active. This is what keeps
-  // this screen showing only *this* key's own data - there's no code path
-  // here that can load anyone else's.
+  // the public history dialog below showing only *this* key's own data -
+  // there's no code path there that can load anyone else's. The dev-only
+  // key browser further down is the one place that deliberately can.
   const captured = useGameStore((state) => state.captured);
   const goalDefeatedAt = useGameStore((state) => state.goalDefeatedAt);
   const isDevMode = isDevStateKey(stateKey);
 
   const [isChangeKeyDialogOpen, setIsChangeKeyDialogOpen] = useState(false);
   const [keyInput, setKeyInput] = useState("");
-  // Dev-only quick-pick list of every key currently in the spreadsheet -
-  // fetched lazily the first time the change-key dialog opens (never on
-  // Settings mount, never refetched once loaded this visit).
+
+  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+
+  // Dev-only browser listing every key currently in the spreadsheet - the
+  // list itself is fetched lazily the first time this dialog opens (never
+  // on Settings mount, never refetched once loaded this visit). Each row
+  // offers the same two actions as the main card, just aimed at that row's
+  // own key instead of the currently active one.
+  const [isKeyBrowserDialogOpen, setIsKeyBrowserDialogOpen] = useState(false);
   const [keyListStatus, setKeyListStatus] = useState<KeyListStatus>("idle");
   const [keyOptions, setKeyOptions] = useState<string[]>([]);
 
-  const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
+  const [isPeekDialogOpen, setIsPeekDialogOpen] = useState(false);
+  const [peekKey, setPeekKey] = useState<string | null>(null);
+  const [peekStatus, setPeekStatus] = useState<PeekStatus>("idle");
+  const [peekCaptured, setPeekCaptured] = useState<
+    PersistedGameState["captured"]
+  >({});
+  const [peekGoalDefeatedAt, setPeekGoalDefeatedAt] = useState<string | null>(
+    null
+  );
 
   const openChangeKeyDialog = (): void => {
     setKeyInput(stateKey ?? "");
     setIsChangeKeyDialogOpen(true);
-    if (isDevMode && keyListStatus === "idle") {
+  };
+
+  const openKeyBrowserDialog = (): void => {
+    setIsKeyBrowserDialogOpen(true);
+    if (keyListStatus === "idle") {
       setKeyListStatus("loading");
       loadRemoteStateKeys().then((keys) => {
         setKeyOptions([...keys].sort());
@@ -56,7 +77,22 @@ const Settings = () => {
     history.push({ pathname: "/", search: window.location.search });
   };
 
-  const capturedOrder = sortByCaptureTime(captured);
+  const peekKeyHistory = (key: string): void => {
+    setPeekKey(key);
+    setIsPeekDialogOpen(true);
+    setPeekStatus("loading");
+    // Remote (the Google Sheet, the actual source of truth for a key that
+    // isn't this browser's own) first, falling back to this browser's own
+    // cached snapshot for that key - the only way to test this locally,
+    // where google.script.run doesn't exist at all (loadRemoteState always
+    // resolves null there).
+    loadRemoteState(key).then((remote) => {
+      const resolved = remote ?? getLocalSnapshot(key);
+      setPeekCaptured(resolved?.captured ?? {});
+      setPeekGoalDefeatedAt(resolved?.goalDefeatedAt ?? null);
+      setPeekStatus(resolved ? "found" : "not-found");
+    });
+  };
 
   return (
     <Screen className={styles.screen}>
@@ -93,6 +129,15 @@ const Settings = () => {
             >
               查詢捕獲紀錄
             </button>
+            {isDevMode && (
+              <button
+                type="button"
+                className={styles.devButton}
+                onClick={openKeyBrowserDialog}
+              >
+                瀏覽存檔金鑰（開發用）
+              </button>
+            )}
           </div>
         </section>
 
@@ -123,33 +168,6 @@ const Settings = () => {
               確定
             </button>
           </form>
-
-          {isDevMode && (
-            <div className={styles.devKeyList}>
-              <p className={styles.devLabel}>開發用：試算表中現有的金鑰</p>
-              {keyListStatus === "loading" && (
-                <p className={styles.peekStatus}>載入中...</p>
-              )}
-              {keyListStatus === "loaded" && keyOptions.length === 0 && (
-                <p className={styles.peekStatus}>找不到任何存檔金鑰</p>
-              )}
-              {keyListStatus === "loaded" && keyOptions.length > 0 && (
-                <ul className={styles.keyOptionList}>
-                  {keyOptions.map((key) => (
-                    <li key={key}>
-                      <button
-                        type="button"
-                        className={styles.keyOptionButton}
-                        onClick={() => changeKey(key)}
-                      >
-                        {key}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
         </SettingsModal>
       )}
 
@@ -158,47 +176,69 @@ const Settings = () => {
           title="捕獲紀錄"
           onClose={() => setIsHistoryDialogOpen(false)}
         >
-          <table className={styles.peekTable}>
-            <thead>
-              <tr>
-                <th>順序</th>
-                <th>怪獸</th>
-                <th>捕獲時間</th>
-              </tr>
-            </thead>
-            <tbody>
-              {capturedOrder.map((monsterId, i) => {
-                const monster = MONSTERS.find((m) => m.id === monsterId);
-                if (!monster) return null;
-                return (
-                  <tr key={monsterId}>
-                    <td>{i + 1}</td>
-                    <td>
-                      <CapturedMonsterIcon
-                        src={monster.icon}
-                        name={monster.name}
-                      />
-                    </td>
-                    <td>{formatCaptureTimestamp(captured[monsterId])}</td>
-                  </tr>
-                );
-              })}
-              {goalDefeatedAt !== null && (
-                <tr>
-                  <td>{capturedOrder.length + 1}</td>
-                  <td>
-                    <CapturedMonsterIcon src={GOAL_SPRITE} name={GOAL_NAME} />
-                  </td>
-                  <td>{formatCaptureTimestamp(goalDefeatedAt)}</td>
-                </tr>
-              )}
-              {capturedOrder.length === 0 && goalDefeatedAt === null && (
-                <tr>
-                  <td colSpan={3}>尚未捕獲任何怪獸</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <CapturedHistoryTable
+            captured={captured}
+            goalDefeatedAt={goalDefeatedAt}
+          />
+        </SettingsModal>
+      )}
+
+      {isKeyBrowserDialogOpen && (
+        <SettingsModal
+          title="所有存檔金鑰"
+          onClose={() => setIsKeyBrowserDialogOpen(false)}
+        >
+          {keyListStatus === "loading" && (
+            <p className={styles.peekStatus}>載入中...</p>
+          )}
+          {keyListStatus === "loaded" && keyOptions.length === 0 && (
+            <p className={styles.peekStatus}>找不到任何存檔金鑰</p>
+          )}
+          {keyListStatus === "loaded" && keyOptions.length > 0 && (
+            <ul className={styles.keyOptionList}>
+              {keyOptions.map((key) => (
+                <li key={key} className={styles.keyBrowserRow}>
+                  <span className={styles.keyBrowserKey}>{key}</span>
+                  <div className={styles.keyBrowserActions}>
+                    <button
+                      type="button"
+                      className={styles.primaryButton}
+                      onClick={() => changeKey(key)}
+                    >
+                      更換金鑰
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.primaryButton}
+                      onClick={() => peekKeyHistory(key)}
+                    >
+                      查詢捕獲紀錄
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </SettingsModal>
+      )}
+
+      {isPeekDialogOpen && (
+        <SettingsModal
+          title={peekKey ?? ""}
+          onClose={() => setIsPeekDialogOpen(false)}
+        >
+          {peekStatus === "loading" && (
+            <p className={styles.peekStatus}>查詢中...</p>
+          )}
+          {peekStatus === "not-found" && (
+            <p className={styles.peekStatus}>找不到這個金鑰的存檔資料</p>
+          )}
+          {peekStatus === "found" && (
+            <CapturedHistoryTable
+              captured={peekCaptured}
+              goalDefeatedAt={peekGoalDefeatedAt}
+            />
+          )}
         </SettingsModal>
       )}
     </Screen>
