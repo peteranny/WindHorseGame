@@ -276,8 +276,13 @@
      this one duration now, so this can be a plain constant rather than a
      per-toast inline custom property. Only fades/bounces this pill's own
      opacity/entrance - the stacking position above is .toastItem's own
-     concern, so the two transforms never conflict. */
-  animation: toast-fade 2s ease-in-out;
+     concern, so the two transforms never conflict.
+     fill-mode: forwards holds the 100% keyframe (opacity 0) once the
+     animation finishes - without it the element snaps back to its base,
+     fully-opaque style the instant the animation ends, then stays that
+     way (visibly flashing back in) until useToastStack's own setTimeout
+     actually removes it a beat later. */
+  animation: toast-fade 2s ease-in-out forwards;
 }
 
 /* Entrance is a plain fade-in - no shift, so it doesn't fight the initial
