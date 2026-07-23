@@ -100,16 +100,22 @@ src/
     MiniMap/              # Small corner overview of the whole map: player position, uncaptured monsters, and
                           # the goal tile - the latter two always visible as beacons even through unexplored fog.
     StateKeyGate/         # Blocks rendering until the save-state key is set and state is hydrated.
-    Settings/             # /settings route: view/change the save-state key. Under a dev save key
-                          # (isDevStateKey), an extra card's button opens a two-step dialog flow:
-                          # tapping it lazily fetches every save key (persistence.ts's
-                          # loadRemoteStateKeys, only called on that first tap) into a picker dialog;
-                          # picking one lazily fetches (loadRemoteState, falling back to
-                          # getLocalSnapshot for local dev) only that key's own data into a second
-                          # dialog - a compact table (order, icon, "YYYY/MM/DD hh:mm" capture time,
+    Settings/             # /settings route: shows the current save-state key as plain text plus two
+                          # buttons - "更換金鑰" opens a dialog with a text input (defaulting to the
+                          # current key) to type a new one; "查詢捕獲紀錄" opens a dialog with the
+                          # player's own capture history (public to everyone, not dev-gated) - a
+                          # compact table (order, icon, "YYYY/MM/DD hh:mm" capture time,
                           # capturedHistory.ts's sortByCaptureTime/formatCaptureTimestamp) with a
                           # trailing row for the goal (goalSprite.png/GOAL_NAME) and its own
-                          # goalDefeatedAt, shown only once that key has actually cleared it.
+                          # goalDefeatedAt, shown only once that key has actually cleared it - read
+                          # straight off gameStore's own captured/goalDefeatedAt (already hydrated
+                          # for whichever key is active) rather than fetched separately, so there's
+                          # no code path that can show anyone else's data. Under a dev save key
+                          # (isDevStateKey), the change-key dialog additionally shows a dashed-border
+                          # section below the input: every save key currently in the spreadsheet
+                          # (persistence.ts's loadRemoteStateKeys, lazily fetched only the first time
+                          # this dialog opens) as quick-pick buttons - tapping one switches to that
+                          # key immediately, the same as submitting the input with it typed in.
   data/
     monsters/
       monsters.generated.json  # The 39 monster definitions (name, description, family, isHealer/healAmount -

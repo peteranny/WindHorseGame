@@ -1,6 +1,6 @@
 // Monster ids in the order they were captured (oldest/first-captured
-// first) - the dev-only "peek another key's captures" table in Settings
-// renders exactly this order, top to bottom.
+// first) - Settings' own "捕獲紀錄" table renders exactly this order, top
+// to bottom.
 export const sortByCaptureTime = (captured: Record<number, string>): number[] =>
   Object.entries(captured)
     .sort(([, a], [, b]) => new Date(a).getTime() - new Date(b).getTime())

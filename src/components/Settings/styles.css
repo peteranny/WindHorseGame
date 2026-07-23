@@ -51,6 +51,7 @@
   word-break: break-all;
 }
 
+.actionButtons,
 .keyForm {
   display: flex;
   flex-wrap: wrap;
@@ -69,27 +70,37 @@
   color: black;
 }
 
-.primaryButton,
-.devButton {
+.primaryButton {
   box-sizing: border-box;
+  flex: 1 1 calc(100px * var(--scale));
   font-size: inherit;
   padding: calc(8px * var(--scale)) calc(14px * var(--scale));
-  border-radius: calc(4px * var(--scale));
-  cursor: pointer;
-}
-
-.primaryButton {
-  flex: 1 1 calc(100px * var(--scale));
   border: none;
+  border-radius: calc(4px * var(--scale));
   background: #4a90d9;
   color: white;
   font-weight: bold;
+  cursor: pointer;
 }
 
-.devButton {
-  border: 2px dashed orangered;
-  background: #fff3e0;
+/*
+ * The change-key dialog's dev-only quick-pick list of every key currently
+ * in the spreadsheet (Settings' own isDevMode branch) - a dashed orangered
+ * rule, same color language as every other dev-only affordance elsewhere
+ * in the app (e.g. Battle's own dev buttons), just as a label/box here
+ * rather than a button since there's nothing to tap except the key list
+ * itself.
+ */
+.devKeyList {
+  margin-top: calc(12px * var(--scale));
+  padding-top: calc(12px * var(--scale));
+  border-top: 2px dashed orangered;
+}
+
+.devLabel {
+  margin: 0 0 calc(8px * var(--scale));
   color: orangered;
+  font-size: calc(10pt * var(--scale));
   font-weight: bold;
 }
 
