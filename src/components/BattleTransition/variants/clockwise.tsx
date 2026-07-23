@@ -10,6 +10,14 @@ import { Phase } from "../types";
 // moved here since a shattering tear reads as a better fit for a clock-hand
 // sweep's own exit than for firework (whose exit is now a plain fade - see
 // BattleTransition/styles.css's battle-reveal-firework-fade).
+//
+// Each shard's own delay (index * 20ms, max 140ms at index 7) plus its
+// animation-duration (clockwise.css's 550ms) must together stay under
+// BattleTransition/timing.ts's DISTORT_OUT_MS (600ms, the "reveal" phase's
+// own length) - index.tsx unmounts this whole overlay the instant `phase`
+// leaves "reveal", so a shard whose delay+duration overruns that window
+// gets yanked off mid-flight (still visibly opaque/mid-tumble) instead of
+// finishing its own fade to invisible.
 const TEAR_WEDGES: Array<{
   clipPath: string;
   x: string;
@@ -51,7 +59,7 @@ const ClockwiseOverlay = ({ phase }: ClockwiseOverlayProps) => {
               "--tear-x": wedge.x,
               "--tear-y": wedge.y,
               "--tear-rotate": wedge.rotate,
-              "--tear-delay": `${index * 35}ms`,
+              "--tear-delay": `${index * 20}ms`,
             } as React.CSSProperties
           }
         />

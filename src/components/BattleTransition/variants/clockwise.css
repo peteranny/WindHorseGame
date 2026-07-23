@@ -16,7 +16,15 @@
   inset: 0;
   background: #000;
   animation-name: battle-tear-shard;
-  animation-duration: 550ms;
+
+  /*
+   * Must stay, together with the max --tear-delay (clockwise.tsx, 140ms at
+   * the 8th shard), under BattleTransition/timing.ts's DISTORT_OUT_MS
+   * (600ms) - index.tsx unmounts this overlay the instant "reveal" ends,
+   * so a shard still mid-animation past that point gets cut off abruptly
+   * instead of finishing its own fade-out.
+   */
+  animation-duration: 440ms;
   animation-timing-function: ease-in;
   animation-delay: var(--tear-delay, 0ms);
   animation-fill-mode: both;
