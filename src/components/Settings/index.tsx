@@ -41,7 +41,7 @@ const Settings = () => {
     if (isDevMode && keyListStatus === "idle") {
       setKeyListStatus("loading");
       loadRemoteStateKeys().then((keys) => {
-        setKeyOptions(keys);
+        setKeyOptions([...keys].sort());
         setKeyListStatus("loaded");
       });
     }

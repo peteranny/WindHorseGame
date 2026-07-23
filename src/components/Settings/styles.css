@@ -54,13 +54,11 @@
 .actionButtons,
 .keyForm {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: calc(8px * var(--scale));
 }
 
 .keyInput {
-  flex: 1 1 calc(160px * var(--scale));
-  min-width: 0;
   box-sizing: border-box;
   font-size: inherit;
   padding: calc(8px * var(--scale)) calc(10px * var(--scale));
@@ -72,7 +70,6 @@
 
 .primaryButton {
   box-sizing: border-box;
-  flex: 1 1 calc(100px * var(--scale));
   font-size: inherit;
   padding: calc(8px * var(--scale)) calc(14px * var(--scale));
   border: none;
@@ -225,16 +222,4 @@
   margin-top: calc(24px * var(--scale));
   opacity: 0.5;
   font-size: calc(9pt * var(--scale));
-}
-
-/*
- * Below ~480px (the content column's own max-width) there's no room to
- * spare, so the key input and its button drop to their own full-width
- * rows instead of trying to share one.
- */
-@media (max-width: 480px) {
-  .keyInput,
-  .primaryButton {
-    flex-basis: 100%;
-  }
 }
