@@ -27,10 +27,10 @@ export const VARIANTS: Variant[] = [
 // label - "default" (flowStore.devForcedTransitionVariant === null, the
 // normal random-per-transition pick) gets its own glyph alongside these.
 export const VARIANT_EMOJIS: Record<Variant, string> = {
-  radial: "🌀",
+  radial: "🔆",
   stripes: "🎞️",
   particles: "🔵",
-  rings: "🎯",
+  rings: "⭕",
   clockwise: "🕛",
   heart: "❤️",
   firework: "🎆",

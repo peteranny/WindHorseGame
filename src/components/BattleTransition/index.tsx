@@ -41,6 +41,18 @@ const FIREWORK_BURST_POSITIONS: Array<{ top: string; left: string }> = [
   { top: "40%", left: "12%" },
   { top: "25%", left: "68%" },
 ];
+// One glowing color per burst (matched 1:1 with FIREWORK_BURST_POSITIONS) -
+// each burst's own rocket/tail/spark rays all share this same color, so a
+// single burst reads as one coherent colored firework rather than a
+// generic black starburst.
+const FIREWORK_BURST_COLORS = [
+  "#ffd166",
+  "#ff6b6b",
+  "#4ecdc4",
+  "#c77dff",
+  "#7bed9f",
+  "#ffa94d",
+];
 const FIREWORK_RAY_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
 
 // The 8 pie-slice wedges "firework"'s own reveal shatters the screen into -
@@ -203,9 +215,11 @@ const BattleTransition = ({
                       top: pos.top,
                       left: pos.left,
                       "--burst-delay": `${burstIndex * 90}ms`,
+                      "--burst-color": FIREWORK_BURST_COLORS[burstIndex],
                     } as React.CSSProperties
                   }
                 >
+                  <span className={styles.fireworkRocket} />
                   {FIREWORK_RAY_ANGLES.map((angle) => (
                     <span
                       key={angle}
