@@ -85,15 +85,26 @@
  * the gaps between them - 9 overlapping bursts' worth of these thickened
  * wedges is what actually blankets the screen, well before the backdrop's
  * own end-of-phase snap ever needs to catch whatever's left.
+ *
+ * width/height are viewport-relative (vmax), deliberately not the usual
+ * --scale-based px every other sprite in this app uses - FIREWORK_BURST_
+ * POSITIONS (firework.tsx) place each burst at a fixed *percentage* of the
+ * screen, so a fixed-pixel ray length only reaches as far as it was tuned
+ * for on one particular viewport size; on any wider/taller window the gaps
+ * between bursts grow past that fixed reach, leaving a visible ring of
+ * transparency the backdrop's own end-of-phase snap then has to paper
+ * over instead of the rays actually covering it themselves. Sizing both
+ * dimensions off vmax instead scales the whole burst with the viewport,
+ * so coverage holds regardless of window size.
  */
 .fireworkRay {
   position: absolute;
   bottom: 0;
   left: 0;
-  width: calc(10px * var(--scale));
-  height: calc(130px * var(--scale));
+  width: 8vmax;
+  height: 100vmax;
   background: linear-gradient(to top, #000, rgb(0 0 0 / 0%));
-  border-radius: calc(5px * var(--scale));
+  border-radius: 4vmax;
   transform-origin: bottom center;
   transform: translateX(-50%) rotate(var(--ray-angle)) scaleY(0) scaleX(1);
   opacity: 0;
