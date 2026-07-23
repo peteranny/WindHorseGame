@@ -30,7 +30,7 @@ export const VARIANT_EMOJIS: Record<Variant, string> = {
   radial: "🔆",
   stripes: "➖",
   particles: "🔵",
-  rings: "⭕",
+  rings: "🌀",
   clockwise: "🕛",
   heart: "❤️",
   firework: "🎆",
