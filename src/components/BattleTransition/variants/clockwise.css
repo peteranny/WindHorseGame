@@ -7,14 +7,27 @@
  * Each shard is a full-box black rectangle clipped down to its own pie
  * slice (clockwise.tsx's TEAR_WEDGES, inline per-shard since every wedge's
  * clip-path/fly direction is unique) - together they tile the whole box
- * exactly at rest (0%), then fly apart toward their own --tear-x/--tear-y/
- * --tear-rotate and fade out, revealing the battle content already mounted
- * underneath.
+ * exactly at rest. Mounted (but invisible - opacity: 0) throughout "cover"
+ * too, not just "reveal" (see clockwise.tsx's own comment) - .tearShardFlying
+ * is what actually plays the fly-apart animation, added only once "reveal"
+ * begins.
  */
 .tearShard {
   position: absolute;
   inset: 0;
   background: #000;
+  opacity: 0;
+}
+
+.tearShardFlying {
+  /*
+   * A static, non-animated opacity: 1 - overriding .tearShard's own resting
+   * opacity: 0 the instant this class is added (the same atomic style
+   * change the mount-race fix above relies on), not part of the keyframes
+   * below. The shard stays fully opaque as it flies apart and rotates
+   * away - no fade, unlike "firework"'s own reveal.
+   */
+  opacity: 1;
   animation-name: battle-tear-shard;
 
   /*
@@ -22,7 +35,7 @@
    * the 8th shard), under BattleTransition/timing.ts's DISTORT_OUT_MS
    * (600ms) - index.tsx unmounts this overlay the instant "reveal" ends,
    * so a shard still mid-animation past that point gets cut off abruptly
-   * instead of finishing its own fade-out.
+   * instead of finishing its own fly-out.
    */
   animation-duration: 440ms;
   animation-timing-function: ease-in;
@@ -33,11 +46,9 @@
 @keyframes battle-tear-shard {
   0% {
     transform: translate(0, 0) rotate(0deg);
-    opacity: 1;
   }
 
   100% {
     transform: translate(var(--tear-x), var(--tear-y)) rotate(var(--tear-rotate));
-    opacity: 0;
   }
 }

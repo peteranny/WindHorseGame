@@ -1,4 +1,5 @@
 import React from "react";
+import cn from "classnames";
 import styles from "./clockwise.css";
 import { Phase } from "../types";
 
@@ -38,21 +39,31 @@ interface ClockwiseOverlayProps {
   phase: Phase;
 }
 
-// Cover is a pure CSS conic-gradient sweep on the shared .overlay element
-// (styles.cover.clockwise, BattleTransition/styles.css) - nothing to
-// render here. Reveal shatters the screen into 8 pie-slice shards that fly
-// apart, tearing it open to reveal the battle screen underneath.
+// Rendered throughout "cover" (including its own hold) as well as
+// "reveal" - not just reveal - so the shard elements are already mounted
+// and painted (at rest, invisible - see .tearShard's own opacity: 0) well
+// before reveal ever begins. Mounting them only on reveal used to race the
+// shared .overlay's own background snapping to transparent at that same
+// instant: a brand-new DOM subtree's first paint isn't guaranteed to land
+// in the very same frame as a plain style change, so the battle scene
+// underneath could flash through for a frame before the shards caught up.
+// Toggling styles.tearShardFlying on already-mounted elements instead is
+// just another style change on the same commit, landing atomically
+// alongside the background swap. Cover itself still reads as a pure CSS
+// conic-gradient sweep (styles.cover.clockwise) - the shards sit
+// invisible on top of it the whole time, doing nothing.
 const ClockwiseOverlay = ({ phase }: ClockwiseOverlayProps) => {
-  if (phase !== "reveal") {
+  if (phase !== "cover" && phase !== "reveal") {
     return null;
   }
+  const isRevealing = phase === "reveal";
 
   return (
     <div className={styles.tearField}>
       {TEAR_WEDGES.map((wedge, index) => (
         <div
           key={index}
-          className={styles.tearShard}
+          className={cn(styles.tearShard, isRevealing && styles.tearShardFlying)}
           style={
             {
               clipPath: wedge.clipPath,
