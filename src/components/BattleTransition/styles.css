@@ -303,13 +303,20 @@
  * implemented as a non-repeating linear-gradient tiled with
  * background-size/repeat-y rather than repeating-linear-gradient.
  * repeating-linear-gradient + animated --band-length left the transparent
- * gap visually stuck (and the last cover frame never went fully solid -
- * a hairline/period-join miss that 1px overshoot didn't fix). Here each
- * 300px tile's own fill is --band-fill (a registered <percentage>), so
- * the gap is literally `100% - var(--band-fill)` and closes in lockstep;
- * cover's final frame also underpaints background-color #000 so any
- * remaining join seam is black. No scale/rotate on cover, same reasoning
- * as .radial's own cover above.
+ * gap visually stuck. Here each 300px tile's own fill is --band-fill (a
+ * registered <percentage>), so the gap is literally
+ * `100% - var(--band-fill)` and closes in lockstep. Cover overshoots to
+ * 101% (not 100) so the gradient's own trailing `#0000 100%` stop - lower
+ * than the preceding var(--band-fill)=101% stop - gets clamped up to
+ * match it per spec (gradient stops can't decrease), collapsing the
+ * transparent span to zero width; reveal starts from that same 101%. (An
+ * earlier attempt instead animated background-color transparent->black
+ * across the whole duration as an "underpaint" safety net - that ran a
+ * plain fade-to-black underneath the band pattern for the entire cover/
+ * reveal, exactly the flat fade this whole family of variants avoids;
+ * dropped in favor of this gradient-only overshoot, same fix as
+ * .clockwise's own --sweep-angle overshoot above.) No scale/rotate on
+ * cover, same reasoning as .radial's own cover above.
  */
 @property --band-fill {
   syntax: "<percentage>";
@@ -324,9 +331,6 @@
 
 .cover.stripes,
 .reveal.stripes {
-  /* Split from the `background` shorthand so background-size/repeat
-   * on .stripes above aren't reset. */
-  background-color: #0000;
   background-image:
     linear-gradient(
       180deg,
@@ -348,15 +352,10 @@
 @keyframes battle-cover-stripes {
   from {
     --band-fill: 5%;
-
-    background-color: #0000;
   }
 
   to {
-    --band-fill: 100%;
-
-    /* Underpaint: last frame is solid even if a tile join would seam. */
-    background-color: #000;
+    --band-fill: 101%;
   }
 }
 
@@ -364,9 +363,7 @@
 @keyframes battle-reveal-stripes {
   from {
     transform: scale(1) rotate(0deg);
-    --band-fill: 100%;
-
-    background-color: #000;
+    --band-fill: 101%;
   }
 
   to {
