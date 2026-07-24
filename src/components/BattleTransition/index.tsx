@@ -151,7 +151,10 @@ const BattleTransition = ({
             styles.contentWrap,
             variant === "squeeze" &&
               phase === "cover" &&
-              styles.squeezeCollapsing
+              styles.squeezeCollapsing,
+            variant === "squeeze" &&
+              phase === "reveal" &&
+              styles.squeezeExpanding
           )}
         >
           {displayed === "battle" ? battleContent : otherContent}
