@@ -32,9 +32,9 @@
  * .squeezeLayer/.squeezeCollapsing/.squeezeExpanding at all.
  *
  * .squeezeLayer's own `perspective` gives its child (.contentWrap) a real
- * 3D viewing context - without it, .squeezeExpanding's rotateX below would
- * just read as an extra vertical squash with no actual foreshortening/
- * depth, indistinguishable from scaleY alone.
+ * 3D viewing context - without it, .squeezeExpanding's rotate3d below
+ * would just read as an extra vertical squash with no actual
+ * foreshortening/depth, indistinguishable from scaleY alone.
  */
 .contentWrap {
   width: 100%;
@@ -69,11 +69,17 @@
 /*
  * Reveal: the reverse of the collapse above, not a plain opacity fade -
  * .contentWrap grows back from a squeezed-flat line while also tilting
- * back upright from a backward rotateX, reading as a flap/lid swinging
- * open rather than just an unsquash. Starts from the same scaleY(0) the
- * collapse ended on (rotateX has no visible effect at zero height, so
- * there's no discontinuity picking it up here), matching DISTORT_OUT_MS
- * ease-out same as every other variant's own reveal.
+ * back upright, reading as a flap/lid swinging open rather than just an
+ * unsquash. The tilt runs along the upper-right/lower-left diagonal (not
+ * a plain top/bottom rotateX) - rotate3d's axis argument is the line that
+ * stays fixed, so tilting *that* diagonal corner pair means rotating
+ * around the *other* one: axis (1, 1, 0) runs upper-left -> lower-right
+ * (screen y grows downward, so (1,1) points down-right), and spinning
+ * around it swings the upper-right/lower-left corners toward/away from
+ * the viewer. Starts from the same scaleY(0) the collapse ended on (the
+ * tilt has no visible effect at zero height, so there's no discontinuity
+ * picking it up here), matching DISTORT_OUT_MS ease-out same as every
+ * other variant's own reveal.
  */
 .squeezeExpanding {
   /* Must match BattleTransition/timing.ts's DISTORT_OUT_MS. */
@@ -85,11 +91,11 @@
 
 @keyframes battle-squeeze-expand {
   0% {
-    transform: scaleY(0) rotateX(-65deg);
+    transform: scaleY(0) rotate3d(1, 1, 0, -65deg);
   }
 
   100% {
-    transform: scaleY(1) rotateX(0deg);
+    transform: scaleY(1) rotate3d(1, 1, 0, 0deg);
   }
 }
 
