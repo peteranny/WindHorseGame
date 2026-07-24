@@ -23,18 +23,11 @@
  * "squeeze" is the one variant that distorts the actual mounted content
  * itself rather than just drawing a pattern on the shared .overlay on top
  * of it (see index.tsx's own top comment) - .contentWrap is what actually
- * gets squashed (cover: battle-squeeze-collapse) and later reopened
- * (reveal: battle-squeeze-expand), while .layer itself stays fixed-size
- * and, only for this variant, carries a solid black background
+ * gets squashed (battle-squeeze-collapse below), while .layer itself stays
+ * fixed-size and, only for this variant, carries a solid black background
  * (.squeezeLayer) that's revealed behind the content as it collapses away
- * from covering it - and stays revealed behind it again as it tilts back
- * open. Harmless for every other variant, which never applies
- * .squeezeLayer/.squeezeCollapsing/.squeezeExpanding at all.
- *
- * .squeezeLayer's own `perspective` gives its child (.contentWrap) a real
- * 3D viewing context - without it, .squeezeExpanding's rotate3d below
- * would just read as an extra vertical squash with no actual
- * foreshortening/depth, indistinguishable from scaleY alone.
+ * from covering it. Harmless for every other variant, which never applies
+ * .squeezeLayer/.squeezeCollapsing at all.
  */
 .contentWrap {
   width: 100%;
@@ -45,7 +38,6 @@
 
 .squeezeLayer {
   background: #000;
-  perspective: calc(900px * var(--scale));
 }
 
 .squeezeCollapsing {
@@ -63,39 +55,6 @@
 
   100% {
     transform: scaleY(0);
-  }
-}
-
-/*
- * Reveal: the reverse of the collapse above, not a plain opacity fade -
- * .contentWrap grows back from a squeezed-flat line while also tilting
- * back upright, reading as a flap/lid swinging open rather than just an
- * unsquash. The tilt runs along the upper-right/lower-left diagonal (not
- * a plain top/bottom rotateX) - rotate3d's axis argument is the line that
- * stays fixed, so tilting *that* diagonal corner pair means rotating
- * around the *other* one: axis (1, 1, 0) runs upper-left -> lower-right
- * (screen y grows downward, so (1,1) points down-right), and spinning
- * around it swings the upper-right/lower-left corners toward/away from
- * the viewer. Starts from the same scaleY(0) the collapse ended on (the
- * tilt has no visible effect at zero height, so there's no discontinuity
- * picking it up here), matching DISTORT_OUT_MS ease-out same as every
- * other variant's own reveal.
- */
-.squeezeExpanding {
-  /* Must match BattleTransition/timing.ts's DISTORT_OUT_MS. */
-  animation-name: battle-squeeze-expand;
-  animation-duration: 900ms;
-  animation-timing-function: ease-out;
-  animation-fill-mode: both;
-}
-
-@keyframes battle-squeeze-expand {
-  0% {
-    transform: scaleY(0) rotate3d(1, 1, 0, -65deg);
-  }
-
-  100% {
-    transform: scaleY(1) rotate3d(1, 1, 0, 0deg);
   }
 }
 
@@ -284,9 +243,9 @@
  * Runs the same --wedge-angle sweep in reverse (90deg back down to 5deg)
  * while transform separately bursts outward - no opacity fade here; every
  * gradient variant reveals purely through the pattern re-opening and
- * scaling/rotating away ("squeeze" reveals its own way too now - see
- * .squeezeExpanding above - by tilting its content back open rather than
- * fading). Starting from 90deg (fully solid, matching
+ * scaling/rotating away ("squeeze" is the one exception - its own reveal
+ * is a plain opacity fade instead, see .reveal.squeeze below). Starting
+ * from 90deg (fully solid, matching
  * where cover left off) rather than a flat `background: #000` sidesteps
  * the same non-interpolable-value jump .radial's own cover comment
  * describes, just at reveal's own start instead of cover's own end.
@@ -627,11 +586,10 @@
  *     on its own (revealing needs no coverage guarantee, only covering
  *     does), and "clockwise"'s tear shards fly apart on their own
  *     animation with .overlay's background staying its ordinary
- *     transparent self underneath them. "squeeze"'s own reveal needs no
- *     entry here at all - .squeezeExpanding (above, alongside
- *     .squeezeCollapsing) does the whole thing on .contentWrap itself;
- *     .overlay stays its ordinary transparent, click-blocking self
- *     throughout, same as it does for squeeze's own cover half.
+ *     transparent self underneath them.
+ *   - "squeeze"'s own *reveal*, a plain opacity fade (no DOM elements of
+ *     its own for this half) - the same shape as this project's very first
+ *     "firework" variant's own reveal used, before firework was replaced.
  */
 .cover.heart {
   animation-name: battle-cover-heart-backdrop;
@@ -647,6 +605,22 @@
   }
 
   100% {
+    background: #000;
+  }
+}
+
+.reveal.squeeze {
+  animation-name: battle-reveal-squeeze-fade;
+}
+
+@keyframes battle-reveal-squeeze-fade {
+  0% {
+    opacity: 1;
+    background: #000;
+  }
+
+  100% {
+    opacity: 0;
     background: #000;
   }
 }
