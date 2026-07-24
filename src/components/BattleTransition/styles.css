@@ -332,23 +332,30 @@
  * since the gradient stays a gradient the whole time and is just already-
  * solid by the time it matters.
  *
- * Frame is a square of the viewport's longer edge (100vmax), not the
- * screen rect: reveal's scale/rotate would otherwise spin a W×H overlay
- * and leave the short-side corners uncovered. Centering that square
- * keeps coverage through the burst. `translate` (individual transform
- * property) centers without fighting the keyframes' own
- * `transform: scale()/rotate()`. Screen itself is fullscreen (inset 0),
- * so vmax matches the game's own longer edge.
+ * Overlay sizing (longer-edge square) is shared with .rings below - see
+ * that paired rule's comment.
  */
 .particles {
+  background-size: 300px 300px, 300px 300px;
+  background-position: 0 0, 150px 150px;
+}
+
+/*
+ * Particles + rings both rotate their overlay on reveal. A plain W×H
+ * screen rect leaves the short-side corners uncovered mid-spin - size the
+ * overlay to a square of the viewport's longer edge (100vmax) and center
+ * it instead. `translate` (individual transform property) centers without
+ * fighting the keyframes' own `transform: scale()/rotate()`. Screen itself
+ * is fullscreen (inset 0), so vmax matches the game's own longer edge.
+ */
+.particles,
+.rings {
   inset: auto;
   top: 50%;
   left: 50%;
   width: 100vmax;
   height: 100vmax;
   translate: -50% -50%;
-  background-size: 300px 300px, 300px 300px;
-  background-position: 0 0, 150px 150px;
 }
 
 @property --dot-radius {
@@ -413,6 +420,9 @@
  * alongside the shared scale/rotate burst. Both need @property (real
  * registered <length>s) - see .radial's own --wedge-angle comment.
  * No scale/rotate on cover, same reasoning as .radial's own cover above.
+ * Overlay is the same longer-edge square as .particles (see the shared
+ * `.particles, .rings` rule above) so reveal's rotate doesn't uncover
+ * the short-side corners.
  */
 @property --ring-length {
   syntax: "<length>";
