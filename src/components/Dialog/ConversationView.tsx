@@ -141,6 +141,10 @@ const ConversationView = () => {
   }, [activeMonsterId, isGoalEncounter, battleOutcome, pageIndex]);
 
   const isLastSubPage = subPageIndex === textChunks.length - 1;
+  // The caret means "there's more text coming" - misleading on the very
+  // last chunk of the conversation's own terminal page, where tapping
+  // instead starts a battle or ends the encounter rather than advancing.
+  const isLastPage = isLastSubPage && isTerminalPage(pages, pageIndex);
   const [displayedText, isTypingDone, completeTyping] = useTypewriter(
     textChunks[subPageIndex] ?? ""
   );
@@ -227,7 +231,7 @@ const ConversationView = () => {
           {displayedText}
         </div>
       </div>
-      {isTypingDone && <AdvanceCaret />}
+      {isTypingDone && !isLastPage && <AdvanceCaret />}
       {showSkipConversationButton && (
         <button
           type="button"
