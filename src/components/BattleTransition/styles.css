@@ -371,11 +371,18 @@
 .reveal.particles {
   background-color: transparent;
 
-  /* Hard edge: +0.01px (not +0.5px) so equal-position stop quirks don't
-   * collapse the circle, without a visible feather/blur. */
+  /*
+   * Explicit ending-shape radius (`circle var(--dot-radius)`) with both
+   * color stops at 100% - a hard disk edge, not a stop-position fade along
+   * a farthest-corner ray. The old `#000 r, #0000 calc(r + 0.5px)` (and
+   * even `+ 0.01px`) still interpolated a translucent fringe that read as
+   * feather. contrast() then thresholds any remaining browser AA soft
+   * pixels to fully opaque or fully transparent.
+   */
   background-image:
-    radial-gradient(circle, #000 var(--dot-radius), #0000 calc(var(--dot-radius) + 0.01px)),
-    radial-gradient(circle, #000 var(--dot-radius), #0000 calc(var(--dot-radius) + 0.01px));
+    radial-gradient(circle var(--dot-radius) at 50% 50%, #000 100%, #0000 100%),
+    radial-gradient(circle var(--dot-radius) at 50% 50%, #000 100%, #0000 100%);
+  filter: contrast(100);
 }
 
 .cover.particles {
