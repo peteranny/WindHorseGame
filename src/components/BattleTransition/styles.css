@@ -322,14 +322,18 @@
  * rule below, so there's no risk of them drifting toward some unintended
  * "neutral" value. Tile is 300px (a full maze cell, CELL_SIZE, used purely
  * as a size reference here) - deliberately a big, chunky unit rather than
- * a fine speckle of confetti. Only each dot's own radius (--dot-radius:
- * 20px at the smallest, 240px at the largest - comfortably past the point
- * the two offset layers already tile fully solid) animates. See .radial's
- * own --wedge-angle comment for why this needs @property (a real
- * registered <length>) rather than a plain custom property to animate
- * smoothly - here it also sidesteps ever needing to flip background-image
- * to `none` once solid (a non-interpolable value change of its own kind),
- * since the gradient stays a gradient the whole time and is just already-
+ * a fine speckle of confetti. Only each dot's own radius (--dot-radius)
+ * animates: 20px at the smallest, 300px (= the tile itself) at the
+ * largest. A single tile's corner sits ~212px from its center
+ * (half-diagonal), so 300px overshoots that and each circle floods its
+ * own tile plus deep into its neighbors - hard-edged dots need that
+ * overlap to finish fully opaque (the old +0.5px feather used to hide
+ * near-miss gaps that hard edges now leave visible). See .radial's own
+ * --wedge-angle comment for why this needs @property (a real registered
+ * <length>) rather than a plain custom property to animate smoothly -
+ * here it also sidesteps ever needing to flip background-image to `none`
+ * once solid (a non-interpolable value change of its own kind), since
+ * the gradient stays a gradient the whole time and is just already-
  * solid by the time it matters.
  *
  * Overlay sizing (longer-edge square) is shared with .rings below - see
@@ -368,12 +372,11 @@
 .reveal.particles {
   background-color: transparent;
 
-  /* Hard edge at --dot-radius (same-position stops). A +0.5px soft stop
-   * used to feather each circle and read as blur - worse once reveal's
-   * scale(1.6) upsamples that feather. */
+  /* Hard edge: +0.01px (not +0.5px) so equal-position stop quirks don't
+   * collapse the circle, without a visible feather/blur. */
   background-image:
-    radial-gradient(circle, #000 var(--dot-radius), #0000 var(--dot-radius)),
-    radial-gradient(circle, #000 var(--dot-radius), #0000 var(--dot-radius));
+    radial-gradient(circle, #000 var(--dot-radius), #0000 calc(var(--dot-radius) + 0.01px)),
+    radial-gradient(circle, #000 var(--dot-radius), #0000 calc(var(--dot-radius) + 0.01px));
 }
 
 .cover.particles {
@@ -390,7 +393,9 @@
   }
 
   to {
-    --dot-radius: 240px;
+    /* = tile size: floods each tile past its corners (~212px) so the
+     * last cover frame is genuinely solid with hard-edged dots. */
+    --dot-radius: 300px;
   }
 }
 
@@ -398,7 +403,7 @@
 @keyframes battle-reveal-particles {
   from {
     transform: scale(1) rotate(0deg);
-    --dot-radius: 240px;
+    --dot-radius: 300px;
   }
 
   to {
@@ -478,7 +483,7 @@
   }
 
   to {
-    transform: scale(1.6) rotate(45deg);
+    transform: scale(3) rotate(45deg);
     --ring-length: 0;
     --ring-period: 720px;
   }
