@@ -385,24 +385,37 @@
 /*
  * Concentric rings expanding from the screen's own center (repeating-
  * radial-gradient in place of .stripes'/.vertical's linear bands) - same
- * "ring thickness within a fixed period" growth as those two, driven by
- * --ring-length, just radiating outward from a point instead of sweeping
- * across an axis. Period is 300px (a full maze cell, CELL_SIZE, used
- * purely as a size reference here) - deliberately big, chunky rings
- * rather than fine concentric lines. No scale/rotate on cover, same
- * reasoning as .radial's own cover above. See .radial's own --wedge-angle
- * comment for why this needs @property (a real registered <length>)
- * rather than a plain custom property to animate smoothly.
+ * "black share of a period" idea as those two, driven by --ring-length,
+ * just radiating outward from a point instead of sweeping across an
+ * axis. Unlike stripes' fixed 300px period, rings also animate
+ * --ring-period itself: cover starts as many fine rings (tight period,
+ * thin black) and both thicken *and* spread outward until
+ * --ring-length === --ring-period (fully solid); reveal opens the gaps
+ * while the period keeps growing, so the rings thin out and expand away
+ * alongside the shared scale/rotate burst. Both need @property (real
+ * registered <length>s) - see .radial's own --wedge-angle comment.
+ * No scale/rotate on cover, same reasoning as .radial's own cover above.
  */
 @property --ring-length {
   syntax: "<length>";
   inherits: false;
-  initial-value: 16px;
+  initial-value: 12px;
+}
+
+@property --ring-period {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 80px;
 }
 
 .cover.rings,
 .reveal.rings {
-  background: repeating-radial-gradient(circle, #000 0 var(--ring-length), transparent var(--ring-length) 300px);
+  background:
+    repeating-radial-gradient(
+      circle,
+      #000 0 var(--ring-length),
+      transparent var(--ring-length) var(--ring-period)
+    );
 }
 
 .cover.rings {
@@ -415,24 +428,31 @@
 
 @keyframes battle-cover-rings {
   from {
-    --ring-length: 16px;
+    --ring-length: 12px;
+    --ring-period: 80px;
   }
 
   to {
-    --ring-length: 300px;
+    /* Must match --ring-period so the last frame is genuinely solid. */
+    --ring-length: 480px;
+    --ring-period: 480px;
   }
 }
 
-/* Same reverse-sweep idea as .radial's own reveal above - no opacity fade. */
+/* Same reverse-sweep idea as .radial's own reveal above - no opacity fade.
+ * Period keeps growing past cover's solid size so the thinning rings
+ * visibly expand outward rather than just reopening a fixed spacing. */
 @keyframes battle-reveal-rings {
   from {
     transform: scale(1) rotate(0deg);
-    --ring-length: 300px;
+    --ring-length: 480px;
+    --ring-period: 480px;
   }
 
   to {
     transform: scale(1.6) rotate(45deg);
     --ring-length: 0;
+    --ring-period: 720px;
   }
 }
 
