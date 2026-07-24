@@ -360,9 +360,13 @@
 .cover.particles,
 .reveal.particles {
   background-color: transparent;
+
+  /* Hard edge at --dot-radius (same-position stops). A +0.5px soft stop
+   * used to feather each circle and read as blur - worse once reveal's
+   * scale(1.6) upsamples that feather. */
   background-image:
-    radial-gradient(circle, #000 var(--dot-radius), transparent calc(var(--dot-radius) + 0.5px)),
-    radial-gradient(circle, #000 var(--dot-radius), transparent calc(var(--dot-radius) + 0.5px));
+    radial-gradient(circle, #000 var(--dot-radius), #0000 var(--dot-radius)),
+    radial-gradient(circle, #000 var(--dot-radius), #0000 var(--dot-radius));
 }
 
 .cover.particles {
