@@ -375,18 +375,6 @@
  * property) centers without fighting the keyframes' own
  * `transform: scale()/rotate()`. Screen itself is fullscreen (inset 0),
  * so vmax matches the game's own longer edge.
- *
- * will-change lists every @property-registered custom property these four
- * variants animate (--wedge-angle/--band-fill/--dot-radius/--ring-length/
- * --ring-period) plus background-image itself - a workaround for a WebKit/
- * mobile Safari bug where an animated custom property used only inside a
- * background-image gradient doesn't get repainted every frame (the property
- * keeps ticking, but the paint stays stuck on its start value until it jumps
- * straight to the end) - reported as a plain flash-to-black/flash-to-reveal
- * on iOS Safari specifically, even though desktop Safari (same @property
- * support) renders the same animation smoothly. Harmless on engines that
- * don't have the bug - will-change just names idents each element doesn't
- * otherwise use, which is explicitly valid and a no-op there.
  */
 .radial,
 .stripes,
@@ -398,13 +386,6 @@
   width: 100vmax;
   height: 100vmax;
   translate: -50% -50%;
-  will-change:
-    --wedge-angle,
-    --band-fill,
-    --dot-radius,
-    --ring-length,
-    --ring-period,
-    background-image;
 }
 
 @property --dot-radius {
@@ -429,6 +410,20 @@
     radial-gradient(circle var(--dot-radius) at 50% 50%, #000 100%, #0000 100%),
     radial-gradient(circle var(--dot-radius) at 50% 50%, #000 100%, #0000 100%);
   filter: contrast(100);
+
+  /*
+   * particles is the one variant here that layers a filter on top of an
+   * animated-custom-property-driven gradient - radial/stripes/rings (no
+   * filter) already animate smoothly on the same phones, so the filter
+   * output specifically not being recomputed each frame (a mobile Safari
+   * repaint bug distinct from - and on top of - the plain "animated custom
+   * property inside a gradient" one) is the more likely culprit for the
+   * flash-to-black/flash-to-reveal reported there. will-change hints all
+   * three inputs that actually change - --dot-radius, the background-image
+   * it feeds, and the filter reading that output - so the fix stays scoped
+   * to this one variant instead of the ones that already work.
+   */
+  will-change: --dot-radius, background-image, filter;
 }
 
 .cover.particles {
@@ -573,9 +568,6 @@
 .cover.clockwise {
   animation-name: battle-cover-clockwise;
   background-image: conic-gradient(from 0deg, #000 0deg var(--sweep-angle), #0000 var(--sweep-angle) 361deg);
-
-  /* Same mobile Safari repaint workaround as .radial/.stripes/.particles/.rings above. */
-  will-change: --sweep-angle, background-image;
 }
 
 @keyframes battle-cover-clockwise {
