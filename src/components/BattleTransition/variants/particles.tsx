@@ -31,12 +31,15 @@ import { Phase } from "../types";
 // the reveal's shared 45deg burst (below) then belongs on dotField itself,
 // same as every other variant's own overlay.
 //
-// ROWS x COLS dots tile dotField, a fixed oversized square (see
-// particles.css) so every row/column pitch is guaranteed proportional
-// regardless of the real screen's own aspect ratio. Odd rows are offset by
-// half a column's width from even rows - a brick/quincunx layout, so once
-// every dot reaches its full size each row's dots sit over the previous
-// row's own gaps rather than stacking in a plain rectangular grid.
+// ROWS x COLS dots tile dotField, a square of the viewport's own longer
+// edge (100vmax, see particles.css - same sizing rule radial/stripes/rings
+// share) so every row/column pitch is guaranteed proportional regardless of
+// the real screen's own aspect ratio, and every dot is still there to be
+// rotated by dotFieldReveal's own burst without uncovering a corner. Odd
+// rows are offset by half a column's width from even rows - a brick/
+// quincunx layout, so once every dot reaches its full size each row's dots
+// sit over the previous row's own gaps rather than stacking in a plain
+// rectangular grid.
 const ROWS = 6;
 const COLS = 6;
 
@@ -67,10 +70,13 @@ const DOTS: Dot[] = (() => {
   return dots;
 })();
 
-// Kept comfortably under BattleTransition/timing.ts's DISTORT_IN_MS/
-// DISTORT_OUT_MS (900ms each), same budget constraint as clockwise's own
-// tear-shard stagger (clockwise.tsx) - every dot finishes growing/shrinking
-// well before the phase animating it ends, even at DOTS.length - 1 (38).
+// Only staggers growing-in (cover has no field-level motion of its own to
+// stay in sync with, so a little per-dot twinkle reads fine there) - kept
+// comfortably under BattleTransition/timing.ts's DISTORT_IN_MS (900ms),
+// same budget constraint as clockwise's own tear-shard stagger
+// (clockwise.tsx), so every dot finishes growing well before "cover" ends,
+// even at DOTS.length - 1 (38). Revealing skips the stagger entirely (see
+// below) so every dot recedes in lockstep with dotFieldReveal's own burst.
 const DOT_DELAY_STEP_MS = 8;
 
 interface ParticlesOverlayProps {
@@ -98,7 +104,9 @@ const ParticlesOverlay = ({ phase }: ParticlesOverlayProps) => {
             {
               left: `${dot.xPercent}%`,
               top: `${dot.yPercent}%`,
-              "--dot-delay": `${index * DOT_DELAY_STEP_MS}ms`,
+              "--dot-delay": isRevealing
+                ? "0ms"
+                : `${index * DOT_DELAY_STEP_MS}ms`,
             } as React.CSSProperties
           }
         />

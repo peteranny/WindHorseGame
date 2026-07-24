@@ -1,8 +1,10 @@
 /*
- * dotField is a fixed square (200vmax, comfortably bigger than any real
- * viewport's longer edge - same oversizing idea as heart.css's own
- * heartShape) so particles.tsx's row/column pitch (both computed as plain
- * percentages of this box) stays proportional regardless of the real
+ * dotField is a square of the viewport's own longer edge (100vmax) -
+ * exactly the same sizing rule radial/stripes/rings share in the main
+ * styles.css, for the same reason: a plain W×H rect leaves the short-side
+ * corners uncovered mid-rotation, but a square sized to the longer edge
+ * doesn't. particles.tsx's row/column pitch (both computed as plain
+ * percentages of this box) stays proportional to it regardless of the real
  * screen's own aspect ratio - no runtime measurement needed, same principle
  * as clockwise's tear wedges using fixed vw/vh math instead of
  * getBoundingClientRect. Dots are positioned directly via left/top (not
@@ -20,8 +22,8 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 200vmax;
-  height: 200vmax;
+  width: 100vmax;
+  height: 100vmax;
   translate: -50% -50%;
 }
 
@@ -91,10 +93,19 @@
 }
 
 .dotShrink {
-  /* Same budget, against DISTORT_OUT_MS. */
+  /*
+   * Full DISTORT_OUT_MS (900ms), same duration/easing as dotFieldReveal's
+   * own burst and no per-dot stagger (particles.tsx passes --dot-delay: 0ms
+   * for every dot while revealing) - so the whole grid reads as one rigid
+   * pattern rotating/bursting outward while it recedes, matching every
+   * gradient variant's own reveal (their pattern recedes and the shared
+   * transform burst plays in the very same keyframe/duration, not on two
+   * independently-timed animations), rather than dots quietly vanishing on
+   * their own staggered clock ahead of the rotation actually finishing.
+   */
   animation-name: battle-particle-shrink;
-  animation-duration: 500ms;
-  animation-timing-function: ease-in;
+  animation-duration: 900ms;
+  animation-timing-function: ease-out;
 }
 
 @keyframes battle-particle-grow {
