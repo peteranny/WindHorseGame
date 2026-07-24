@@ -323,8 +323,10 @@
  * "neutral" value. Tile is 300px (a full maze cell, CELL_SIZE, used purely
  * as a size reference here) - deliberately a big, chunky unit rather than
  * a fine speckle of confetti. Only each dot's own radius (--dot-radius)
- * animates: 20px at the smallest, 300px (= the tile itself) at the
- * largest. A single tile's corner sits ~212px from its center
+ * animates, in place at its tile center: 20px at the smallest, 300px
+ * (= the tile itself) at the largest. No overlay scale/rotate - growing
+ * the whole layer would move centers outward and soft-resample the hard
+ * edges. A single tile's corner sits ~212px from its center
  * (half-diagonal), so 300px overshoots that and each circle floods its
  * own tile plus deep into its neighbors - hard-edged dots need that
  * overlap to finish fully opaque (the old +0.5px feather used to hide
@@ -335,9 +337,6 @@
  * once solid (a non-interpolable value change of its own kind), since
  * the gradient stays a gradient the whole time and is just already-
  * solid by the time it matters.
- *
- * Overlay sizing (longer-edge square) is shared with .rings below - see
- * that paired rule's comment.
  */
 .particles {
   background-size: 300px 300px, 300px 300px;
@@ -345,14 +344,14 @@
 }
 
 /*
- * Particles + rings both rotate their overlay on reveal. A plain W×H
- * screen rect leaves the short-side corners uncovered mid-spin - size the
- * overlay to a square of the viewport's longer edge (100vmax) and center
- * it instead. `translate` (individual transform property) centers without
- * fighting the keyframes' own `transform: scale()/rotate()`. Screen itself
- * is fullscreen (inset 0), so vmax matches the game's own longer edge.
+ * Rings rotates its overlay on reveal. A plain W×H screen rect leaves the
+ * short-side corners uncovered mid-spin - size the overlay to a square of
+ * the viewport's longer edge (100vmax) and center it instead. `translate`
+ * (individual transform property) centers without fighting the keyframes'
+ * own `transform: scale()/rotate()`. Screen itself is fullscreen (inset 0),
+ * so vmax matches the game's own longer edge. Particles deliberately stay
+ * on the ordinary inset:0 overlay - they only grow --dot-radius in place.
  */
-.particles,
 .rings {
   inset: auto;
   top: 50%;
@@ -399,15 +398,14 @@
   }
 }
 
-/* Same reverse-sweep idea as .radial's own reveal above - no opacity fade. */
+/* Shrink each dot in place - no overlay scale/rotate (unlike .radial/
+ * .stripes/.rings). Coverage opens purely as --dot-radius collapses. */
 @keyframes battle-reveal-particles {
   from {
-    transform: scale(1) rotate(0deg);
     --dot-radius: 300px;
   }
 
   to {
-    transform: scale(1.6) rotate(45deg);
     --dot-radius: 0;
   }
 }
