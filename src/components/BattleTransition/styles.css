@@ -565,17 +565,23 @@
  * gradient's own default direction is clockwise from 12 o'clock) rather
  * than many thin repeating wedges growing together like .radial - reads
  * as one deliberate clockwise wipe instead of a spinning burst, driven by
- * --sweep-angle. Cover ends at 361deg (not exactly 360) so the 0/360 seam
- * doesn't leave a hairline transparent gap the way an exact full turn
- * does - same overshoot idea as stripes' band-fill past its period.
- * Deliberately has *no* shared scale/rotate motion the way every other
- * gradient variant's own keyframes do (compare .radial/.stripes/etc
- * above) - this one is meant to read as purely a pie chart filling in,
- * so its own transform stays untouched (i.e. "none") at every step
- * instead of also zooming/spinning the whole wedge as a second,
- * independent motion layered on top. See .radial's own --wedge-angle
- * comment for why this needs @property (a real registered <angle>)
- * rather than a plain custom property to animate smoothly.
+ * --sweep-angle. The gradient's own second stop is a literal 361deg (not
+ * 360) to match --sweep-angle's own final value - once --sweep-angle
+ * reaches 361deg the transparent span (var(--sweep-angle) to 361deg) is
+ * zero-width, so the very last frame has no color-stop boundary left to
+ * anti-alias at all, closing the 0/360 seam without a fade. (An earlier
+ * attempt paired this with an animated background-color transparent->
+ * black to "guarantee" solid coverage - that ran a plain fade-to-black
+ * underneath the wipe for the whole duration, exactly the flat strobe/
+ * fade this whole family of variants avoids; dropped in favor of this
+ * gradient-only fix.) Deliberately has *no* shared scale/rotate motion
+ * the way every other gradient variant's own keyframes do (compare
+ * .radial/.stripes/etc above) - this one is meant to read as purely a
+ * pie chart filling in, so its own transform stays untouched (i.e.
+ * "none") at every step instead of also zooming/spinning the whole wedge
+ * as a second, independent motion layered on top. See .radial's own
+ * --wedge-angle comment for why this needs @property (a real registered
+ * <angle>) rather than a plain custom property to animate smoothly.
  */
 @property --sweep-angle {
   syntax: "<angle>";
@@ -585,22 +591,16 @@
 
 .cover.clockwise {
   animation-name: battle-cover-clockwise;
-  background-color: #0000;
-  background-image: conic-gradient(from 0deg, #000 0deg var(--sweep-angle), #0000 var(--sweep-angle) 360deg);
+  background-image: conic-gradient(from 0deg, #000 0deg var(--sweep-angle), #0000 var(--sweep-angle) 361deg);
 }
 
 @keyframes battle-cover-clockwise {
   from {
     --sweep-angle: 0deg;
-
-    background-color: #0000;
   }
 
   to {
-    /* Past 360deg so the seam at 0/360 is fully closed. */
     --sweep-angle: 361deg;
-
-    background-color: #000;
   }
 }
 
