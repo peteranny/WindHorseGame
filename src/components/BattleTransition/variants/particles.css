@@ -1,10 +1,14 @@
 /*
  * dotField is a fixed square (200vmax, comfortably bigger than any real
  * viewport's longer edge - same oversizing idea as heart.css's own
- * heartShape) so GRID_COLS x GRID_ROWS always divides it into genuinely
- * square cells, regardless of the real screen's own aspect ratio - no
- * runtime measurement needed, same principle as clockwise's tear wedges
- * using fixed vw/vh math instead of getBoundingClientRect.
+ * heartShape) so particles.tsx's row/column pitch (both computed as plain
+ * percentages of this box) stays proportional regardless of the real
+ * screen's own aspect ratio - no runtime measurement needed, same principle
+ * as clockwise's tear wedges using fixed vw/vh math instead of
+ * getBoundingClientRect. Dots are positioned directly via left/top (not
+ * CSS grid) since particles.tsx's brick/quincunx layout needs odd rows
+ * shifted by half a column from even rows - not something a plain grid
+ * can express.
  */
 .dotField {
   position: absolute;
@@ -13,38 +17,42 @@
   width: 200vmax;
   height: 200vmax;
   translate: -50% -50%;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  grid-template-rows: repeat(6, 1fr);
-}
-
-.dotCell {
-  position: relative;
 }
 
 /*
- * inset: -30% oversizes the dot well past its own cell (a plain percentage,
- * so it scales with the grid regardless of dotField's real pixel size) -
- * at scale(1) each dot's radius comfortably exceeds its cell's own
- * center-to-corner distance (a cell's diagonal is ~1.41x its side; this
- * dot's diameter is 1.6x the cell's side), so the grid's union is fully
- * solid with no gaps, the same guarantee the old gradient version's own
- * 300px-radius-vs-212px-corner math made - just via a real circle element
- * instead of an animated background.
+ * width/height: 26.6667% = 1.6x ROWS/COLS's own pitch (100/6%, see
+ * particles.tsx) - at scale(1) each dot's radius comfortably exceeds its
+ * row/column cell's own center-to-corner distance (a cell's diagonal is
+ * ~1.41x its side), so the brick layout's union is fully solid with no
+ * gaps the instant every dot finishes growing - the same guarantee the old
+ * gradient version's own 300px-radius-vs-212px-corner math made, just via
+ * real circle elements instead of an animated background. (If ROWS/COLS in
+ * particles.tsx ever changes, this must be re-derived to match.)
+ *
+ * filter: contrast(100) thresholds the browser's own anti-aliased edge on
+ * each circle to a hard boundary, same fix particles used before as a
+ * gradient (see BattleTransition/styles.css's own history) - safe to
+ * reapply here since what's actually animating is transform (a universally
+ * well-supported compositor animation), not a gradient fed by an animated
+ * custom property, so the mobile Safari repaint bug that forced this
+ * component's whole redesign doesn't apply to this combination.
  */
 .dot {
   position: absolute;
-  inset: -30%;
+  width: 26.6667%;
+  height: 26.6667%;
   border-radius: 50%;
   background: #000;
-  transform: scale(0);
+  filter: contrast(100);
+  transform: translate(-50%, -50%) scale(0);
   animation-fill-mode: both;
   animation-delay: var(--dot-delay, 0ms);
 }
 
 .dotGrow {
-  /* index * 10ms across 36 dots (see particles.tsx) plus this duration
-   * must stay under BattleTransition/timing.ts's DISTORT_IN_MS (900ms). */
+  /* index * 8ms across up to 39 dots (see particles.tsx) plus this
+   * duration must stay under BattleTransition/timing.ts's DISTORT_IN_MS
+   * (900ms). */
   animation-name: battle-particle-grow;
   animation-duration: 500ms;
   animation-timing-function: ease-out;
@@ -59,20 +67,20 @@
 
 @keyframes battle-particle-grow {
   from {
-    transform: scale(0);
+    transform: translate(-50%, -50%) scale(0);
   }
 
   to {
-    transform: scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
 @keyframes battle-particle-shrink {
   from {
-    transform: scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
 
   to {
-    transform: scale(0);
+    transform: translate(-50%, -50%) scale(0);
   }
 }
