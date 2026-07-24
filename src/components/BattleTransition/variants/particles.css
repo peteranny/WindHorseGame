@@ -9,6 +9,12 @@
  * CSS grid) since particles.tsx's brick/quincunx layout needs odd rows
  * shifted by half a column from even rows - not something a plain grid
  * can express.
+ *
+ * translate (the standalone property, not transform) handles this box's
+ * own centering so it never fights dotFieldReveal's own transform below -
+ * individual transform properties (translate/rotate/scale) and the
+ * transform property compose independently, so both can be set here
+ * without one overwriting the other.
  */
 .dotField {
   position: absolute;
@@ -20,31 +26,57 @@
 }
 
 /*
+ * Reveal's shared "burst outward" motion, matching radial/stripes/rings'
+ * own reveal keyframes exactly (scale(1.6) rotate(45deg), same duration/
+ * easing as the shared .reveal class in the main styles.css) - applied to
+ * the whole field rather than each individual dot, same as those variants
+ * apply it to their own shared .overlay element.
+ */
+.dotFieldReveal {
+  /* Must match BattleTransition/timing.ts's DISTORT_OUT_MS. */
+  animation-name: battle-particle-field-burst;
+  animation-duration: 900ms;
+  animation-timing-function: ease-out;
+  animation-fill-mode: both;
+}
+
+@keyframes battle-particle-field-burst {
+  from {
+    transform: scale(1) rotate(0deg);
+  }
+
+  to {
+    transform: scale(1.6) rotate(45deg);
+  }
+}
+
+/*
+ * Growing/shrinking animates width/height directly rather than
+ * transform: scale() - scale() would reuse one rasterized bitmap and let
+ * the compositor stretch it, blowing the browser's normal ~1px
+ * anti-aliased edge up into a visibly soft band as the circle grows.
+ * Animating width/height instead makes the browser re-rasterize a crisp
+ * circle fresh at its real size every frame - no filter trick needed (a
+ * contrast() filter was tried first and didn't help: it doesn't touch the
+ * alpha channel, which is where that softness actually lives).
+ *
+ * transform here is a static translate(-50%, -50%) only - centers the box
+ * on its own left/top anchor point, and since transform: translate()
+ * percentages resolve against the element's own current size, this stays
+ * correctly centered as width/height change every frame.
+ *
  * width/height: 26.6667% = 1.6x ROWS/COLS's own pitch (100/6%, see
- * particles.tsx) - at scale(1) each dot's radius comfortably exceeds its
+ * particles.tsx) - at full size each dot's radius comfortably exceeds its
  * row/column cell's own center-to-corner distance (a cell's diagonal is
  * ~1.41x its side), so the brick layout's union is fully solid with no
- * gaps the instant every dot finishes growing - the same guarantee the old
- * gradient version's own 300px-radius-vs-212px-corner math made, just via
- * real circle elements instead of an animated background. (If ROWS/COLS in
+ * gaps the instant every dot finishes growing. (If ROWS/COLS in
  * particles.tsx ever changes, this must be re-derived to match.)
- *
- * filter: contrast(100) thresholds the browser's own anti-aliased edge on
- * each circle to a hard boundary, same fix particles used before as a
- * gradient (see BattleTransition/styles.css's own history) - safe to
- * reapply here since what's actually animating is transform (a universally
- * well-supported compositor animation), not a gradient fed by an animated
- * custom property, so the mobile Safari repaint bug that forced this
- * component's whole redesign doesn't apply to this combination.
  */
 .dot {
   position: absolute;
-  width: 26.6667%;
-  height: 26.6667%;
   border-radius: 50%;
   background: #000;
-  filter: contrast(100);
-  transform: translate(-50%, -50%) scale(0);
+  transform: translate(-50%, -50%);
   animation-fill-mode: both;
   animation-delay: var(--dot-delay, 0ms);
 }
@@ -67,20 +99,24 @@
 
 @keyframes battle-particle-grow {
   from {
-    transform: translate(-50%, -50%) scale(0);
+    width: 0;
+    height: 0;
   }
 
   to {
-    transform: translate(-50%, -50%) scale(1);
+    width: 26.6667%;
+    height: 26.6667%;
   }
 }
 
 @keyframes battle-particle-shrink {
   from {
-    transform: translate(-50%, -50%) scale(1);
+    width: 26.6667%;
+    height: 26.6667%;
   }
 
   to {
-    transform: translate(-50%, -50%) scale(0);
+    width: 0;
+    height: 0;
   }
 }

@@ -12,22 +12,31 @@ import { Phase } from "../types";
 // it reads as a flash straight to solid black and back, rather than a
 // smooth grow/shrink (radial/stripes/rings, which animate a custom property
 // too but never layer a filter on top, don't have this problem on the same
-// phone). Real elements animated via transform: scale() sidestep it
-// entirely - the same technique "heart" (a single scaled shape) and
-// "clockwise" (several independently transformed shards) already use, both
-// unaffected by the same bug. particles.css still applies its own
-// filter: contrast(100) to each dot to kill the same soft anti-aliased edge
-// the old version fought - safe here since what's actually animating is
-// transform (a universally well-supported compositor animation), not a
-// gradient driven by a custom property, so the earlier repaint bug doesn't
-// apply to this combination.
+// phone). Real elements sidestep that repaint bug entirely regardless of
+// how they're animated - the same category of fix "heart" (a single scaled
+// shape) and "clockwise" (several independently transformed shards) already
+// use.
+//
+// Each dot's own grow/shrink is driven by animating width/height directly
+// (see particles.css), not transform: scale() - scale() reuses one
+// rasterized bitmap and lets the compositor stretch it, which blows the
+// browser's normal ~1px anti-aliased edge up into a visibly soft/blurry
+// band as the circle grows (filter: contrast(100) can't fix this - it
+// doesn't touch the alpha channel where that softness actually lives, which
+// is why the earlier version still looked feathered despite that filter).
+// Animating width/height instead makes the browser re-rasterize a crisp
+// circle fresh at its real size every frame. That also frees up each dot's
+// own transform for nothing but centering (translate(-50%, -50%), so left/
+// top can stay simple percentages regardless of the dot's current size) -
+// the reveal's shared 45deg burst (below) then belongs on dotField itself,
+// same as every other variant's own overlay.
 //
 // ROWS x COLS dots tile dotField, a fixed oversized square (see
 // particles.css) so every row/column pitch is guaranteed proportional
 // regardless of the real screen's own aspect ratio. Odd rows are offset by
 // half a column's width from even rows - a brick/quincunx layout, so once
-// every dot reaches scale(1) each row's dots sit over the previous row's
-// own gaps rather than stacking in a plain rectangular grid.
+// every dot reaches its full size each row's dots sit over the previous
+// row's own gaps rather than stacking in a plain rectangular grid.
 const ROWS = 6;
 const COLS = 6;
 
@@ -75,7 +84,9 @@ const ParticlesOverlay = ({ phase }: ParticlesOverlayProps) => {
   const isRevealing = phase === "reveal";
 
   return (
-    <div className={styles.dotField}>
+    <div
+      className={cn(styles.dotField, isRevealing && styles.dotFieldReveal)}
+    >
       {DOTS.map((dot, index) => (
         <span
           key={index}
