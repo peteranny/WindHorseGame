@@ -423,9 +423,8 @@
  * alongside the shared scale/rotate burst. Both need @property (real
  * registered <length>s) - see .radial's own --wedge-angle comment.
  * No scale/rotate on cover, same reasoning as .radial's own cover above.
- * Overlay is the same longer-edge square as .particles (see the shared
- * `.particles, .rings` rule above) so reveal's rotate doesn't uncover
- * the short-side corners.
+ * Overlay uses the longer-edge square (`.rings` rule above) so reveal's
+ * rotate doesn't uncover the short-side corners.
  */
 @property --ring-length {
   syntax: "<length>";
