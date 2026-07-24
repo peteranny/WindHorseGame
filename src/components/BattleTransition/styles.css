@@ -271,7 +271,9 @@
  * pinstripe. No scale/rotate on cover, same reasoning as .radial's own
  * cover above. See .radial's own --wedge-angle comment for why this needs
  * @property (a real registered <length>) rather than a plain custom
- * property to animate smoothly.
+ * property to animate smoothly. Cover's last frame overshoots the 300px
+ * period by 1px - at exact equality repeating-linear-gradient often leaves
+ * a hairline transparent gap at each tile join.
  */
 @property --band-length {
   syntax: "<length>";
@@ -298,7 +300,8 @@
   }
 
   to {
-    --band-length: 300px;
+    /* 1px past the 300px period - kills the repeat-join hairline gap. */
+    --band-length: 301px;
   }
 }
 
@@ -306,7 +309,7 @@
 @keyframes battle-reveal-stripes {
   from {
     transform: scale(1) rotate(0deg);
-    --band-length: 300px;
+    --band-length: 301px;
   }
 
   to {
@@ -344,16 +347,17 @@
 }
 
 /*
- * Radial + rings both rotate their overlay on reveal. A plain W×H screen
- * rect leaves the short-side corners uncovered mid-spin - size the overlay
- * to a square of the viewport's longer edge (100vmax) and center it
- * instead. `translate` (individual transform property) centers without
+ * Radial / stripes / rings all rotate their overlay on reveal. A plain W×H
+ * screen rect leaves the short-side corners uncovered mid-spin - size the
+ * overlay to a square of the viewport's longer edge (100vmax) and center
+ * it instead. `translate` (individual transform property) centers without
  * fighting the keyframes' own `transform: scale()/rotate()`. Screen itself
  * is fullscreen (inset 0), so vmax matches the game's own longer edge.
  * Particles deliberately stay on the ordinary inset:0 overlay - they only
  * grow --dot-radius in place.
  */
 .radial,
+.stripes,
 .rings {
   inset: auto;
   top: 50%;
@@ -432,8 +436,8 @@
  * alongside the shared scale/rotate burst. Both need @property (real
  * registered <length>s) - see .radial's own --wedge-angle comment.
  * No scale/rotate on cover, same reasoning as .radial's own cover above.
- * Overlay uses the longer-edge square (`.radial, .rings` rule above) so
- * reveal's rotate doesn't uncover the short-side corners.
+ * Overlay uses the longer-edge square (`.radial, .stripes, .rings` rule
+ * above) so reveal's rotate doesn't uncover the short-side corners.
  */
 @property --ring-length {
   syntax: "<length>";
