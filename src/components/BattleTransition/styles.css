@@ -525,18 +525,21 @@
 }
 
 /*
- * A single clock-hand wedge sweeping 0deg -> 360deg (conic-gradient's own
- * default direction is clockwise from 12 o'clock) rather than many thin
- * repeating wedges growing together like .radial - reads as one deliberate
- * clockwise wipe instead of a spinning burst, driven by --sweep-angle.
+ * A single clock-hand wedge sweeping 0deg -> past a full turn (conic-
+ * gradient's own default direction is clockwise from 12 o'clock) rather
+ * than many thin repeating wedges growing together like .radial - reads
+ * as one deliberate clockwise wipe instead of a spinning burst, driven by
+ * --sweep-angle. Cover ends at 361deg (not exactly 360) so the 0/360 seam
+ * doesn't leave a hairline transparent gap the way an exact full turn
+ * does - same overshoot idea as stripes' band-fill past its period.
  * Deliberately has *no* shared scale/rotate motion the way every other
  * gradient variant's own keyframes do (compare .radial/.stripes/etc
- * above) - this one is meant to read as purely a pie chart filling in
- * from 0 to 360deg, so its own transform stays untouched (i.e. "none") at
- * every step instead of also zooming/spinning the whole wedge as a
- * second, independent motion layered on top. See .radial's own
- * --wedge-angle comment for why this needs @property (a real registered
- * <angle>) rather than a plain custom property to animate smoothly.
+ * above) - this one is meant to read as purely a pie chart filling in,
+ * so its own transform stays untouched (i.e. "none") at every step
+ * instead of also zooming/spinning the whole wedge as a second,
+ * independent motion layered on top. See .radial's own --wedge-angle
+ * comment for why this needs @property (a real registered <angle>)
+ * rather than a plain custom property to animate smoothly.
  */
 @property --sweep-angle {
   syntax: "<angle>";
@@ -546,16 +549,22 @@
 
 .cover.clockwise {
   animation-name: battle-cover-clockwise;
-  background: conic-gradient(from 0deg, #000 0deg var(--sweep-angle), transparent var(--sweep-angle) 360deg);
+  background-color: #0000;
+  background-image: conic-gradient(from 0deg, #000 0deg var(--sweep-angle), #0000 var(--sweep-angle) 360deg);
 }
 
 @keyframes battle-cover-clockwise {
   from {
     --sweep-angle: 0deg;
+
+    background-color: #0000;
   }
 
   to {
-    --sweep-angle: 360deg;
+    /* Past 360deg so the seam at 0/360 is fully closed. */
+    --sweep-angle: 361deg;
+
+    background-color: #000;
   }
 }
 
