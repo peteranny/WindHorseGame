@@ -263,27 +263,42 @@
 
 /*
  * Horizontal bands (stacked top-to-bottom, not vertical columns) - same
- * "grow the black share of a fixed period" idea as .radial above, just
- * with repeating-linear-gradient's own band height (300px - a full maze
- * cell, CELL_SIZE, used purely as a size reference here, not an actual
- * shared constant) in place of the conic gradient's angle, driven by
- * --band-length - deliberately a big, chunky unit rather than a fine
- * pinstripe. No scale/rotate on cover, same reasoning as .radial's own
- * cover above. See .radial's own --wedge-angle comment for why this needs
- * @property (a real registered <length>) rather than a plain custom
- * property to animate smoothly. Cover's last frame overshoots the 300px
- * period by 1px - at exact equality repeating-linear-gradient often leaves
- * a hairline transparent gap at each tile join.
+ * "grow the black share of a fixed period" idea as .radial above, but
+ * implemented as a non-repeating linear-gradient tiled with
+ * background-size/repeat-y rather than repeating-linear-gradient.
+ * repeating-linear-gradient + animated --band-length left the transparent
+ * gap visually stuck (and the last cover frame never went fully solid -
+ * a hairline/period-join miss that 1px overshoot didn't fix). Here each
+ * 300px tile's own fill is --band-fill (a registered <percentage>), so
+ * the gap is literally `100% - var(--band-fill)` and closes in lockstep;
+ * cover's final frame also underpaints background-color #000 so any
+ * remaining join seam is black. No scale/rotate on cover, same reasoning
+ * as .radial's own cover above.
  */
-@property --band-length {
-  syntax: "<length>";
+@property --band-fill {
+  syntax: "<percentage>";
   inherits: false;
-  initial-value: 16px;
+  initial-value: 5%;
+}
+
+.stripes {
+  background-size: 100% 300px;
+  background-repeat: repeat-y;
 }
 
 .cover.stripes,
 .reveal.stripes {
-  background: repeating-linear-gradient(180deg, #000 0 var(--band-length), transparent var(--band-length) 300px);
+  /* Split from the `background` shorthand so background-size/repeat
+   * on .stripes above aren't reset. */
+  background-color: #0000;
+  background-image:
+    linear-gradient(
+      180deg,
+      #000 0%,
+      #000 var(--band-fill),
+      #0000 var(--band-fill),
+      #0000 100%
+    );
 }
 
 .cover.stripes {
@@ -296,12 +311,16 @@
 
 @keyframes battle-cover-stripes {
   from {
-    --band-length: 16px;
+    --band-fill: 5%;
+
+    background-color: #0000;
   }
 
   to {
-    /* 1px past the 300px period - kills the repeat-join hairline gap. */
-    --band-length: 301px;
+    --band-fill: 100%;
+
+    /* Underpaint: last frame is solid even if a tile join would seam. */
+    background-color: #000;
   }
 }
 
@@ -309,12 +328,16 @@
 @keyframes battle-reveal-stripes {
   from {
     transform: scale(1) rotate(0deg);
-    --band-length: 301px;
+    --band-fill: 100%;
+
+    background-color: #000;
   }
 
   to {
     transform: scale(1.6) rotate(45deg);
-    --band-length: 0;
+    --band-fill: 0%;
+
+    background-color: #0000;
   }
 }
 
