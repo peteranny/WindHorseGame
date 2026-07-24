@@ -942,7 +942,6 @@
 }
 
 .levelBadge {
-  font-family: monospace;
   font-size: calc(8pt * var(--scale));
   font-weight: bold;
   color: white;
@@ -953,7 +952,6 @@
 
 .hpDevValue {
   margin-top: calc(2px * var(--scale));
-  font-family: monospace;
   font-size: calc(9pt * var(--scale));
   color: orangered;
 }

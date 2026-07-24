@@ -7,4 +7,17 @@
   overflow: hidden;
   background: brown;
   font-size: calc(13pt * var(--scale));
+
+  /*
+   * A bare generic keyword, not a named font - it resolves to whatever
+   * monospace font the browser/OS provides (Menlo on macOS Safari, Courier
+   * New elsewhere), same as the LV badge already used on its own
+   * (Battle/styles.css's .levelBadge). Applied here once so it cascades to
+   * every English/Latin glyph in the app. No CJK fallback is listed
+   * because none is needed: a monospace font has no Chinese glyphs, so the
+   * browser's own per-character fallback already reaches for its system
+   * CJK font automatically - the same rendering Chinese text already gets
+   * today, since no font-family was set anywhere before this.
+   */
+  font-family: monospace;
 }
