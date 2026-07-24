@@ -344,14 +344,16 @@
 }
 
 /*
- * Rings rotates its overlay on reveal. A plain W×H screen rect leaves the
- * short-side corners uncovered mid-spin - size the overlay to a square of
- * the viewport's longer edge (100vmax) and center it instead. `translate`
- * (individual transform property) centers without fighting the keyframes'
- * own `transform: scale()/rotate()`. Screen itself is fullscreen (inset 0),
- * so vmax matches the game's own longer edge. Particles deliberately stay
- * on the ordinary inset:0 overlay - they only grow --dot-radius in place.
+ * Radial + rings both rotate their overlay on reveal. A plain W×H screen
+ * rect leaves the short-side corners uncovered mid-spin - size the overlay
+ * to a square of the viewport's longer edge (100vmax) and center it
+ * instead. `translate` (individual transform property) centers without
+ * fighting the keyframes' own `transform: scale()/rotate()`. Screen itself
+ * is fullscreen (inset 0), so vmax matches the game's own longer edge.
+ * Particles deliberately stay on the ordinary inset:0 overlay - they only
+ * grow --dot-radius in place.
  */
+.radial,
 .rings {
   inset: auto;
   top: 50%;
@@ -430,8 +432,8 @@
  * alongside the shared scale/rotate burst. Both need @property (real
  * registered <length>s) - see .radial's own --wedge-angle comment.
  * No scale/rotate on cover, same reasoning as .radial's own cover above.
- * Overlay uses the longer-edge square (`.rings` rule above) so reveal's
- * rotate doesn't uncover the short-side corners.
+ * Overlay uses the longer-edge square (`.radial, .rings` rule above) so
+ * reveal's rotate doesn't uncover the short-side corners.
  */
 @property --ring-length {
   syntax: "<length>";
