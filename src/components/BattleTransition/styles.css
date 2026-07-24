@@ -340,45 +340,18 @@
 }
 
 /*
- * Two dot layers tiled in a quincunx (offset by half the tile in both
- * directions, see background-position below) - background-size/position
- * live on the always-applied .particles class rather than the animated
- * rule below, so there's no risk of them drifting toward some unintended
- * "neutral" value. Tile is 300px (a full maze cell, CELL_SIZE, used purely
- * as a size reference here) - deliberately a big, chunky unit rather than
- * a fine speckle of confetti. Only each dot's own radius (--dot-radius)
- * animates at its tile center: 20px at the smallest, 300px (= the tile
- * itself) at the largest. Cover has no overlay transform - dots grow in
- * place. Reveal keeps the shared scale/rotate burst (dots also shrink via
- * --dot-radius). A single tile's corner sits ~212px from its center
- * (half-diagonal), so 300px overshoots that and each circle floods its
- * own tile plus deep into its neighbors - hard-edged dots need that
- * overlap to finish fully opaque (the old +0.5px feather used to hide
- * near-miss gaps that hard edges now leave visible). See .radial's own
- * --wedge-angle comment for why this needs @property (a real registered
- * <length>) rather than a plain custom property to animate smoothly -
- * here it also sidesteps ever needing to flip background-image to `none`
- * once solid (a non-interpolable value change of its own kind), since
- * the gradient stays a gradient the whole time and is just already-
- * solid by the time it matters.
- */
-.particles {
-  background-size: 300px 300px, 300px 300px;
-  background-position: 0 0, 150px 150px;
-}
-
-/*
- * Radial / stripes / particles / rings all rotate their overlay on reveal.
- * A plain W×H screen rect leaves the short-side corners uncovered mid-
- * spin - size the overlay to a square of the viewport's longer edge
- * (100vmax) and center it instead. `translate` (individual transform
- * property) centers without fighting the keyframes' own
- * `transform: scale()/rotate()`. Screen itself is fullscreen (inset 0),
- * so vmax matches the game's own longer edge.
+ * Radial / stripes / rings all rotate their overlay on reveal ("particles"
+ * used to as well, back when it was this same kind of shared-.overlay
+ * gradient - it's since moved to its own DOM-based component, variants/
+ * particles.tsx/.css, see that file's own comment for why). A plain W×H
+ * screen rect leaves the short-side corners uncovered mid-spin - size the
+ * overlay to a square of the viewport's longer edge (100vmax) and center it
+ * instead. `translate` (individual transform property) centers without
+ * fighting the keyframes' own `transform: scale()/rotate()`. Screen itself
+ * is fullscreen (inset 0), so vmax matches the game's own longer edge.
  */
 .radial,
 .stripes,
-.particles,
 .rings {
   inset: auto;
   top: 50%;
@@ -386,77 +359,6 @@
   width: 100vmax;
   height: 100vmax;
   translate: -50% -50%;
-}
-
-@property --dot-radius {
-  syntax: "<length>";
-  inherits: false;
-  initial-value: 20px;
-}
-
-.cover.particles,
-.reveal.particles {
-  background-color: transparent;
-
-  /*
-   * Explicit ending-shape radius (`circle var(--dot-radius)`) with both
-   * color stops at 100% - a hard disk edge, not a stop-position fade along
-   * a farthest-corner ray. The old `#000 r, #0000 calc(r + 0.5px)` (and
-   * even `+ 0.01px`) still interpolated a translucent fringe that read as
-   * feather. contrast() then thresholds any remaining browser AA soft
-   * pixels to fully opaque or fully transparent.
-   */
-  background-image:
-    radial-gradient(circle var(--dot-radius) at 50% 50%, #000 100%, #0000 100%),
-    radial-gradient(circle var(--dot-radius) at 50% 50%, #000 100%, #0000 100%);
-  filter: contrast(100);
-
-  /*
-   * particles is the one variant here that layers a filter on top of an
-   * animated-custom-property-driven gradient - radial/stripes/rings (no
-   * filter) already animate smoothly on the same phones, so the filter
-   * output specifically not being recomputed each frame (a mobile Safari
-   * repaint bug distinct from - and on top of - the plain "animated custom
-   * property inside a gradient" one) is the more likely culprit for the
-   * flash-to-black/flash-to-reveal reported there. will-change hints all
-   * three inputs that actually change - --dot-radius, the background-image
-   * it feeds, and the filter reading that output - so the fix stays scoped
-   * to this one variant instead of the ones that already work.
-   */
-  will-change: --dot-radius, background-image, filter;
-}
-
-.cover.particles {
-  animation-name: battle-cover-particles;
-}
-
-.reveal.particles {
-  animation-name: battle-reveal-particles;
-}
-
-@keyframes battle-cover-particles {
-  from {
-    --dot-radius: 20px;
-  }
-
-  to {
-    /* = tile size: floods each tile past its corners (~212px) so the
-     * last cover frame is genuinely solid with hard-edged dots. */
-    --dot-radius: 300px;
-  }
-}
-
-/* Shrink each dot while the overlay does the shared scale/rotate burst. */
-@keyframes battle-reveal-particles {
-  from {
-    transform: scale(1) rotate(0deg);
-    --dot-radius: 300px;
-  }
-
-  to {
-    transform: scale(1.6) rotate(45deg);
-    --dot-radius: 0;
-  }
 }
 
 /*
@@ -472,9 +374,8 @@
  * alongside the shared scale/rotate burst. Both need @property (real
  * registered <length>s) - see .radial's own --wedge-angle comment.
  * No scale/rotate on cover, same reasoning as .radial's own cover above.
- * Overlay uses the longer-edge square (`.radial, .stripes, .particles,
- * .rings` rule above) so reveal's rotate doesn't uncover the short-side
- * corners.
+ * Overlay uses the longer-edge square (`.radial, .stripes, .rings` rule
+ * above) so reveal's rotate doesn't uncover the short-side corners.
  */
 @property --ring-length {
   syntax: "<length>";
@@ -581,15 +482,15 @@
 }
 
 /*
- * "heart" and "clockwise" both render real DOM elements (variants/
- * heart.tsx, variants/clockwise.tsx) somewhere in their sequence, rather
- * than only growing a CSS gradient pattern on this shared .overlay element
- * the way radial/stripes/particles/rings do throughout - "squeeze" is a
- * DOM-free exception of its own kind instead, distorting the actual
- * mounted content (see .contentWrap/.squeezeLayer above) rather than
- * drawing anything on .overlay for its cover half at all. Those DOM
- * elements' own classes/keyframes live in their matching variants/*.css
- * file instead of here. What stays here is:
+ * "heart", "clockwise", and "particles" all render real DOM elements
+ * (variants/heart.tsx, variants/clockwise.tsx, variants/particles.tsx)
+ * somewhere in their sequence, rather than only growing a CSS gradient
+ * pattern on this shared .overlay element the way radial/stripes/rings do
+ * throughout - "squeeze" is a DOM-free exception of its own kind instead,
+ * distorting the actual mounted content (see .contentWrap/.squeezeLayer
+ * above) rather than drawing anything on .overlay for its cover half at
+ * all. Those DOM elements' own classes/keyframes live in their matching
+ * variants/*.css file instead of here. What stays here is:
  *   - "heart"'s own *cover* backdrop, a near-instant snap to solid black
  *     in the last sliver of the duration (0% and 95% both stay fully
  *     transparent, so nothing fades in before then) - a pure safety net
@@ -598,9 +499,11 @@
  *     provides, just reached a different way. No matching cover-side rule
  *     is needed for reveal: "heart"'s own heart already fades to invisible
  *     on its own (revealing needs no coverage guarantee, only covering
- *     does), and "clockwise"'s tear shards fly apart on their own
- *     animation with .overlay's background staying its ordinary
- *     transparent self underneath them.
+ *     does), "clockwise"'s tear shards fly apart on their own animation
+ *     with .overlay's background staying its ordinary transparent self
+ *     underneath them, and "particles"'s own dots need no safety net at
+ *     all - each one's own oversizing already guarantees a gap-free union
+ *     the instant every dot reaches scale(1) (see particles.css).
  *   - "squeeze"'s own *reveal*, a plain opacity fade (no DOM elements of
  *     its own for this half) - the same shape as this project's very first
  *     "firework" variant's own reveal used, before firework was replaced.

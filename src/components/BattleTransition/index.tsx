@@ -6,6 +6,7 @@ import { Variant, VARIANTS } from "../../store/battleTransitionVariants";
 import { Phase } from "./types";
 import HeartOverlay from "./variants/heart";
 import ClockwiseOverlay from "./variants/clockwise";
+import ParticlesOverlay from "./variants/particles";
 import {
   FREEZE_MS,
   FLASH_MS,
@@ -22,13 +23,17 @@ import {
 // plays the much simpler "resolve" instead - see the leavingBattle branch
 // below. The variant catalog itself lives in store/battleTransitionVariants
 // (not here) since flowStore's own devForcedTransitionVariant and Game's dev
-// toggle button need it too. Most variants are a pure CSS gradient pattern
-// hooked onto the shared .overlay div below via styles[variant] - "heart" is
-// a DOM-element exception on its cover half (variants/heart.tsx), "clockwise"
-// is a DOM-element exception on its reveal half instead (variants/
-// clockwise.tsx), and "squeeze" is a different kind of exception entirely: it
-// distorts the actual mounted content (see contentWrap below), not just the
-// shared overlay.
+// toggle button need it too. "radial"/"stripes"/"rings" are a pure CSS
+// gradient pattern hooked onto the shared .overlay div below via
+// styles[variant] - "heart" is a DOM-element exception on its cover half
+// (variants/heart.tsx), "clockwise" is a DOM-element exception on its reveal
+// half instead (variants/clockwise.tsx), "particles" is a DOM-element
+// exception across both halves (variants/particles.tsx - a grid of real
+// circles animated via transform, not a gradient, after mobile Safari was
+// found not to repaint a filter-on-animated-gradient version reliably), and
+// "squeeze" is a different kind of exception entirely: it distorts the
+// actual mounted content (see contentWrap below), not just the shared
+// overlay.
 
 interface BattleTransitionProps {
   mode: string;
@@ -174,6 +179,7 @@ const BattleTransition = ({
           {phase === "flash" && <div className={styles.flash} />}
           {variant === "heart" && <HeartOverlay phase={phase} />}
           {variant === "clockwise" && <ClockwiseOverlay phase={phase} />}
+          {variant === "particles" && <ParticlesOverlay phase={phase} />}
         </div>
       )}
     </div>
